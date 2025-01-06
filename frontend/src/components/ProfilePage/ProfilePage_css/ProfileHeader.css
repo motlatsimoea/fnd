@@ -1,0 +1,35 @@
+.profile-header {
+  position: relative;
+  height: 200px;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.profile-header-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+.profile-info {
+  position: relative;
+  color: white;
+  text-align: center;
+  padding: 10px;
+}
+
+.profile-picture {
+  border-radius: 50%;
+  height: 100px;
+  width: 100px;
+  margin-bottom: 10px;
+}
+
+.edit-profile-btn,
+.change-background-btn {
+  margin-top: 10px;
+  padding: 5px 10px;
+}

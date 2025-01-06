@@ -1,0 +1,46 @@
+.inbox-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  .chat-list {
+    margin-top: 20px;
+  }
+  
+  .chat-item {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: black;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: #f9f9f9;
+    transition: background-color 0.3s;
+  }
+  
+  .chat-item:hover {
+    background-color: #f1f1f1;
+  }
+  
+  .chat-item img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+  
+  .chat-item h3 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+  
+  .chat-item p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+  }
+  

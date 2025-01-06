@@ -1,0 +1,55 @@
+.info-page {
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .search-box {
+    padding: 10px;
+    margin: 20px;
+    width: 80%;
+    max-width: 500px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  
+  .article-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  
+  .article-card {
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  }
+  
+  .article-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
+  
+  .article-card h2 {
+    font-size: 1.5rem;
+    color: #333;
+    margin: 10px 0;
+  }
+
+  .article-card h2 a {
+    text-decoration: none; 
+    color: inherit; /* Ensures the color matches the h2 */
+  }
+  
+  .article-card h2 a:hover {
+    color: #2ecc71; /* Optional: Add a hover effect for better UX */
+  }
+  
+  
+  .article-card p {
+    font-size: 1rem;
+    color: #777;
+  }
+  

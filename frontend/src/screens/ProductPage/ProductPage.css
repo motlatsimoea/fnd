@@ -1,0 +1,27 @@
+.product-page {
+    padding: 20px;
+  }
+  
+  .product-slider {
+    display: flex;
+    align-items: center;
+  }
+  
+  .product-slider img {
+    width: 300px;
+    height: 300px;
+    margin: 0 10px;
+  }
+  
+  h1, .price {
+    color: #27ae60;
+  }
+  
+  .reviews {
+    margin-top: 20px;
+  }
+  
+  .review {
+    margin-bottom: 10px;
+  }
+  

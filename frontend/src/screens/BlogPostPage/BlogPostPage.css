@@ -1,0 +1,85 @@
+/* BlogPostPage.css */
+
+/* Main Blog Post Page */
+.blog-post-page {
+    width: 80%;
+    margin: 0 auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .blog-post {
+    margin-bottom: 40px;
+  }
+  
+  .post-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .user-info {
+    display: flex;
+    align-items: center;
+  }
+  
+  .user-image {
+    border-radius: 50%;
+    margin-right: 15px;
+  }
+  
+  .user-details .post-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0;
+  }
+  
+  .user-name, .post-date {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .post-content {
+    margin-top: 20px;
+  }
+  
+  .post-content p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #333;
+  }
+  
+  .post-images {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  .post-images img {
+    max-width: 100%;
+    border-radius: 5px;
+  }
+  
+  .like-button {
+    background-color: #2a9d8f;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 20px;
+  }
+  
+  .like-button:hover {
+    background-color: #264653;
+  }
+  
+  .post-summary {
+    margin-top: 20px;
+    font-size: 16px;
+    color: #555;
+  }
+  

@@ -1,0 +1,142 @@
+.blog-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center posts horizontally */
+  padding: 20px;
+  gap: 20px; /* Add spacing between posts */
+}
+
+.blog-post {
+  width: 90%; /* Constrain width on larger screens */
+  max-width: 800px; /* Maximum width for the blog post */
+  background-color: #f9f9f9; /* Light background for blog post */
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.blog-header {
+  display: flex;
+  align-items: flex-start; /* Align content at the top */
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.author-image {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%; /* Circular image */
+  border: 2px solid #2c5f2d;
+}
+
+.blog-meta {
+  display: flex;
+  flex-direction: column; /* Stack name and date vertically */
+}
+
+.blog-author {
+  font-weight: bold;
+  font-size: 1rem;
+  color: #333;
+}
+
+.blog-date {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.blog-title {
+  font-size: 1.5rem;
+  color: #2c5f2d; /* Dark green for agricultural theme */
+  margin: 0;
+}
+
+.blog-images {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* 2x2 grid */
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.blog-images img {
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.blog-text {
+  font-size: 1rem;
+  color: #444;
+  line-height: 1.6;
+  margin-bottom: 15px;
+  text-align: justify;
+}
+
+.blog-likes {
+  font-size: 1rem;
+  color: #1dc70d; /* Red color for likes */
+  font-weight: bold;
+  margin-top: 10px;
+  display: flex;
+  align-items: center; /* Align content vertically */
+  justify-content: flex-start; /* Align content to the left */
+}
+
+.blog-title-link {
+  text-decoration: none;
+  color: #2a9d8f; /* Dark green color */
+  transition: color 0.2s ease;
+}
+
+.blog-title-link:hover {
+  color: #264653; /* Even darker green for hover */
+}
+
+.author-link {
+  text-decoration: none;
+}
+
+.author-name {
+  margin-left: 10px;
+  color: #2a9d8f;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  text-decoration: none; /* Ensures no underline */
+}
+
+.author-name:hover {
+  color: #264653;
+}
+
+.author-img {
+  width: 50px; /* Fixed width */
+  height: 50px; /* Fixed height */
+  border-radius: 50%; /* Makes it round */
+  object-fit: cover; /* Ensures the image fits within the circle */
+}
+
+/* Add hover effect for username link */
+.author-name:hover {
+  color: #264653;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .blog-post {
+    width: 95%;
+  }
+
+  .blog-header {
+    flex-direction: column; /* Stack header on smaller screens */
+    align-items: flex-start;
+  }
+
+  .blog-images {
+    grid-template-columns: 1fr; /* Single column for images on small screens */
+  }
+}
+
