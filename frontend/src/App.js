@@ -14,6 +14,7 @@ import RegistrationPage from './screens/RegistrationPage/RegistrationPage';
 
 import InboxPage from './screens/InboxPage/InboxPage';
 import ChatPage from './screens/InboxPage/ChatPage';
+import Chat from './components/chat';
 
 import LoginPage from './screens/LoginPage/LoginPage';
 
@@ -48,6 +49,7 @@ function App() {
         {/* Inbox Page Routes */}
         <Route path="/inbox" element={<InboxPage />} /> {/* Main inbox page */}
         <Route path="/chat/:chatId" element={<ChatPage />} /> {/* Specific chat page */}
+        <Route path="/chat_test/:chat_id" element={<Chat />} />
       </Routes>
     </Router>
   );

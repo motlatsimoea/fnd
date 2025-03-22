@@ -34,6 +34,9 @@ class Media(models.Model):
 
     def __str__(self):
         return f"{self.post.title} - {self.file.name}"
+    
+    class Meta:
+        verbose_name_plural = "Media"
 
 
 class Like(models.Model):

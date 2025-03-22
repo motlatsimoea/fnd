@@ -6,6 +6,9 @@ from .models import Post, Comment, Like, Media
 from .serializers import PostSerializer, CommentSerializer
 from django.shortcuts import get_object_or_404
 
+from notifications.utils import send_notification
+
+
 class PostView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -52,6 +55,8 @@ class PostDetailView(APIView):
         except Post.DoesNotExist:
             return Response({'error': 'Post not found or you are not the author.'}, status=status.HTTP_404_NOT_FOUND)
 
+
+
 class LikeView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -67,6 +72,9 @@ class LikeView(APIView):
                 {"message": "Post unliked successfully."},
                 status=status.HTTP_200_OK,
             )
+        if request.user != post.author:  # Prevent self-notifications
+            message = f"{request.user.username} liked your post."
+            send_notification(user=post.author, sender=request.user, notification_type="like", message=message, post=post)
 
         return Response(
             {"message": "Post liked successfully."},
@@ -88,9 +96,15 @@ class CommentView(APIView):
         data['post'] = post.id
         data['author'] = request.user.id
         serializer = CommentSerializer(data=data)
+        
         if serializer.is_valid():
-            serializer.save()
+            comment = serializer.save()
+            
+            if request.user != post.author:  # Prevent self-notifications
+                message = f"{request.user.username} commented on your post: {comment.text}"
+                send_notification(user=post.author, sender=request.user, notification_type="comment", message=message, post=post)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request, post_id):
