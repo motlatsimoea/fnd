@@ -39,19 +39,25 @@ INSTALLED_APPS = [
     "market",
     "chat",
     "notifications",
+    "info",
     
     # Third Party
     "rest_framework",
     "corsheaders",
     "rest_framework_simplejwt",
     "channels",
+    "django_ckeditor_5",
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ),
 }
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),  # Customize token lifetime
@@ -103,6 +109,18 @@ TEMPLATES = [
     },
 ]
 
+
+CKEDITOR_5_CONFIGS = {
+    'default': {
+        'toolbar': [
+            'heading', '|',
+            'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|',
+            'blockQuote', 'insertTable', 'imageUpload', 'undo', 'redo',
+        ],
+        'language': 'en',
+    }
+}
+
 WSGI_APPLICATION = "backend.wsgi.application"
 ASGI_APPLICATION = "backend.asgi.application"
 
@@ -153,6 +171,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = "static/"
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 CORS_ALLOW_ALL_ORIGINS = True
 

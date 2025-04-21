@@ -14,7 +14,7 @@ class ProductImageAdmin(admin.ModelAdmin):
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ('product', 'user', 'rating', 'created_at')
+    list_display = ('product', 'author', 'rating', 'created_at')
     search_fields = ('product__name', 'user__username')
     list_filter = ('rating', 'created_at')
 

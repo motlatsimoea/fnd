@@ -39,11 +39,11 @@ class ProductImage(models.Model):
 
 class Review(models.Model):
     product     = models.ForeignKey(Product, related_name="reviews", on_delete=models.CASCADE)
-    user        = models.ForeignKey(User, on_delete=models.CASCADE)
+    author      = models.ForeignKey(User, on_delete=models.CASCADE)
     rating      = models.PositiveIntegerField()
-    comment     = models.TextField(blank=True, null=True)
+    content     = models.TextField(blank=True, null=True)
     created_at  = models.DateTimeField(auto_now_add=True)
-    
+    parent      = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
     
     def clean(self):
         if not (1 <= self.rating <= 5):

@@ -1,155 +1,138 @@
-import React, { useState } from 'react';
-import './CommentSection.css';
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchComments,
+  createComment,
+  editComment,
+  deleteComment
+} from '../../features/blog/Comment-slice';
 
-const CommentSection = () => {
-  const [comments, setComments] = useState([
-    {
-      id: 1,
-      username: 'JaneDoe',
-      profilePicture: 'https://via.placeholder.com/50', // Profile Picture URL
-      date: 'November 22, 2024',
-      content: 'This is a great blog post! I totally agree with your points on sustainable farming.',
-      replies: [
-        {
-          id: 1,
-          username: 'JohnDoe',
-          profilePicture: 'https://via.placeholder.com/50', // Profile Picture URL
-          content: 'Thanks! I appreciate your thoughts on this topic.',
-        },
-      ],
-    },
-    {
-      id: 2,
-      username: 'MarkSmith',
-      profilePicture: 'https://via.placeholder.com/50', // Profile Picture URL
-      date: 'November 21, 2024',
-      content: 'Interesting read! I would love to see more posts on farming techniques.',
-      replies: [],
-    },
-  ]);
+const CommentForm = ({ postId, parentId = null, initialText = '', onCancel, onSubmitSuccess }) => {
+  const dispatch = useDispatch();
+  const [text, setText] = useState(initialText);
 
-  const [newComment, setNewComment] = useState('');
-  const [newReply, setNewReply] = useState('');
-
-  const handleCommentChange = (e) => {
-    setNewComment(e.target.value);
-  };
-
-  const handleReplyChange = (e) => {
-    setNewReply(e.target.value);
-  };
-
-  const handleSubmitComment = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (newComment.trim()) {
-      const newCommentObj = {
-        id: comments.length + 1,
-        username: 'NewUser',
-        profilePicture: 'https://via.placeholder.com/50', // Placeholder Profile Picture
-        date: new Date().toLocaleDateString(),
-        content: newComment,
-        replies: [],
-      };
-      setComments([...comments, newCommentObj]);
-      setNewComment('');
-    }
-  };
-
-  const handleSubmitReply = (commentId) => {
-    if (newReply.trim()) {
-      const updatedComments = comments.map((comment) =>
-        comment.id === commentId
-          ? {
-              ...comment,
-              replies: [
-                ...comment.replies,
-                {
-                  id: comment.replies.length + 1,
-                  username: 'NewUser',
-                  profilePicture: 'https://via.placeholder.com/50', // Placeholder Profile Picture
-                  content: newReply,
-                },
-              ],
-            }
-          : comment
-      );
-      setComments(updatedComments);
-      setNewReply('');
+    if (!text.trim()) return;
+  
+    try {
+      if (initialText) {
+        await dispatch(editComment({ postId, commentId: parentId, text })).unwrap();
+      } else {
+        await dispatch(createComment({ postId, text, parent: parentId })).unwrap();
+      }
+  
+      setText('');
+      if (onSubmitSuccess) onSubmitSuccess();
+    } catch (err) {
+      console.error('Error submitting comment:', err);
+      // Optional: show error feedback to user
     }
   };
 
   return (
-    <div className="comment-section">
-      <h3>Comments</h3>
-      
-      {/* Add Comment Form */}
-      <form onSubmit={handleSubmitComment} className="comment-form">
-        <textarea
-          placeholder="Add a comment..."
-          value={newComment}
-          onChange={handleCommentChange}
-          rows="4"
-          className="comment-input"
-        ></textarea>
-        <button type="submit" className="comment-submit">
-          Post Comment
+    <form onSubmit={handleSubmit} className="space-y-2">
+      <textarea
+        className="w-full border rounded p-2"
+        rows={2}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="Write your comment..."
+      />
+      <div className="flex gap-2">
+        <button type="submit" className="px-3 py-1 bg-blue-500 text-white rounded">
+          {initialText ? 'Update' : 'Post'}
         </button>
-      </form>
+        {onCancel && (
+          <button type="button" onClick={onCancel} className="px-3 py-1 bg-gray-300 rounded">
+            Cancel
+          </button>
+        )}
+      </div>
+    </form>
+  );
+};
 
-      {/* Display Comments */}
-      <div className="comments-list">
+const CommentItem = ({ comment, postId }) => {
+  const dispatch = useDispatch();
+  const [replying, setReplying] = useState(false);
+  const [editing, setEditing] = useState(false);
+
+  const handleDelete = () => {
+    dispatch(deleteComment({ postId, commentId: comment.id }));
+  };
+
+  return (
+    <div className="mb-4 ml-4 border-l pl-4">
+      <div className="flex justify-between">
+        <p className="font-medium">{comment.author?.username}</p>
+        <small className="text-gray-500">{new Date(comment.created_at).toLocaleString()}</small>
+      </div>
+      {!editing ? (
+        <p className="mt-1">{comment.text}</p>
+      ) : (
+        <CommentForm
+          postId={postId}
+          parentId={comment.id}
+          initialText={comment.text}
+          onCancel={() => setEditing(false)}
+          onSubmitSuccess={() => setEditing(false)}
+        />
+      )}
+
+      {!editing && (
+        <div className="text-sm mt-1 flex gap-2 text-blue-600 cursor-pointer">
+          <span onClick={() => setReplying(!replying)}>Reply</span>
+          <span onClick={() => setEditing(true)}>Edit</span>
+          <span onClick={handleDelete}>Delete</span>
+        </div>
+      )}
+
+      {replying && (
+        <div className="mt-2">
+          <CommentForm
+            postId={postId}
+            parentId={comment.id}
+            onCancel={() => setReplying(false)}
+            onSubmitSuccess={() => setReplying(false)}
+          />
+        </div>
+      )}
+
+      {comment.replies && comment.replies.length > 0 && (
+        <div className="mt-2">
+          {comment.replies.map((reply) => (
+            <CommentItem key={reply.id} comment={reply} postId={postId} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const CommentSection = ({ postId }) => {
+  const dispatch = useDispatch();
+  const { items: comments, loading, error } = useSelector((state) => state.comments);
+
+  useEffect(() => {
+    if (postId) {
+      dispatch(fetchComments(postId));
+    }
+  }, [dispatch, postId]);
+
+  return (
+    <div className="p-4 border rounded bg-white shadow-sm">
+      <h3 className="text-lg font-semibold mb-4">Comments</h3>
+
+      <CommentForm postId={postId} />
+
+      {loading && <p>Loading comments...</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
+      {comments.length === 0 && !loading && <p className="text-gray-500">No comments yet.</p>}
+
+      <div className="mt-4">
         {comments.map((comment) => (
-          <div key={comment.id} className="comment">
-            <div className="comment-header">
-              <img
-                src={comment.profilePicture}
-                alt={`${comment.username}'s profile`}
-                className="profile-picture"
-              />
-              <div>
-                <strong>{comment.username}</strong> <span>| {comment.date}</span>
-              </div>
-            </div>
-            <p className="comment-content">{comment.content}</p>
-            
-            {/* Replies */}
-            {comment.replies.length > 0 && (
-              <div className="replies">
-                {comment.replies.map((reply) => (
-                  <div key={reply.id} className="reply">
-                    <img
-                      src={reply.profilePicture}
-                      alt={`${reply.username}'s profile`}
-                      className="profile-picture-reply"
-                    />
-                    <div>
-                      <strong>{reply.username}</strong>: {reply.content}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Reply Form */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSubmitReply(comment.id);
-              }}
-              className="reply-form"
-            >
-              <input
-                type="text"
-                placeholder="Reply..."
-                value={newReply}
-                onChange={handleReplyChange}
-                className="reply-input"
-              />
-              <button type="submit" className="reply-submit">
-                Reply
-              </button>
-            </form>
-          </div>
+          <CommentItem key={comment.id} comment={comment} postId={postId} />
         ))}
       </div>
     </div>

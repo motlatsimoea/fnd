@@ -1,54 +1,47 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import CommentSection from '../../components/CommentSection/CommentSection'; // Adjust this path if needed
+import CommentSection from '../../components/CommentSection/CommentSection';
 
 const ArticlePage = () => {
   const { id } = useParams();
+  const [article, setArticle] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  // Replace with your actual articles data source
-  const articles = [
-    {
-      id: 1,
-      title: 'The Future of AI in Agriculture',
-      image: '/images/ai-agriculture.jpg',
-      date: 'November 25, 2024',
-      author: 'John Doe',
-      content: 'AI is revolutionizing agriculture with predictive analysis, automated harvesting...',
-    },
-    {
-      id: 2,
-      title: 'Sustainable Farming Practices',
-      image: '/images/sustainable-farming.jpg',
-      date: 'November 22, 2024',
-      author: 'Jane Smith',
-      content: 'Sustainable farming practices aim to reduce environmental impact...',
-    },
-    {
-      id: 3,
-      title: 'The Rise of Vertical Farming',
-      image: '/images/vertical-farming.jpg',
-      date: 'November 20, 2024',
-      author: 'David Wilson',
-      content: 'Vertical farming is growing in popularity due to its efficiency in urban areas...',
-    },
-  ];
+  useEffect(() => {
+    const fetchArticle = async () => {
+      try {
+        const response = await fetch(`/api/articles/${id}/`);
+        if (!response.ok) {
+          throw new Error('Article not found');
+        }
+        const data = await response.json();
+        setArticle(data);
+      } catch (error) {
+        console.error(error);
+        setNotFound(true);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Find the article by id
-  const article = articles.find((article) => article.id === parseInt(id));
+    fetchArticle();
+  }, [id]);
 
-  if (!article) {
-    return <h1>Article not found</h1>;
-  }
+  if (loading) return <p>Loading article...</p>;
+  if (notFound || !article) return <h1>Article not found</h1>;
 
   return (
     <div className="article-page">
       <h1>{article.title}</h1>
-      <img src={article.image} alt={article.title} style={{ maxWidth: '100%' }} />
+      {article.image && (
+        <img src={article.image} alt={article.title} style={{ maxWidth: '100%' }} />
+      )}
       <p><strong>By {article.author}</strong> | {article.date}</p>
       <div className="content">
         <p>{article.content}</p>
       </div>
-      <CommentSection />
+      <CommentSection articleId={id} />
     </div>
   );
 };

@@ -9,11 +9,27 @@ class NotificationListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Fetch notifications for the logged-in user (likes & comments)
+        # Fetch "like", "comment", and "reply" notifications for the logged-in user
         notifications = Notification.objects.filter(
-            user=request.user, 
-            notification_type__in=["like", "comment"]
-        ).order_by("-created_at")  # Show most recent first
+            user=request.user,
+            notification_type__in=["like", "comment", "reply"]
+        ).order_by("-timestamp")
 
         serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data, status=200)
+
+
+
+class InboxNotificationView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Fetch inbox (message) notifications for the logged-in user
+        inbox_notifications = Notification.objects.filter(
+            user=request.user,
+            notification_type="message"
+        ).order_by("-timestamp")  # Most recent first
+
+        # Serialize and return the notifications
+        serializer = NotificationSerializer(inbox_notifications, many=True)
         return Response(serializer.data, status=200)

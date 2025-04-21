@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { registerUser } from '../../features/users/register-slice';
 import './RegistrationPage.css';
 
 const RegistrationPage = () => {
+  const dispatch = useDispatch();
+  const { loading, error, success } = useSelector((state) => state.register);
+
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -76,16 +81,14 @@ const RegistrationPage = () => {
       setErrors(formErrors);
       return;
     }
-    alert('Registration Successful!');
-    console.log('Form Data:', formData);
-    // Add an API call here to send the form data to a backend
+
+    dispatch(registerUser(formData));
   };
 
   return (
     <div className="registration-page">
       <h1>Welcome to FND. Register here...</h1>
       <form onSubmit={handleSubmit} className="registration-form" noValidate>
-        {/* Username */}
         <label htmlFor="username">Username:</label>
         <input
           type="text"
@@ -98,7 +101,6 @@ const RegistrationPage = () => {
         />
         {errors.username && <p id="usernameError" className="error">{errors.username}</p>}
 
-        {/* Email */}
         <label htmlFor="email">Email:</label>
         <input
           type="email"
@@ -111,7 +113,6 @@ const RegistrationPage = () => {
         />
         {errors.email && <p id="emailError" className="error">{errors.email}</p>}
 
-        {/* Farming Sectors */}
         <fieldset className="farming-sectors">
           <legend>Farming Sector(s):</legend>
           {farmingSectors.map((sector) => (
@@ -127,7 +128,6 @@ const RegistrationPage = () => {
           ))}
         </fieldset>
 
-        {/* Password */}
         <label htmlFor="password">Password:</label>
         <input
           type="password"
@@ -143,7 +143,6 @@ const RegistrationPage = () => {
           Strength: {passwordStrength}
         </p>
 
-        {/* Confirm Password */}
         <label htmlFor="confirmPassword">Confirm Password:</label>
         <input
           type="password"
@@ -156,14 +155,13 @@ const RegistrationPage = () => {
         />
         {errors.confirmPassword && <p id="confirmPasswordError" className="error">{errors.confirmPassword}</p>}
 
-
-        {/* Submit Button */}
-        <button type="submit" className="submit-button">
-          Register
+        <button type="submit" className="submit-button" disabled={loading}>
+          {loading ? 'Registering...' : 'Register'}
         </button>
+        {error && <p className="error">{error}</p>}
+        {success && <p className="success">Registration successful!</p>}
       </form>
 
-      {/* Redirect to Login */}
       <p className="login-link">
         Already have an account? <a href="/login">Log in</a>
       </p>

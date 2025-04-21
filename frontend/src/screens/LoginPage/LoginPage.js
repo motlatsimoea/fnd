@@ -1,16 +1,29 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // For navigation
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../features/auth/auth-slice';
 import './LoginPage.css';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  // Access userLogin from your store format
+  const { userInfo, loading, error } = useSelector((state) => state.userLogin);
+
   const handleLogin = (e) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Username:', username, 'Password:', password);
+    dispatch(login({ username, password }));
   };
+
+  useEffect(() => {
+    if (userInfo?.access) {
+      navigate('/'); // Navigate on login success
+    }
+  }, [userInfo, navigate]);
 
   return (
     <div className="login-page">
@@ -38,9 +51,10 @@ const LoginPage = () => {
             required
           />
         </div>
-        <button type="submit" className="login-button">
-          Login
+        <button type="submit" className="login-button" disabled={loading}>
+          {loading ? 'Logging in...' : 'Login'}
         </button>
+        {error && <div className="error-message">{error}</div>}
       </form>
       <p className="register-link">
         Don't have an account? <Link to="/register">Register here</Link>.
@@ -50,4 +64,3 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
-    

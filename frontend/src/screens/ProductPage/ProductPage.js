@@ -1,49 +1,50 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchProductById } from '../../features/products/Product-slice'; // update path as needed
 import Reviews from './Reviews';
 import './ProductPage.css';
 
 const ProductPage = () => {
-  const product = {
-    name: 'Fresh Tomatoes',
-    description: 'Organic, freshly harvested tomatoes from local farms.',
-    price: '$10 per kg',
-    seller: { name: 'John’s Farm', profileLink: '/seller/johns-farm' },
-    images: [
-      '/images/tomatoes1.jpg',
-      '/images/tomatoes2.jpg',
-      '/images/tomatoes3.jpg',
-    ],
-    reviews: [
-      { id: 1, user: 'Alice', rating: 5, comment: 'Great quality!' },
-      { id: 2, user: 'Bob', rating: 4, comment: 'Fresh and tasty, but a bit pricey.' },
-      { id: 3, user: 'Charlie', rating: 3, comment: 'Not bad, but I expected better packaging.' },
-    ],
-  };
+  const { id } = useParams();
+  const dispatch = useDispatch();
+  const { selectedProduct: product, loading, error } = useSelector((state) => state.products);
 
   const [currentImage, setCurrentImage] = useState(0);
 
+  useEffect(() => {
+    dispatch(fetchProductById(id));
+  }, [dispatch, id]);
+
   const nextImage = () => {
-    setCurrentImage((prev) => (prev + 1) % product.images.length);
+    setCurrentImage((prev) => (prev + 1) % (product?.additional_images?.length || 1));
   };
 
   const prevImage = () => {
-    setCurrentImage((prev) => (prev - 1 + product.images.length) % product.images.length);
+    setCurrentImage((prev) => (prev - 1 + (product?.additional_images?.length || 1)) % (product?.additional_images?.length || 1));
   };
+
+  if (loading) return <p>Loading product...</p>;
+  if (error) return <p className="error-message">{error}</p>;
+  if (!product) return <p>Product not found.</p>;
 
   return (
     <div className="product-page">
       <div className="product-slider">
         <button onClick={prevImage}>&lt;</button>
-        <img src={product.images[currentImage]} alt="Product" />
+        <img
+          src={product.additional_images?.[currentImage] || product.profile_image || '/images/placeholder.jpg'}
+          alt="Product"
+        />
         <button onClick={nextImage}>&gt;</button>
       </div>
       <h1>{product.name}</h1>
       <p>{product.description}</p>
-      <p className="price">{product.price}</p>
+      <p className="price">${product.price}</p>
       <p className="seller">
-        Seller: <a href={product.seller.profileLink}>{product.seller.name}</a>
+        Seller: <a href={`/seller/${product.seller}`}>{product.seller_name || 'Unknown Seller'}</a>
       </p>
-      <Reviews reviews={product.reviews} />
+      <Reviews reviews={product.reviews || []} />
     </div>
   );
 };

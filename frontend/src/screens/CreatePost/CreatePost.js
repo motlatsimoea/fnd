@@ -1,45 +1,78 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { createPost } from '../features/blogs/blogSlice';
+import Loader from '../components/Loader';
+import Message from '../components/Message';
 import './CreatePost.css';
 
 const CreatePost = () => {
+  const dispatch = useDispatch();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [file, setFile] = useState(null);
+  const [files, setFiles] = useState([]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle form submission logic here
-    console.log('Post Title:', title);
-    console.log('Post Content:', content);
-    console.log('Uploaded File:', file);
-  };
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleFileUpload = (e) => {
-    setFile(e.target.files[0]); // Save the uploaded file
+    setFiles(Array.from(e.target.files));
   };
 
-  const renderFilePreview = () => {
-    if (!file) return null;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-    const fileType = file.type;
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    files.forEach((file) => formData.append('media_files', file));
 
-    if (fileType.startsWith('image/')) {
-      return <img src={URL.createObjectURL(file)} alt="Preview" className="file-preview" />;
-    } else if (fileType.startsWith('video/')) {
-      return (
-        <video controls className="file-preview">
-          <source src={URL.createObjectURL(file)} type={fileType} />
-          Your browser does not support the video tag.
-        </video>
-      );
-    } else {
-      return <p className="file-name">File Selected: {file.name}</p>;
+    try {
+      await dispatch(createPost(formData)).unwrap();
+      setTitle('');
+      setContent('');
+      setFiles([]);
+    } catch (err) {
+      setError(err.message || 'Something went wrong.');
+    } finally {
+      setLoading(false);
     }
   };
+
+  const renderFilePreviews = () =>
+    files.map((file, index) => {
+      const fileType = file.type;
+      const key = `${file.name}-${index}`;
+
+      if (fileType.startsWith('image/')) {
+        return (
+          <img
+            key={key}
+            src={URL.createObjectURL(file)}
+            alt="Preview"
+            className="file-preview"
+          />
+        );
+      } else if (fileType.startsWith('video/')) {
+        return (
+          <video key={key} controls className="file-preview">
+            <source src={URL.createObjectURL(file)} type={fileType} />
+            Your browser does not support the video tag.
+          </video>
+        );
+      } else {
+        return <p key={key} className="file-name">File Selected: {file.name}</p>;
+      }
+    });
 
   return (
     <div className="create-post-page">
       <h1>Create a New Post</h1>
+
+      {error && <Message variant="danger">{error}</Message>}
+      {loading && <Loader />}
+
       <form className="create-post-form" onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="title">Title</label>
@@ -64,14 +97,15 @@ const CreatePost = () => {
           ></textarea>
         </div>
         <div className="form-group">
-          <label htmlFor="file">Upload Image, Video, or Document</label>
+          <label htmlFor="file">Upload Images or Videos (max 4)</label>
           <input
             type="file"
             id="file"
-            accept="image/*,video/*,.pdf,.doc,.docx,.txt"
+            multiple
+            accept="image/*,video/*"
             onChange={handleFileUpload}
           />
-          {renderFilePreview()}
+          <div className="file-previews">{renderFilePreviews()}</div>
         </div>
         <button type="submit" className="submit-button">
           Post

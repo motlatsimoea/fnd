@@ -2,33 +2,45 @@ import React from 'react';
 import './ProfilePage_css/ProfileHeader.css';
 
 const ProfileHeader = ({ user }) => {
+  if (!user) return null;
+
+  const {
+    username,
+    bio,
+    location,
+    birth_date,
+    interests = [],
+    profile_picture,
+    background_picture
+  } = user;
+
   return (
     <div className="profile-header">
       {/* Background Image */}
       <div
         className="background-image"
-        style={{ backgroundImage: `url(${user.backgroundPicture})` }}
+        style={{ backgroundImage: `url(${background_picture})` }}
       ></div>
 
       {/* Profile Section */}
       <div className="profile-section">
         <div
           className="profile-picture"
-          style={{ backgroundImage: `url(${user.profilePicture})` }}
+          style={{ backgroundImage: `url(${profile_picture})` }}
         ></div>
         <div className="user-info">
-          <h2>{user.name}</h2>
+          <h2>{username}</h2>
           <button className="edit-button">Edit Profile</button>
-          <p>{user.bio}</p>
+          <p>{bio}</p>
           <div className="tags">
-            {user.interests.map((interest, index) => (
+            {interests.map((interest, index) => (
               <span key={index} className="tag">
                 {interest}
               </span>
             ))}
           </div>
           <p>
-            📍 {user.location} | 🎂 Born {user.birthDate}
+            📍 {location} | 🎂 Born {birth_date}
           </p>
         </div>
       </div>

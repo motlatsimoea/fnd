@@ -6,6 +6,7 @@ from .models import Profile, CustomUser
 from .serializers import UserSerializerWithToken, ProfileSerializer, UserSerializer
 from .utils import generate_user_token, send_activation_email
 from django.urls import reverse
+from rest_framework.exceptions import NotFound
 
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import AccessToken
@@ -95,11 +96,8 @@ class ProfileView(APIView):
 
 
 """
-from rest_framework.exceptions import NotFound
+
 class ProfileView(APIView):
-    
-    #Handles retrieving and updating a user's profile based on their username.
-    
     permission_classes = [IsAuthenticated]
 
     def get_object(self, username):
@@ -107,9 +105,9 @@ class ProfileView(APIView):
             user = CustomUser.objects.get(username=username)
             return Profile.objects.get(user=user)
         except CustomUser.DoesNotExist:
-            raise NotFound("User not found")
+            raise NotFound({"detail": "User not found"})
         except Profile.DoesNotExist:
-            raise NotFound("Profile not found for this user")
+            raise NotFound({"detail": "Profile not found for this user"})
 
     def get(self, request, username=None):
         profile = self.get_object(username or request.user.username)

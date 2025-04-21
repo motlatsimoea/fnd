@@ -1,41 +1,24 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom'; // Assuming you are using React Router for navigation
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import './InfoPage.css';
 
 const InfoPage = () => {
-  const articles = [
-    {
-      id: 1,
-      title: 'The Future of AI in Agriculture',
-      image: '/images/ai-agriculture.jpg',
-      date: 'November 25, 2024',
-      author: 'John Doe',
-      content: 'Content of the article will be here...',
-    },
-    {
-      id: 2,
-      title: 'Sustainable Farming Practices',
-      image: '/images/sustainable-farming.jpg',
-      date: 'November 22, 2024',
-      author: 'Jane Smith',
-      content: 'Content of the article will be here...',
-    },
-    {
-      id: 3,
-      title: 'The Rise of Vertical Farming',
-      image: '/images/vertical-farming.jpg',
-      date: 'November 20, 2024',
-      author: 'David Wilson',
-      content: 'Content of the article will be here...',
-    },
-    // Add more articles here
-  ];
-
   const [searchTerm, setSearchTerm] = useState('');
+  const [articles, setArticles] = useState([]);
 
-  const filteredArticles = articles.filter(article =>
-    article.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        const response = await fetch(`/api/articles/?q=${searchTerm}`);
+        const data = await response.json();
+        setArticles(data.results || data); // in case of pagination
+      } catch (error) {
+        console.error('Failed to fetch articles:', error);
+      }
+    };
+
+    fetchArticles();
+  }, [searchTerm]);
 
   return (
     <div className="info-page">
@@ -48,7 +31,7 @@ const InfoPage = () => {
         className="search-box"
       />
       <div className="article-grid">
-        {filteredArticles.map((article) => (
+        {articles.map((article) => (
           <div key={article.id} className="article-card">
             <img src={article.image} alt={article.title} />
             <h2>

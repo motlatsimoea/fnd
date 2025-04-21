@@ -1,17 +1,27 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+  fetchReviews,
+  createReview,
+  selectReviewsByProduct,
+} from '../../features/products/review-slice';
 import './Reviews.css';
 
-const Reviews = ({ reviews: initialReviews }) => {
-  // State to manage reviews
-  const [reviews, setReviews] = useState(initialReviews);
+const Reviews = ({ productId }) => {
+  const dispatch = useDispatch();
+  const reviews = useSelector((state) => selectReviewsByProduct(state, productId));
 
-  // Form states
+  // Local form state
   const [name, setName] = useState('');
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
 
-  // Handle review submission
-  const handleSubmit = (e) => {
+  // Fetch reviews when component mounts
+  useEffect(() => {
+    dispatch(fetchReviews(productId));
+  }, [dispatch, productId]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!name || !rating || !comment) {
@@ -19,36 +29,42 @@ const Reviews = ({ reviews: initialReviews }) => {
       return;
     }
 
-    const newReview = {
-      id: reviews.length + 1,
+    const reviewData = {
       user: name,
       rating,
       comment,
     };
 
-    // Add new review and reset form
-    setReviews([...reviews, newReview]);
-    setName('');
-    setRating(0);
-    setComment('');
+    try {
+      await dispatch(createReview({ productId, reviewData })).unwrap();
+      // Reset form
+      setName('');
+      setRating(0);
+      setComment('');
+    } catch (err) {
+      alert('Error submitting review!');
+      console.error(err);
+    }
   };
 
   return (
     <div className="reviews-section">
       <h3>Customer Reviews</h3>
 
-      {/* Display Existing Reviews */}
-      {reviews.map((review) => (
-        <div key={review.id} className="review-card">
-          <strong>{review.user}</strong>
-          <p>
-            Rating: {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
-          </p>
-          <p>{review.comment}</p>
-        </div>
-      ))}
+      {reviews.length === 0 ? (
+        <p>No reviews yet. Be the first!</p>
+      ) : (
+        reviews.map((review) => (
+          <div key={review.id} className="review-card">
+            <strong>{review.user}</strong>
+            <p>
+              Rating: {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
+            </p>
+            <p>{review.comment}</p>
+          </div>
+        ))
+      )}
 
-      {/* Add a New Review Form */}
       <div className="review-form">
         <h4>Write a Review</h4>
         <form onSubmit={handleSubmit}>
