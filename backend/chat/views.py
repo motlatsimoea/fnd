@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
-from django.db.models import Count
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from .models import Inbox, Message
 from .serializers import ChatRoomSerializer, MessageSerializer
@@ -34,9 +34,16 @@ class ChatDetailView(ListAPIView):
     serializer_class = MessageSerializer
 
     def get_queryset(self):
-        # Fetch messages for a specific chat
         chat_id = self.kwargs['chat_id']
-        return Message.objects.filter(chat_id=chat_id).order_by('timestamp')
+
+        # Ensure the user is a participant of this chat
+        chat = get_object_or_404(Inbox, id=chat_id, participants=self.request.user)
+
+        # Optional: Enforce 2-participant rule
+        if chat.participants.count() != 2:
+            raise PermissionDenied("This chat must have exactly two participants.")
+
+        return Message.objects.filter(chat=chat).order_by('timestamp')
     
     
 class CreateChatView(APIView):
@@ -59,7 +66,7 @@ class CreateChatView(APIView):
             return Response({"error": "Message cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Save the message
-        message = Message.objects.create(inbox=inbox, sender=sender, text=message_text)
+        message = Message.objects.create(inbox=inbox, sender=sender, content=message_text)
 
         # Create notification
         Notification.objects.create(

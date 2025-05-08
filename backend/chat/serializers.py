@@ -1,5 +1,8 @@
 from rest_framework import serializers
 from .models import Inbox, Message
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class MessageSerializer(serializers.ModelSerializer):
     content = serializers.CharField(write_only=True)  # Accept plaintext for writing
@@ -18,9 +21,14 @@ class MessageSerializer(serializers.ModelSerializer):
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):
-    participants = serializers.StringRelatedField(many=True)
+    participants = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True)
     messages = MessageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Inbox
         fields = ['id', 'participants', 'messages']
+
+    def validate_participants(self, value):
+        if len(value) != 2:
+            raise serializers.ValidationError("A chat room must have exactly two participants.")
+        return value

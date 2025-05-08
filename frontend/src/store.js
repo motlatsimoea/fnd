@@ -7,6 +7,7 @@ import blogReducer from './features/blog/BlogList-slice'
 import commentReducer from './features/blog/Comment-slice'
 import productReducer from './features/products/Product-slice'
 import reviewReducer from './features/products/review-slice'
+import notificationReducer from './features/notifications/notice-slice'
 
 
 const reducer = combineReducers({
@@ -16,7 +17,8 @@ const reducer = combineReducers({
   register: registerReducer,
   profile: profileReducer,
   product: productReducer,
-  reviews, reviewReducer,
+  reviews: reviewReducer,
+  notifications: notificationReducer,
 
 })
 

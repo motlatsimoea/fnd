@@ -7,7 +7,7 @@ import Sidebar from './Sidebar';
 import './ProfilePage_css/ProfilePage.css'; // Optional if you have layout styles
 
 import { fetchProfile } from '../../features/users/profile-slice';
-import { fetchProducts } from '../../redux/products/product-slice';
+import { fetchProducts } from '../../features/products/product-slice';
 
 const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState('Posts');
