@@ -3,13 +3,12 @@ import { useSelector, useDispatch } from 'react-redux';
 import {
   fetchReviews,
   createReview,
-  selectReviewsByProduct,
 } from '../../features/products/review-slice';
 import './Reviews.css';
 
 const Reviews = ({ productId }) => {
   const dispatch = useDispatch();
-  const reviews = useSelector((state) => selectReviewsByProduct(state, productId));
+  const reviews = useSelector((state) => fetchReviews(state, productId));
 
   // Local form state
   const [name, setName] = useState('');

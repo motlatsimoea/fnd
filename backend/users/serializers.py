@@ -4,18 +4,29 @@ from .utils import generate_user_token, generate_login_token
 from django.db import models
 from .models import Profile, Sector, CustomUser 
 
+class ProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Profile model.
+    """
+    class Meta:
+        model = Profile
+        fields = ['first_name', 'last_name', 'location', 'phone_number', 'bio', 'profile_picture']
+        
+
 class SectorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sector
         fields = ['id', 'name']
 
 
+
 class UserSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer(read_only=True)
     sectors = serializers.ListField(
         child=serializers.CharField(max_length=100),
-        write_only=True  # Accept sector names from the frontend
+        write_only=True  
     )
-    sectors_display = serializers.SerializerMethodField()  # Display sector names in the response
+    sectors_display = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
@@ -24,7 +35,12 @@ class UserSerializer(serializers.ModelSerializer):
             'password': {'write_only': True},
         }
         
-
+    
+    def validate_email(self, value):
+        if CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email already exists.")
+        return value
+    
     def create(self, validated_data):
         sectors_data = validated_data.pop('sectors', [])
         password = validated_data.pop('password')
@@ -48,56 +64,39 @@ class UserSerializer(serializers.ModelSerializer):
         return [sector.name for sector in obj.sectors.all()]
 
 
+
 class UserSerializerWithToken(serializers.ModelSerializer):
-    token = serializers.SerializerMethodField(read_only=True)
     isAdmin = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'isAdmin', 'token']
+        fields = ['id', 'username', 'email', 'isAdmin']
 
-    def get_token(self, obj):
-        return generate_login_token(obj)['access']
 
     def get_isAdmin(self, obj):
         return obj.is_staff
     
 
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
-        # Generate the base token
         token = super().get_token(user)
 
         # Add custom claims
         token['username'] = user.username
-        token['email'] = user.email  # Optional: Include email
-        token['is_staff'] = user.is_staff  # Optional: Include is_staff
+        token['email'] = user.email 
+        token['is_staff'] = user.is_staff  
         return token
 
     def validate(self, attrs):
-        # Validate the user and get the base token data
         data = super().validate(attrs)
 
-        # Generate additional user-specific token data (if any custom logic exists)
-        user_token_data = generate_login_token(self.user)  # Custom function
-        data.update(user_token_data)
+        refresh = self.get_token(self.user)
+        data['refresh'] = str(refresh)                
+        data['access'] = str(refresh.access_token)
 
-        # Add user details (full user data if required)
-        data['user'] = UserSerializerWithToken(self.user).data
+        data['user'] = UserSerializerWithToken(self.user).data 
         return data
 
     
-
-
-
-
-class ProfileSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Profile model.
-    """
-    class Meta:
-        model = Profile
-        fields = ['first_name', 'last_name', 'location', 'phone_number', 'bio', 'profile_picture']

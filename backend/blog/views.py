@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 from .models import Post, Comment, Like, Media
 from .serializers import PostSerializer, CommentSerializer
@@ -10,18 +10,31 @@ from django.utils.text import get_valid_filename
 from notifications.utils import send_notification
 
 
+
+
 class PostView(APIView):
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
+    def get(self, request):
+        posts = Post.objects.all().order_by('-created_at')
+        serializer = PostSerializer(posts, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    
     def post(self, request):
-        serializer = PostSerializer(data=request.data, context={'request': request})
-        
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        title = request.data.get('title')
+        content = request.data.get('content')
+        tags = request.data.get('tags', '')
         media_files = request.FILES.getlist('media_files') or []
 
-        # File validation configs
+        # Validate required fields
+        if not title or not content:
+            return Response({'detail': 'Title and content are required.'}, status=400)
+
+        # File validation
         ALLOWED_TYPES = ['image/jpeg', 'image/png', 'video/mp4']
         MAX_FILE_SIZE_MB = 5
         MAX_MEDIA_COUNT = 4
@@ -35,22 +48,30 @@ class PostView(APIView):
             if media_file.size > MAX_FILE_SIZE_MB * 1024 * 1024:
                 return Response({'detail': f'{media_file.name} exceeds max file size of {MAX_FILE_SIZE_MB}MB.'}, status=400)
 
-        # All good, proceed with save inside transaction
         try:
             with transaction.atomic():
-                post = serializer.save(author=request.user)
+                post = Post.objects.create(
+                    title=title,
+                    content=content,
+                    tags=tags,
+                    author=request.user
+                )
 
                 for media_file in media_files:
-                    clean_name = get_valid_filename(media_file.name)
-                    media_file.name = clean_name  # optional, helps with weird filenames
+                    media_file.name = get_valid_filename(media_file.name)
                     Media.objects.create(post=post, file=media_file)
 
-                return Response(PostSerializer(post, context={'request': request}).data, status=status.HTTP_201_CREATED)
-        
+                serialized_post = PostSerializer(post, context={'request': request})
+                return Response(serialized_post.data, status=201)
+
         except Exception as e:
             return Response({'detail': 'An error occurred while saving the post.', 'error': str(e)}, status=500)
-
+        
+        
     def put(self, request, post_id):
+        if not request.user or not request.user.is_authenticated:
+            return Response({'detail': 'Authentication required.'}, status=status.HTTP_401_UNAUTHORIZED)
+
         try:
             post = Post.objects.get(id=post_id, author=request.user)
         except Post.DoesNotExist:
@@ -62,8 +83,7 @@ class PostView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         
         return Response({'detail': 'Invalid update data', 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
-    
+
 
 class PostDetailView(APIView):
     permission_classes = [IsAuthenticated]
@@ -125,9 +145,15 @@ class LikeView(APIView):
 
 
 class CommentView(APIView):
-    permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
     def post(self, request, post_id):
+        #print(f"User: {request.user} (Authenticated: {request.user.is_authenticated})")
+        #print(f"User ID: {request.user.id}")
         try:
             post = Post.objects.get(id=post_id)
         except Post.DoesNotExist:
@@ -136,16 +162,17 @@ class CommentView(APIView):
         # Prepare comment data
         data = request.data.copy()
         data['post'] = post.id
-        data['author'] = request.user.id
+        #data['author'] = request.user.id
+        #print("Prepared data:", data)
 
-        serializer = CommentSerializer(data=data)
+        serializer = CommentSerializer(data=data, context={'request': request})
         
         if serializer.is_valid():
             comment = serializer.save()
 
             # Send notification for top-level comments only (no parent comment)
             if request.user != post.author and comment.parent is None:
-                message = f"{request.user.username} commented on your post: {comment.text}"
+                message = f"{request.user.username} commented on your post: {comment.content}"
                 send_notification(
                     user=post.author,
                     sender=request.user,
@@ -182,6 +209,20 @@ class CommentDetailView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Comment.DoesNotExist:
             return Response({'error': 'Comment not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        
+    def patch(self, request, post_id, id):
+        try:
+            comment = Comment.objects.get(id=id, post__id=post_id, author=request.user)
+        except Comment.DoesNotExist:
+            return Response({'error': 'Comment not found or you are not the author.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CommentSerializer(comment, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, post_id, id):
         # Delete a specific comment

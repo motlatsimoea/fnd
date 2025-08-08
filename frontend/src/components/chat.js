@@ -6,9 +6,7 @@ const Chat = ({ chatId, user }) => {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    // Connect to WebSocket server
-     
-    const ws = new WebSocket("ws://127.0.0.1:8000/ws/chat/2/");
+    const ws = new WebSocket(`ws://127.0.0.1:8000/ws/chat/${chatId}/`);
 
     ws.onopen = () => {
       console.log("WebSocket Connected");
@@ -16,10 +14,8 @@ const Chat = ({ chatId, user }) => {
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      console.log("Message received:", data);
-
       if (data.message) {
-        setMessages((prevMessages) => [...prevMessages, data]);
+        setMessages((prev) => [...prev, data]);
       }
     };
 
@@ -28,17 +24,14 @@ const Chat = ({ chatId, user }) => {
     };
 
     setSocket(ws);
-
-    return () => {
-      ws.close(); // Close socket when component unmounts
-    };
+    return () => ws.close();
   }, [chatId]);
 
   const sendMessage = () => {
-    if (socket && message.trim() !== "") {
+    if (socket && message.trim()) {
       socket.send(JSON.stringify({
         message: message,
-        sender: user.username, // Sending user info
+        sender: user.id, // match server expectations
       }));
       setMessage("");
     }
@@ -46,17 +39,19 @@ const Chat = ({ chatId, user }) => {
 
   return (
     <div>
-      <h2>Chat Room {chatId}</h2>
-      <div>
-        {messages.map((msg, index) => (
-          <p key={index}><strong>{msg.sender}:</strong> {msg.message}</p>
+      <h2>Chat with User (Chat ID: {chatId})</h2>
+      <div className="chat-box">
+        {messages.map((msg, i) => (
+          <p key={i}>
+            <strong>{msg.sender}:</strong> {msg.message}
+          </p>
         ))}
       </div>
       <input
         type="text"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        placeholder="Type a message..."
+        placeholder="Type your message..."
       />
       <button onClick={sendMessage}>Send</button>
     </div>

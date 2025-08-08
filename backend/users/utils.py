@@ -1,4 +1,5 @@
 from django.core.mail import send_mail
+from datetime import timedelta
 from rest_framework_simplejwt.tokens import AccessToken
 
 def generate_login_token(user):
@@ -16,7 +17,8 @@ def generate_user_token(user):
     Generate a JWT token for the given user.
     """
     token = AccessToken()
-    token['user_id'] = user.id  # Include user-specific data
+    token.set_exp(lifetime=timedelta(hours=24))
+    token['user_id'] = user.id  
     return str(token)
 
 

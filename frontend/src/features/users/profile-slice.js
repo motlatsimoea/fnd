@@ -1,16 +1,15 @@
-// features/profile/profileSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance'; // 👈 replace axios
 
 export const fetchProfile = createAsyncThunk(
   'profile/fetchProfile',
   async (username = '', { rejectWithValue }) => {
     try {
       const url = username ? `/api/profile/${username}/` : '/api/profile/';
-      const response = await axios.get(url);
+      const response = await axiosInstance.get(url); // 👈 uses axiosInstance
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data || 'Failed to fetch profile');
     }
   }
 );
@@ -20,10 +19,10 @@ export const updateProfile = createAsyncThunk(
   async ({ username = '', formData }, { rejectWithValue }) => {
     try {
       const url = username ? `/api/profile/${username}/` : '/api/profile/';
-      const response = await axios.put(url, formData);
+      const response = await axiosInstance.put(url, formData); // 👈 uses axiosInstance
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data || 'Failed to update profile');
     }
   }
 );
@@ -50,6 +49,7 @@ const profileSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
       .addCase(updateProfile.fulfilled, (state, action) => {
         state.profile = action.payload;
         state.loading = false;

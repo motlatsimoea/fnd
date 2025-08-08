@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { startTokenRefreshTimer, refreshToken, setUser } from './features/users/auth-slice';
+import axiosInstance, { setAccessToken } from './utils/axiosInstance';
+
 import Header from './components/Header/Header';
-import BlogSection from './screens/BlogSection';
-import HomeScreen from './screens/HomeScreen'
+import HomeScreen from './screens/HomeScreen';
 import BlogPostPage from './screens/BlogPostPage/BlogPostPage';
 import CreatePost from './screens/CreatePost/CreatePost';
-
 import MarketPage from './screens/MarketPage/MarketPage';
 import ProductPage from './screens/ProductPage/ProductPage';
 import AddProductForm from './screens/ProductForm/ProductForm';
@@ -18,42 +23,81 @@ import ChatPage from './screens/InboxPage/ChatPage';
 import Chat from './components/chat';
 
 import LoginPage from './screens/LoginPage/LoginPage';
-
 import ProfilePage from './components/ProfilePage/ProfilePage';
 
-function App() {
+import Loader from './components/Loader';
+
+
+const App = () => {
+  const dispatch = useDispatch();
+  const [loadingAuth, setLoadingAuth] = useState(true);
+
+  useEffect(() => {
+    const bootstrapAuth = async () => {
+      try {
+        const hasSession = sessionStorage.getItem('hasSession') === 'true';
+  
+        if (!hasSession) {
+          setLoadingAuth(false);
+          return;
+        }
+  
+        const result = await dispatch(refreshToken()).unwrap();
+        const access = result?.access ?? result;
+  
+        setAccessToken(access);
+  
+        const { data: user } = await axiosInstance.get('/users/me/');
+        dispatch(setUser(user));
+  
+        startTokenRefreshTimer(dispatch, access);
+      } catch (err) {
+        // Silently fail — user is not logged in
+      } finally {
+        setLoadingAuth(false);
+      }
+    };
+  
+    bootstrapAuth();
+  }, [dispatch]);
+  
+
+  if (loadingAuth) return <Loader />;
+
   return (
     <Router>
       <Header />
       <Routes>
         {/* Registration Page Route */}
-        <Route path="/registration" element={<RegistrationPage />} />
+        <Route path="/register" element={<RegistrationPage />} />
         <Route path="/profile/:username" element={<ProfilePage />} />
 
         {/* Login Page Route */}
         <Route path="/login" element={<LoginPage />} />
 
         {/* Blog Routes */}
-        <Route path="/" element={<BlogSection />} /> {/* Main blog section */}
-        <Route path="/create-post" element={<CreatePost />} /> {/* Main blog section */}
-        <Route path="/blog/:id" element={<BlogPostPage />} /> {/* Specific blog post */}
+        <Route path="/" element={<HomeScreen />} />
+        <Route path="/create-post" element={<CreatePost />} />
+        <Route path="/blog/:id" element={<BlogPostPage />} />
 
         {/* Market Place Routes */}
-        <Route path="/market" element={<MarketPage />} /> {/* Main market page */}
-        <Route path="/product/:id" element={<ProductPage />} /> {/* Specific product page */}
-        <Route path="/add-product" element={<AddProductForm />} /> {/* Add product form */}
+        <Route path="/market" element={<MarketPage />} />
+        <Route path="/product/:id" element={<ProductPage />} />
+        <Route path="/add-product" element={<AddProductForm />} />
 
         {/* Information Page Routes */}
-        <Route path="/info" element={<InfoPage />} /> {/* Main information page */}
-        <Route path="/article/:id" element={<ArticlePage />} /> {/* Specific article page */}
+        <Route path="/info" element={<InfoPage />} />
+        <Route path="/article/:id" element={<ArticlePage />} />
 
         {/* Inbox Page Routes */}
-        <Route path="/inbox" element={<InboxPage />} /> {/* Main inbox page */}
-        <Route path="/chat/:chatId" element={<ChatPage />} /> {/* Specific chat page */}
+        <Route path="/inbox" element={<InboxPage />} />
+        <Route path="/chat/:chatId" element={<ChatPage />} />
         <Route path="/chat_test/:chat_id" element={<Chat />} />
       </Routes>
+
+      <ToastContainer position="top-right" autoClose={3000} />
     </Router>
   );
-}
+};
 
 export default App;

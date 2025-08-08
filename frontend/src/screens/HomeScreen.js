@@ -1,15 +1,14 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import Header from '../components/Header';
 import BlogPost from '../components/BlogPost/BlogPost';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
-import { fetchBlogPosts } from '../features/blogs/blogSlice';
+import { fetchBlogPosts } from '../features/blog/BlogList-slice';
 
 const HomeScreen = () => {
   const dispatch = useDispatch();
 
-  const blogList = useSelector((state) => state.blogs);
+  const blogList = useSelector((state) => state.BlogList);
   const { loading, error, posts } = blogList;
 
   useEffect(() => {
@@ -18,7 +17,6 @@ const HomeScreen = () => {
 
   return (
     <div>
-      <Header />
       <main style={{ padding: '20px' }}>
         {loading ? (
           <Loader />
@@ -30,13 +28,14 @@ const HomeScreen = () => {
           posts.map((post) => (
             <BlogPost
               key={post.id}
+              id={post.id}
               title={post.title}
-              author={post.author}
-              date={post.date}
+              author={post.author.username}
+              date={post.time_since_posted}
               authorImage={post.authorImage}
-              images={post.images}
-              text={post.text}
-              likes={post.likes}
+              images={post.media}
+              text={post.content}
+              likes={post.likes_count}
             />
           ))
         )}

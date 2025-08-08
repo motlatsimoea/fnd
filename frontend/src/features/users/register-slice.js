@@ -1,4 +1,3 @@
-// features/auth/registerSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
@@ -9,7 +8,11 @@ export const registerUser = createAsyncThunk(
       const response = await axios.post('/api/register/', userData);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      if (error.response && error.response.data) {
+        return rejectWithValue(error.response.data);
+      } else {
+        return rejectWithValue({ detail: 'An unexpected error occurred.' });
+      }
     }
   }
 );

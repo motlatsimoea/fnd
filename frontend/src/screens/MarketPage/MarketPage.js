@@ -2,14 +2,14 @@ import React, { useEffect } from 'react';
 import './MarketPage.css';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { getProducts } from '../../features/products/Product-slice';
+import { fetchProducts } from '../../features/products/Product-slice';
 
 const MarketPage = () => {
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector((state) => state.products);
 
   useEffect(() => {
-    dispatch(getProducts());
+    dispatch(fetchProducts());
   }, [dispatch]);
 
   return (

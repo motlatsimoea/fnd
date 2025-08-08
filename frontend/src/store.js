@@ -1,5 +1,5 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit'
-import thunk from 'redux-thunk'
+import { thunk } from 'redux-thunk'
 import authReducer from './features/users/auth-slice'
 import registerReducer from './features/users/register-slice'
 import profileReducer from './features/users/profile-slice'
@@ -9,9 +9,8 @@ import productReducer from './features/products/Product-slice'
 import reviewReducer from './features/products/review-slice'
 import notificationReducer from './features/notifications/notice-slice'
 
-
 const reducer = combineReducers({
-  userLogin: authReducer,
+  auth: authReducer,
   BlogList: blogReducer,
   comments: commentReducer,
   register: registerReducer,
@@ -19,23 +18,17 @@ const reducer = combineReducers({
   product: productReducer,
   reviews: reviewReducer,
   notifications: notificationReducer,
-
 })
 
-const UserInfoFromStorage = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')) : null
-
 const initialState = {
-  userLogin: {userInfo: UserInfoFromStorage },
+  auth: { userInfo: null },  // ✅ Don't preload from localStorage
 }
-
-const middleware = [thunk]
 
 export const store = configureStore({
   reducer,
-  middleware,
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(thunk),
   preloadedState: initialState,
   devTools: {
-      name:"frontend",
+    name: 'frontend',
   },
-
-});
+})

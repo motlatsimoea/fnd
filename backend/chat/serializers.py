@@ -20,13 +20,31 @@ class MessageSerializer(serializers.ModelSerializer):
         return message
 
 
+
 class ChatRoomSerializer(serializers.ModelSerializer):
     participants = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True)
-    messages = MessageSerializer(many=True, read_only=True)
+    last_message = serializers.SerializerMethodField()
+    current_user = serializers.SerializerMethodField()
 
     class Meta:
         model = Inbox
-        fields = ['id', 'participants', 'messages']
+        fields = ['id', 'unique_key', 'participants', 'last_message', 'current_user']
+        
+        
+        
+    def get_last_message(self, obj):
+        last_msg = obj.messages.order_by('-timestamp').first()
+        if last_msg:
+            return {
+                'sender_id': last_msg.sender.id,
+                'text': last_msg.get_content(),  # Decrypt message
+                'timestamp': last_msg.timestamp,
+            }
+        return None
+
+    def get_current_user(self, obj):
+        request = self.context.get('request')
+        return request.user.id if request and hasattr(request, 'user') else None
 
     def validate_participants(self, value):
         if len(value) != 2:

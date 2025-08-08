@@ -33,3 +33,24 @@
   margin-top: 10px;
   padding: 5px 10px;
 }
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.message-button {
+  background-color: #007bff;
+  border: none;
+  color: white;
+  padding: 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.message-button:hover {
+  background-color: #0056b3;
+}

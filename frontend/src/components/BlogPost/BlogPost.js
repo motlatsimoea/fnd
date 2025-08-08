@@ -1,52 +1,70 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "./BlogPost.css";
 
-const BlogPost = () => {
+const BlogPost = ({
+  id,
+  title,
+  author,
+  date,
+  authorImage,
+  images = [],
+  text,
+  likes,
+}) => {
+  const navigate = useNavigate();
+
   const handleTitleClick = () => {
-    alert("Navigating to the full blog post...");
+    navigate(`/blog/${id}`);
   };
 
   const handleUserClick = () => {
-    alert("Navigating to the user's profile...");
+    navigate(`/user/${author}`);
   };
 
   return (
     <div className="blog-post">
-      <a href="#" onClick={handleTitleClick} className="blog-title-link">
-        <h2 className="blog-title">Kissing ass: Tips for Success</h2>
-      </a>
+      <div
+        onClick={handleTitleClick}
+        className="blog-title-link"
+        style={{ cursor: "pointer" }}
+      >
+        <h2 className="blog-title">{title}</h2>
+      </div>
+
       <div className="blog-author">
-        <a href="#" onClick={handleUserClick} className="author-link">
+        <div onClick={handleUserClick} className="author-link" style={{ cursor: "pointer" }}>
           <img
-            src="https://via.placeholder.com/50"
+            src={authorImage || "https://via.placeholder.com/50"}
             alt="Author's avatar"
             className="author-img"
           />
-        </a>
-        <a href="#" onClick={handleUserClick} className="author-name">
-          John Doe
-        </a>
-        <p className="blog-date">November 22, 2024</p>
+        </div>
+        <span
+          onClick={handleUserClick}
+          className="author-name"
+          style={{ cursor: "pointer" }}
+        >
+          {author}
+        </span>
+        <p className="blog-date">{date}</p>
       </div>
-      <div className="blog-images">
-        <img src="https://via.placeholder.com/200x120" alt="Blog image 1" />
-        <img src="https://via.placeholder.com/200x120" alt="Blog image 2" />
-        <img src="https://via.placeholder.com/200x120" alt="Blog image 3" />
-        <img src="https://via.placeholder.com/200x120" alt="Blog image 4" />
-      </div>
-      <p className="blog-text">
-        Sustainable farming is critical to ensure food security and
-        environmental health...
-      </p>
+
+      {images?.length > 0 && (
+        <div className="blog-images">
+          {images.map((img, idx) => (
+            <img key={idx} src={img.file} alt={`Blog image ${idx + 1}`} />
+          ))}
+        </div>
+      )}
+
+      <p className="blog-text">{text}</p>
+
       <div className="blog-likes">
-        <span role="img" aria-label="heart">
-          ❤️
-        </span>{" "}
-        15 Likes
+        <span role="img" aria-label="heart">❤️</span> {likes} Likes
       </div>
     </div>
   );
 };
 
 export default BlogPost;
-

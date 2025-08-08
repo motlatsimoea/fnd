@@ -1,11 +1,14 @@
 import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { prependNotification } from '../redux/notificationsSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { prependNotification } from '../../features/notifications/notice-slice';
 
 const useNotificationsSocket = () => {
   const dispatch = useDispatch();
+  const userInfo = useSelector((state) => state.auth.userInfo);
 
   useEffect(() => {
+    if (!userInfo || !userInfo.access) return;
+
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const wsUrl = `${protocol}://${window.location.host}/ws/notifications/`;
 
@@ -37,7 +40,7 @@ const useNotificationsSocket = () => {
     return () => {
       socket.close();
     };
-  }, [dispatch]);
+  }, [dispatch, userInfo]);
 };
 
 export default useNotificationsSocket;

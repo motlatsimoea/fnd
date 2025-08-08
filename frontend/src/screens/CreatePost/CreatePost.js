@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { createPost } from '../features/blogs/blogSlice';
-import Loader from '../components/Loader';
-import Message from '../components/Message';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { createPost } from '../../features/blog/BlogList-slice';
+import Loader from '../../components/Loader';
+import Message from '../../components/Message';
 import './CreatePost.css';
 
 const CreatePost = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -30,11 +33,18 @@ const CreatePost = () => {
 
     try {
       await dispatch(createPost(formData)).unwrap();
+
+      toast.success('Post created successfully!');
+
       setTitle('');
       setContent('');
       setFiles([]);
+
+      setTimeout(() => {
+        navigate('/');
+      }, 1000);
     } catch (err) {
-      setError(err.message || 'Something went wrong.');
+      setError(err || 'Something went wrong.');
     } finally {
       setLoading(false);
     }

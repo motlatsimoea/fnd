@@ -8,9 +8,3 @@ websocket_urlpatterns = [
     path('ws/chat/<str:unique_key>/', ChatConsumer.as_asgi()),
 ]
 
-# ASGI application setup
-application = ProtocolTypeRouter({
-    "websocket": AuthMiddlewareStack(
-        URLRouter(websocket_urlpatterns)
-    ),
-})
