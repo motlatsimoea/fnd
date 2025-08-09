@@ -1,15 +1,21 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axiosInstance from '../../utils/axiosInstance';  // ✅ use custom axiosInstance
+import axiosInstance from "../../utils/axiosInstance";
+
+const getErrorMessage = (error) =>
+  error.response?.data?.detail ||
+  error.response?.data?.message ||
+  error.message ||
+  "Something went wrong";
 
 // Fetch all products
 export const fetchProducts = createAsyncThunk(
   "products/fetchAll",
   async (_, thunkAPI) => {
     try {
-      const response = await axiosInstance.get("/products/");
-      return response.data;
-    } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data || "Failed to fetch products");
+      const res = await axiosInstance.get("/products/");
+      return res.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -17,12 +23,17 @@ export const fetchProducts = createAsyncThunk(
 // Create a product
 export const createProduct = createAsyncThunk(
   "products/create",
-  async (data, thunkAPI) => {
+  async ({ formData, token }, thunkAPI) => {
     try {
-      const response = await axiosInstance.post("/products/", data);
-      return response.data;
-    } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data || "Failed to create product");
+      const res = await axiosInstance.post("/products/", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return res.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -32,10 +43,10 @@ export const fetchProductById = createAsyncThunk(
   "products/fetchById",
   async (id, thunkAPI) => {
     try {
-      const response = await axiosInstance.get(`/products/${id}/`);
-      return response.data;
-    } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data || "Failed to fetch product");
+      const res = await axiosInstance.get(`/products/${id}/`);
+      return res.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -43,12 +54,17 @@ export const fetchProductById = createAsyncThunk(
 // Update product
 export const updateProduct = createAsyncThunk(
   "products/update",
-  async ({ id, data }, thunkAPI) => {
+  async ({ id, formData, token }, thunkAPI) => {
     try {
-      const response = await axiosInstance.put(`/products/${id}/`, data);
-      return response.data;
-    } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data || "Failed to update product");
+      const res = await axiosInstance.put(`/products/${id}/`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return res.data;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
@@ -56,95 +72,133 @@ export const updateProduct = createAsyncThunk(
 // Delete product
 export const deleteProduct = createAsyncThunk(
   "products/delete",
-  async (id, thunkAPI) => {
+  async ({ id, token }, thunkAPI) => {
     try {
-      await axiosInstance.delete(`/products/${id}/`);
+      await axiosInstance.delete(`/products/${id}/`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       return id;
-    } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data || "Failed to delete product");
+    } catch (err) {
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
   }
 );
 
+const initialState = {
+  products: [],
+  selectedProduct: null,
+  fetchAllStatus: "idle",
+  fetchOneStatus: "idle",
+  createStatus: "idle",
+  updateStatus: "idle",
+  deleteStatus: "idle",
+  error: null,
+  formResetFlag: false, // used to signal ProductForm reset
+};
+
 const productsSlice = createSlice({
   name: "products",
-  initialState: {
-    products: [],
-    selectedProduct: null,
-    status: "idle",
-    error: null,
+  initialState,
+  reducers: {
+    clearSelectedProduct: (state) => {
+      state.selectedProduct = null;
+    },
+    clearError: (state) => {
+      state.error = null;
+    },
+    resetProductForm: (state) => {
+      state.formResetFlag = !state.formResetFlag; // toggle flag so form can detect and reset
+    },
   },
-  reducers: {},
   extraReducers: (builder) => {
     builder
+      // FETCH ALL
       .addCase(fetchProducts.pending, (state) => {
-        state.status = "loading";
+        state.fetchAllStatus = "loading";
         state.error = null;
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.fetchAllStatus = "succeeded";
         state.products = action.payload;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload || action.error.message;
+        state.fetchAllStatus = "failed";
+        state.error = action.payload;
       })
 
+      // FETCH ONE
       .addCase(fetchProductById.pending, (state) => {
-        state.status = "loading";
+        state.fetchOneStatus = "loading";
         state.error = null;
       })
       .addCase(fetchProductById.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.fetchOneStatus = "succeeded";
         state.selectedProduct = action.payload;
       })
       .addCase(fetchProductById.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload || action.error.message;
+        state.fetchOneStatus = "failed";
+        state.error = action.payload;
       })
 
+      // CREATE
       .addCase(createProduct.pending, (state) => {
-        state.status = "loading";
+        state.createStatus = "loading";
         state.error = null;
       })
       .addCase(createProduct.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.createStatus = "succeeded";
         state.products.push(action.payload);
+        state.formResetFlag = !state.formResetFlag; // trigger form reset after successful creation
       })
       .addCase(createProduct.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload || action.error.message;
+        state.createStatus = "failed";
+        state.error = action.payload;
       })
 
+      // UPDATE
       .addCase(updateProduct.pending, (state) => {
-        state.status = "loading";
+        state.updateStatus = "loading";
         state.error = null;
       })
       .addCase(updateProduct.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        const index = state.products.findIndex(p => p.id === action.payload.id);
-        if (index !== -1) {
-          state.products[index] = action.payload;
+        state.updateStatus = "succeeded";
+        state.products = state.products.map((p) =>
+          p.id === action.payload.id ? action.payload : p
+        );
+        if (state.selectedProduct?.id === action.payload.id) {
+          state.selectedProduct = action.payload;
         }
       })
       .addCase(updateProduct.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload || action.error.message;
+        state.updateStatus = "failed";
+        state.error = action.payload;
       })
 
+      // DELETE
       .addCase(deleteProduct.pending, (state) => {
-        state.status = "loading";
+        state.deleteStatus = "loading";
         state.error = null;
       })
       .addCase(deleteProduct.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        state.products = state.products.filter(p => p.id !== action.payload);
+        state.deleteStatus = "succeeded";
+        state.products = state.products.filter((p) => p.id !== action.payload);
+        if (state.selectedProduct?.id === action.payload) {
+          state.selectedProduct = null;
+        }
       })
       .addCase(deleteProduct.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload || action.error.message;
+        state.deleteStatus = "failed";
+        state.error = action.payload;
       });
-  }
+  },
 });
+
+export const {
+  clearSelectedProduct,
+  clearError,
+  resetProductForm,
+} = productsSlice.actions;
 
 export default productsSlice.reducer;

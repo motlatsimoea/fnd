@@ -54,11 +54,15 @@ class ProductDetailView(APIView):
         except Product.DoesNotExist:
             return Response({"detail": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        if request.user != product.seller:
+            raise PermissionDenied("You can only update your own product.")
+        
         serializer = ProductSerializer(product, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
     def delete(self, request, pk):
         try:
@@ -66,8 +70,11 @@ class ProductDetailView(APIView):
         except Product.DoesNotExist:
             return Response({"detail": "Product not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        if request.user != product.seller:
+            raise PermissionDenied("You can only delete your own product.")
         product.delete()
         return Response({"detail": "Product deleted."}, status=status.HTTP_204_NO_CONTENT)
+
 
 
 class ProductImageListCreateView(APIView):
@@ -84,12 +91,13 @@ class ProductImageListCreateView(APIView):
         return Response(serializer.data)
 
     def post(self, request, product_id):
-        product = Product.objects.get(pk=product_id)
+        product = get_object_or_404(Product, pk=product_id)
         serializer = ProductImageSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(product=product)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class ReviewListCreateView(APIView):
@@ -109,12 +117,12 @@ class ReviewListCreateView(APIView):
         product = get_object_or_404(Product, pk=product_id)
         serializer = ReviewSerializer(data=request.data)
         if serializer.is_valid():
-            parent_review_id = request.data.get("parent")
+            parent = serializer.validated_data.get('parent', None)
             review = serializer.save(product=product, author=request.user)
 
-            if parent_review_id:
+            if parent:
                 try:
-                    parent_review = Review.objects.get(id=parent_review_id)
+                    parent_review = Review.objects.get(pk=parent.pk)
                     if parent_review.author != request.user:
                         send_notification(
                             user=parent_review.author,
@@ -127,7 +135,7 @@ class ReviewListCreateView(APIView):
                     pass  # Optional: handle if parent is invalid
 
             else:
-                if product.user != request.user:
+                if product.seller != request.user:
                     send_notification(
                         user=product.user,
                         sender=request.user,

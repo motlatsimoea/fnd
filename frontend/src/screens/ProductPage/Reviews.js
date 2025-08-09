@@ -1,48 +1,43 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import {
-  fetchReviews,
-  createReview,
-} from '../../features/products/review-slice';
+import { fetchReviews, createReview } from '../../features/products/review-slice';
 import './Reviews.css';
 
 const Reviews = ({ productId }) => {
   const dispatch = useDispatch();
-  const reviews = useSelector((state) => fetchReviews(state, productId));
+  const reviews = useSelector(
+    (state) => state.reviews.reviewsByProduct[productId] || []
+  );
+  const { createStatus, error } = useSelector((state) => state.reviews);
 
-  // Local form state
   const [name, setName] = useState('');
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
 
-  // Fetch reviews when component mounts
   useEffect(() => {
-    dispatch(fetchReviews(productId));
+    if (productId) {
+      dispatch(fetchReviews(productId));
+    }
   }, [dispatch, productId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!name || !rating || !comment) {
       alert('Please fill out all fields!');
       return;
     }
-
-    const reviewData = {
-      user: name,
-      rating,
-      comment,
-    };
-
     try {
-      await dispatch(createReview({ productId, reviewData })).unwrap();
-      // Reset form
+      await dispatch(
+        createReview({
+          productId,
+          reviewData: { user: name, rating, comment },
+        })
+      ).unwrap();
       setName('');
       setRating(0);
       setComment('');
-    } catch (err) {
+    } catch {
       alert('Error submitting review!');
-      console.error(err);
     }
   };
 
@@ -68,17 +63,11 @@ const Reviews = ({ productId }) => {
         <h4>Write a Review</h4>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="name">Name:</label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+            <label>Name:</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label htmlFor="rating">Rating:</label>
+            <label>Rating:</label>
             <div className="star-rating">
               {[1, 2, 3, 4, 5].map((star) => (
                 <span
@@ -92,18 +81,13 @@ const Reviews = ({ productId }) => {
             </div>
           </div>
           <div className="form-group">
-            <label htmlFor="comment">Comment:</label>
-            <textarea
-              id="comment"
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows="4"
-              required
-            />
+            <label>Comment:</label>
+            <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows="4" required />
           </div>
-          <button type="submit" className="submit-btn">
-            Submit Review
+          <button type="submit" disabled={createStatus === 'loading'}>
+            {createStatus === 'loading' ? 'Submitting...' : 'Submit Review'}
           </button>
+          {error && <p className="error-message">{error}</p>}
         </form>
       </div>
     </div>

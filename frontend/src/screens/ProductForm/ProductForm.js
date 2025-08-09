@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { createProduct } from '../../features/products/Product-slice'; 
+import { createProduct, resetProductForm } from '../../features/products/Product-slice'; 
 import './ProductForm.css';
 
 const ProductForm = () => {
   const dispatch = useDispatch();
   const accessToken = useSelector((state) => state.auth.access);
-  const { loading, error } = useSelector((state) => state.products);
+  const { createStatus, error } = useSelector((state) => state.products);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -15,6 +15,20 @@ const ProductForm = () => {
     profileImage: null,
     additionalImages: [],
   });
+
+  // Reset form after successful creation
+  useEffect(() => {
+    if (createStatus === "succeeded") {
+      setFormData({
+        name: '',
+        description: '',
+        price: '',
+        profileImage: null,
+        additionalImages: [],
+      });
+      dispatch(resetProductForm());
+    }
+  }, [createStatus, dispatch]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -50,18 +64,49 @@ const ProductForm = () => {
   return (
     <form className="add-product-form" onSubmit={handleSubmit}>
       <h2>Add a Product</h2>
-      <input type="text" name="name" placeholder="Product Name" onChange={handleChange} required />
-      <textarea name="description" placeholder="Product Description" onChange={handleChange} required></textarea>
-      <input type="number" name="price" placeholder="Price" onChange={handleChange} required />
-      
+      <input
+        type="text"
+        name="name"
+        placeholder="Product Name"
+        value={formData.name}
+        onChange={handleChange}
+        required
+      />
+      <textarea
+        name="description"
+        placeholder="Product Description"
+        value={formData.description}
+        onChange={handleChange}
+        required
+      />
+      <input
+        type="number"
+        name="price"
+        placeholder="Price"
+        value={formData.price}
+        onChange={handleChange}
+        required
+      />
+
       <label>Profile Image:</label>
-      <input type="file" name="profileImage" accept="image/*" onChange={handleChange} />
+      <input
+        type="file"
+        name="profileImage"
+        accept="image/*"
+        onChange={handleChange}
+      />
 
       <label>Additional Images:</label>
-      <input type="file" name="additionalImages" multiple accept="image/*" onChange={handleImageChange} />
+      <input
+        type="file"
+        name="additionalImages"
+        multiple
+        accept="image/*"
+        onChange={handleImageChange}
+      />
 
-      <button type="submit" disabled={loading}>
-        {loading ? 'Submitting...' : 'Submit'}
+      <button type="submit" disabled={createStatus === "loading"}>
+        {createStatus === "loading" ? 'Submitting...' : 'Submit'}
       </button>
 
       {error && <p className="error-message">{error}</p>}

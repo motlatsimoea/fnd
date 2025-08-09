@@ -40,7 +40,7 @@ class ProductImage(models.Model):
 class Review(models.Model):
     product     = models.ForeignKey(Product, related_name="reviews", on_delete=models.CASCADE)
     author      = models.ForeignKey(User, on_delete=models.CASCADE)
-    rating      = models.PositiveIntegerField()
+    rating      = models.PositiveSmallIntegerField()
     content     = models.TextField(blank=True, null=True)
     created_at  = models.DateTimeField(auto_now_add=True)
     parent      = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
@@ -50,5 +50,7 @@ class Review(models.Model):
             raise ValidationError("Rating must be between 1 and 5.")
 
     def __str__(self):
-        return f"Review by {self.user.username} for {self.product.name}"
+        # use author (exists) instead of user
+        author_name = getattr(self.author, "username", str(self.author))
+        return f"Review by {author_name} for {self.product.name}"
 
