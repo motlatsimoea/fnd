@@ -47,7 +47,7 @@ const App = () => {
   
         setAccessToken(access);
   
-        const { data: user } = await axiosInstance.get('/users/me/');
+        const { data: user } = await axiosInstance.get('/api/users/me/');
         dispatch(setUser(user));
   
         startTokenRefreshTimer(dispatch, access);

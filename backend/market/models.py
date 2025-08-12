@@ -1,6 +1,7 @@
 from django.db import models
 import uuid
 from django.core.exceptions import ValidationError
+from django.db.models import Avg
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -16,10 +17,8 @@ class Product(models.Model):
     updated_at  = models.DateTimeField(auto_now=True)
 
     def average_rating(self):
-        reviews = self.reviews.all()
-        if reviews.exists():
-            return sum([review.rating for review in reviews]) / reviews.count()
-        return 0
+        avg = self.reviews.aggregate(average=Avg('rating'))['average']
+        return avg if avg is not None else 0
 
     def __str__(self):
         return self.name
@@ -31,6 +30,10 @@ class ProductImage(models.Model):
     def clean(self):
         if self.product.additional_images.count() >= 4:
             raise ValidationError("A product can only have up to 4 additional images.")
+        
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Image for {self.product.name}"
@@ -48,6 +51,10 @@ class Review(models.Model):
     def clean(self):
         if not (1 <= self.rating <= 5):
             raise ValidationError("Rating must be between 1 and 5.")
+        
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         # use author (exists) instead of user

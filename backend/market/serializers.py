@@ -19,6 +19,13 @@ class ReviewSerializer(serializers.ModelSerializer):
         if not (1 <= value <= 5):
             raise serializers.ValidationError("Rating must be between 1 and 5.")
         return value
+    
+    def validate(self, data):
+        parent = data.get('parent', None)
+        product = data.get('product', None) or self.instance.product if self.instance else None
+        if parent and parent.product != product:
+            raise serializers.ValidationError("Parent review must be for the same product.")
+        return data
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -28,6 +35,12 @@ class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
         fields = ['id', 'product', 'image']
+        
+    def validate(self, attrs):
+        product = self.context['product']
+        if product.additional_images.count() >= 4:
+            raise serializers.ValidationError("A product can only have up to 4 additional images.")
+        return attrs
         
 
 class ProductSerializer(serializers.ModelSerializer):

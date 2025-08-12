@@ -11,7 +11,7 @@ urlpatterns = [
     path("token/refresh/", MyTokenRefreshCookieView.as_view(), name='token_refresh'),
     path('logout/', LogoutAndBlacklistRefreshTokenForUserView.as_view()),
     path("admin/", admin.site.urls),
-    path("api/", include("users.urls")),
+    path("api/users", include("users.urls")),
     path("api/posts/", include("blog.urls")),
     path("api/products/", include("market.urls")),
     path("api/inbox/", include("chat.urls")),

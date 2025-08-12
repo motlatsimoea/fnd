@@ -99,4 +99,8 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['user'] = UserSerializerWithToken(self.user).data 
         return data
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email', 'is_staff']
     

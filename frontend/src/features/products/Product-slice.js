@@ -12,7 +12,7 @@ export const fetchProducts = createAsyncThunk(
   "products/fetchAll",
   async (_, thunkAPI) => {
     try {
-      const res = await axiosInstance.get("/products/");
+      const res = await axiosInstance.get("/api/products/");
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -23,14 +23,9 @@ export const fetchProducts = createAsyncThunk(
 // Create a product
 export const createProduct = createAsyncThunk(
   "products/create",
-  async ({ formData, token }, thunkAPI) => {
+  async (formData, thunkAPI) => {
     try {
-      const res = await axiosInstance.post("/products/", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await axiosInstance.post("/api/products/", formData);
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -43,7 +38,7 @@ export const fetchProductById = createAsyncThunk(
   "products/fetchById",
   async (id, thunkAPI) => {
     try {
-      const res = await axiosInstance.get(`/products/${id}/`);
+      const res = await axiosInstance.get(`/api/products/${id}/`);
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -54,14 +49,9 @@ export const fetchProductById = createAsyncThunk(
 // Update product
 export const updateProduct = createAsyncThunk(
   "products/update",
-  async ({ id, formData, token }, thunkAPI) => {
+  async ({ id, formData }, thunkAPI) => {
     try {
-      const res = await axiosInstance.put(`/products/${id}/`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await axiosInstance.put(`/api/products/${id}/`, formData);
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -72,13 +62,9 @@ export const updateProduct = createAsyncThunk(
 // Delete product
 export const deleteProduct = createAsyncThunk(
   "products/delete",
-  async ({ id, token }, thunkAPI) => {
+  async (id, thunkAPI) => {
     try {
-      await axiosInstance.delete(`/products/${id}/`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axiosInstance.delete(`/api/products/${id}/`);
       return id;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -109,7 +95,7 @@ const productsSlice = createSlice({
       state.error = null;
     },
     resetProductForm: (state) => {
-      state.formResetFlag = !state.formResetFlag; // toggle flag so form can detect and reset
+      state.formResetFlag = !state.formResetFlag;
     },
   },
   extraReducers: (builder) => {
@@ -132,6 +118,7 @@ const productsSlice = createSlice({
       .addCase(fetchProductById.pending, (state) => {
         state.fetchOneStatus = "loading";
         state.error = null;
+        state.selectedProduct = null; // clear stale data
       })
       .addCase(fetchProductById.fulfilled, (state, action) => {
         state.fetchOneStatus = "succeeded";
@@ -149,8 +136,8 @@ const productsSlice = createSlice({
       })
       .addCase(createProduct.fulfilled, (state, action) => {
         state.createStatus = "succeeded";
-        state.products.push(action.payload);
-        state.formResetFlag = !state.formResetFlag; // trigger form reset after successful creation
+        state.products = [...state.products, action.payload];
+        state.formResetFlag = !state.formResetFlag; // trigger form reset after success
       })
       .addCase(createProduct.rejected, (state, action) => {
         state.createStatus = "failed";
@@ -195,10 +182,6 @@ const productsSlice = createSlice({
   },
 });
 
-export const {
-  clearSelectedProduct,
-  clearError,
-  resetProductForm,
-} = productsSlice.actions;
+export const { clearSelectedProduct, clearError, resetProductForm } = productsSlice.actions;
 
 export default productsSlice.reducer;

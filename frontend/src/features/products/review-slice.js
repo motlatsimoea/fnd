@@ -2,14 +2,17 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../../utils/axiosInstance";
 
 const getErrorMessage = (error) =>
-  error.response?.data?.detail || error.response?.data || error.message || "Something went wrong";
+  error.response?.data?.detail ??
+  error.response?.data?.message ??
+  error.message ??
+  "Something went wrong";
 
 // Fetch all reviews for a product
 export const fetchReviews = createAsyncThunk(
   "reviews/fetchByProduct",
   async (productId, thunkAPI) => {
     try {
-      const res = await axiosInstance.get(`/products/${productId}/reviews/`);
+      const res = await axiosInstance.get(`/api/products/${productId}/reviews/`);
       return { productId, reviews: res.data };
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -22,7 +25,10 @@ export const createReview = createAsyncThunk(
   "reviews/create",
   async ({ productId, reviewData }, thunkAPI) => {
     try {
-      const res = await axiosInstance.post(`/products/${productId}/reviews/`, reviewData);
+      const res = await axiosInstance.post(
+        `/api/products/${productId}/reviews/`,
+        reviewData
+      );
       return { productId, review: res.data };
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -35,7 +41,7 @@ export const updateReview = createAsyncThunk(
   "reviews/update",
   async ({ reviewId, updatedData }, thunkAPI) => {
     try {
-      const res = await axiosInstance.put(`/reviews/${reviewId}/`, updatedData);
+      const res = await axiosInstance.put(`/api/reviews/${reviewId}/`, updatedData);
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -43,19 +49,35 @@ export const updateReview = createAsyncThunk(
   }
 );
 
+// Delete review
+export const deleteReview = createAsyncThunk(
+  "reviews/delete",
+  async (reviewId, thunkAPI) => {
+    try {
+      await axiosInstance.delete(`/api/reviews/${reviewId}/`);
+      return reviewId;
+    } catch (err) {
+      return thunkAPI.rejectWithValue(getErrorMessage(err));
+    }
+  }
+);
+
+const initialState = {
+  reviewsByProduct: {},
+  fetchStatus: "idle",
+  createStatus: "idle",
+  updateStatus: "idle",
+  deleteStatus: "idle",
+  error: null,
+};
+
 const reviewsSlice = createSlice({
   name: "reviews",
-  initialState: {
-    reviewsByProduct: {},
-    fetchStatus: "idle",
-    createStatus: "idle",
-    updateStatus: "idle",
-    error: null,
-  },
+  initialState,
   reducers: {
     clearReviewError: (state) => {
       state.error = null;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -84,7 +106,7 @@ const reviewsSlice = createSlice({
         if (!state.reviewsByProduct[productId]) {
           state.reviewsByProduct[productId] = [];
         }
-        state.reviewsByProduct[productId] = [...state.reviewsByProduct[productId], review];
+        state.reviewsByProduct[productId].push(review);
         state.createStatus = "succeeded";
       })
       .addCase(createReview.rejected, (state, action) => {
@@ -100,7 +122,7 @@ const reviewsSlice = createSlice({
       .addCase(updateReview.fulfilled, (state, action) => {
         const updatedReview = action.payload;
         const productId = updatedReview.product;
-        const reviews = state.reviewsByProduct[productId] || [];
+        const reviews = state.reviewsByProduct[productId] ?? [];
         state.reviewsByProduct[productId] = reviews.map((r) =>
           r.id === updatedReview.id ? updatedReview : r
         );
@@ -109,9 +131,29 @@ const reviewsSlice = createSlice({
       .addCase(updateReview.rejected, (state, action) => {
         state.updateStatus = "failed";
         state.error = action.payload;
+      })
+
+      // DELETE
+      .addCase(deleteReview.pending, (state) => {
+        state.deleteStatus = "loading";
+        state.error = null;
+      })
+      .addCase(deleteReview.fulfilled, (state, action) => {
+        const deletedId = action.payload;
+        Object.keys(state.reviewsByProduct).forEach((productId) => {
+          state.reviewsByProduct[productId] = state.reviewsByProduct[productId].filter(
+            (r) => r.id !== deletedId
+          );
+        });
+        state.deleteStatus = "succeeded";
+      })
+      .addCase(deleteReview.rejected, (state, action) => {
+        state.deleteStatus = "failed";
+        state.error = action.payload;
       });
   },
 });
 
 export const { clearReviewError } = reviewsSlice.actions;
+
 export default reviewsSlice.reducer;

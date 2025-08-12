@@ -92,7 +92,7 @@ class ProductImageListCreateView(APIView):
 
     def post(self, request, product_id):
         product = get_object_or_404(Product, pk=product_id)
-        serializer = ProductImageSerializer(data=request.data)
+        serializer = ProductImageSerializer(data=request.data, context={'product': product})
         if serializer.is_valid():
             serializer.save(product=product)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -137,7 +137,7 @@ class ReviewListCreateView(APIView):
             else:
                 if product.seller != request.user:
                     send_notification(
-                        user=product.user,
+                        user=product.seller,
                         sender=request.user,
                         notification_type="review",
                         message="",  # Will be dynamically generated
@@ -158,6 +158,11 @@ class ReviewRetrieveUpdateDestroyView(RetrieveUpdateDestroyAPIView):
 
     def perform_update(self, serializer):
         # Optionally restrict to only the review's author
-        if self.request.user != serializer.instance.user:
+        if self.request.user != serializer.instance.author:
             raise PermissionDenied("You can only edit your own review.")
         serializer.save()
+        
+    def perform_destroy(self, instance):
+        if self.request.user != instance.author:
+            raise PermissionDenied("You can only delete your own review.")
+        instance.delete()

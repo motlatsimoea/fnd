@@ -1,69 +1,131 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { createProduct, resetProductForm } from '../../features/products/Product-slice'; 
-import './ProductForm.css';
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  createProduct,
+  resetProductForm,
+  clearError,
+} from "../../features/products/Product-slice";
+import Loader from "../../components/Loader";
+import Message from "../../components/Message";
+import "./ProductForm.css";
 
 const ProductForm = () => {
   const dispatch = useDispatch();
-  const accessToken = useSelector((state) => state.auth.access);
-  const { createStatus, error } = useSelector((state) => state.products);
+  const {
+    createStatus: loading,
+    error,
+    formResetFlag,
+    successMessage,
+  } = useSelector((state) => state.products);
 
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    profileImage: null,
+    name: "",
+    description: "",
+    price: "",
+    thumbnail: null,
     additionalImages: [],
   });
 
-  // Reset form after successful creation
+  // Preview URLs for images
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const [additionalPreviews, setAdditionalPreviews] = useState([]);
+
+  // Reset form & previews after successful creation
   useEffect(() => {
-    if (createStatus === "succeeded") {
+    if (successMessage || formResetFlag) {
       setFormData({
-        name: '',
-        description: '',
-        price: '',
-        profileImage: null,
+        name: "",
+        description: "",
+        price: "",
+        thumbnail: null,
         additionalImages: [],
       });
-      dispatch(resetProductForm());
+      setThumbnailPreview(null);
+      setAdditionalPreviews([]);
+
+      const timeout = setTimeout(() => {
+        dispatch(resetProductForm());
+      }, 3000);
+
+      return () => clearTimeout(timeout);
     }
-  }, [createStatus, dispatch]);
+  }, [successMessage, formResetFlag, dispatch]);
+
+  // Cleanup preview URLs on unmount or when previews change
+  useEffect(() => {
+    return () => {
+      if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
+      additionalPreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [thumbnailPreview, additionalPreviews]);
 
   const handleChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === 'profileImage') {
-      setFormData((prev) => ({ ...prev, profileImage: files[0] }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (error) dispatch(clearError());
   };
 
-  const handleImageChange = (e) => {
+  const handleThumbnailChange = (e) => {
+    const file = e.target.files[0];
+    setFormData((prev) => ({ ...prev, thumbnail: file }));
+
+    if (thumbnailPreview) {
+      URL.revokeObjectURL(thumbnailPreview);
+    }
+
+    if (file) {
+      setThumbnailPreview(URL.createObjectURL(file));
+    } else {
+      setThumbnailPreview(null);
+    }
+
+    if (error) dispatch(clearError());
+  };
+
+  const handleAdditionalImagesChange = (e) => {
     const files = Array.from(e.target.files);
+
+    if (files.length > 4) {
+      alert("You can only upload up to 4 additional images.");
+      return;
+    }
+
+    // Clean up old previews
+    additionalPreviews.forEach((url) => URL.revokeObjectURL(url));
+
     setFormData((prev) => ({ ...prev, additionalImages: files }));
+
+    const previews = files.map((file) => URL.createObjectURL(file));
+    setAdditionalPreviews(previews);
+
+    if (error) dispatch(clearError());
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     const data = new FormData();
-    data.append('name', formData.name);
-    data.append('description', formData.description);
-    data.append('price', formData.price);
-    if (formData.profileImage) {
-      data.append('profile_image', formData.profileImage);
+    data.append("name", formData.name);
+    data.append("description", formData.description);
+    data.append("price", formData.price);
+    if (formData.thumbnail) {
+      data.append("thumbnail", formData.thumbnail);
     }
     formData.additionalImages.forEach((file) => {
-      data.append('additional_images', file);
+      data.append("additional_images", file);
     });
 
-    dispatch(createProduct({ formData: data, token: accessToken }));
+    dispatch(createProduct(data));
   };
 
   return (
     <form className="add-product-form" onSubmit={handleSubmit}>
       <h2>Add a Product</h2>
+
+      {loading === "loading" && <Loader />}
+
       <input
         type="text"
         name="name"
@@ -85,31 +147,53 @@ const ProductForm = () => {
         placeholder="Price"
         value={formData.price}
         onChange={handleChange}
+        step="0.01"
+        min="0"
         required
       />
 
-      <label>Profile Image:</label>
+      <label>Thumbnail Image:</label>
       <input
         type="file"
-        name="profileImage"
+        name="thumbnail"
         accept="image/*"
-        onChange={handleChange}
+        onChange={handleThumbnailChange}
       />
+      {thumbnailPreview && (
+        <img
+          src={thumbnailPreview}
+          alt="Thumbnail Preview"
+          style={{ maxWidth: "150px", marginTop: "10px" }}
+        />
+      )}
 
-      <label>Additional Images:</label>
+      <label>Additional Images (up to 4):</label>
       <input
         type="file"
         name="additionalImages"
         multiple
         accept="image/*"
-        onChange={handleImageChange}
+        onChange={handleAdditionalImagesChange}
       />
+      <div
+        style={{ display: "flex", gap: "10px", marginTop: "10px", flexWrap: "wrap" }}
+      >
+        {additionalPreviews.map((url, idx) => (
+          <img
+            key={idx}
+            src={url}
+            alt={`Additional Preview ${idx + 1}`}
+            style={{ maxWidth: "100px", maxHeight: "100px", objectFit: "cover" }}
+          />
+        ))}
+      </div>
 
-      <button type="submit" disabled={createStatus === "loading"}>
-        {createStatus === "loading" ? 'Submitting...' : 'Submit'}
+      <button type="submit" disabled={loading === "loading"}>
+        {loading === "loading" ? "Submitting..." : "Submit"}
       </button>
 
-      {error && <p className="error-message">{error}</p>}
+      {error && <Message variant="danger">{error}</Message>}
+      {successMessage && <Message variant="success">{successMessage}</Message>}
     </form>
   );
 };
