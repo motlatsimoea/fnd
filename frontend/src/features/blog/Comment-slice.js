@@ -37,8 +37,8 @@ export const createComment = createAsyncThunk(
 );
 
 // Edit a comment
-export const editComment = createAsyncThunk(
-  'comments/editComment',
+export const updateComment = createAsyncThunk(
+  'comments/updateComment',
   async ({ postId, commentId, text }, thunkAPI) => {
     try {
       const res = await axiosInstance.patch(
@@ -69,55 +69,44 @@ export const deleteComment = createAsyncThunk(
   }
 );
 
-// ─── Helper Functions for Tree Management ─────────────────────
+// ─── Helper Functions (Immutable) ─────────────────────
 
-// Add comment (or reply) to tree
+// Add comment (or reply) immutably
 function addCommentToTree(tree, comment) {
   if (!comment.parent) {
-    tree.push(comment);
-    return true;
+    return [...tree, { ...comment, replies: [] }];
   }
 
-  for (let node of tree) {
-    if (node.id === comment.parent) {
-      node.replies = node.replies || [];
-      node.replies.push(comment);
-      return true;
-    } else if (node.replies?.length) {
-      const added = addCommentToTree(node.replies, comment);
-      if (added) return true;
-    }
-  }
-
-  return false;
+  return tree.map((node) =>
+    node.id === comment.parent
+      ? {
+          ...node,
+          replies: [...(node.replies || []), { ...comment, replies: [] }],
+        }
+      : {
+          ...node,
+          replies: node.replies ? addCommentToTree(node.replies, comment) : [],
+        }
+  );
 }
 
-// Update comment in tree
+// Update comment immutably
 function updateCommentInTree(tree, updated) {
-  for (let i = 0; i < tree.length; i++) {
-    if (tree[i].id === updated.id) {
-      tree[i] = { ...tree[i], ...updated };
-      return true;
-    } else if (tree[i].replies?.length) {
-      const found = updateCommentInTree(tree[i].replies, updated);
-      if (found) return true;
-    }
-  }
-  return false;
+  return tree.map((node) =>
+    node.id === updated.id
+      ? { ...node, ...updated }
+      : { ...node, replies: node.replies ? updateCommentInTree(node.replies, updated) : [] }
+  );
 }
 
-// Delete comment from tree
+// Delete comment immutably (fix: recursive delete)
 function deleteCommentFromTree(tree, commentId) {
-  for (let i = 0; i < tree.length; i++) {
-    if (tree[i].id === commentId) {
-      tree.splice(i, 1);
-      return true;
-    } else if (tree[i].replies?.length) {
-      const deleted = deleteCommentFromTree(tree[i].replies, commentId);
-      if (deleted) return true;
-    }
-  }
-  return false;
+  return tree
+    .filter((node) => node.id !== commentId) // remove at this level
+    .map((node) => ({
+      ...node,
+      replies: node.replies ? deleteCommentFromTree(node.replies, commentId) : [],
+    }));
 }
 
 // ─── Slice Definition ───────
@@ -149,17 +138,17 @@ const commentsSlice = createSlice({
 
       // ─── Create ─────
       .addCase(createComment.fulfilled, (state, action) => {
-        addCommentToTree(state.items, action.payload);
+        state.items = addCommentToTree(state.items, action.payload);
       })
 
       // ─── Edit ─────
-      .addCase(editComment.fulfilled, (state, action) => {
-        updateCommentInTree(state.items, action.payload);
+      .addCase(updateComment.fulfilled, (state, action) => {
+        state.items = updateCommentInTree(state.items, action.payload);
       })
 
       // ─── Delete ─────
       .addCase(deleteComment.fulfilled, (state, action) => {
-        deleteCommentFromTree(state.items, action.payload);
+        state.items = deleteCommentFromTree(state.items, action.payload);
       });
   },
 });

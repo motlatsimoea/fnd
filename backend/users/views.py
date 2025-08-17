@@ -9,7 +9,7 @@ from .models import Profile, CustomUser
 from .serializers import UserSerializerWithToken, ProfileSerializer, UserSerializer
 from .utils import generate_user_token, send_activation_email
 from django.urls import reverse
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
@@ -24,26 +24,29 @@ def get_current_user(request):
     serializer = UserSerializer(request.user)
     return Response(serializer.data)
 
+
+
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
     
     def post(self, request, *args, **kwargs):
-        # Run the normal token generation logic
+        # Run the default token generation
         response = super().post(request, *args, **kwargs)
 
         refresh_token = response.data.get("refresh")
         if refresh_token:
-            # Remove refresh from the JSON body
-            del response.data["refresh"]
+            # Remove refresh token from JSON body
+            response.data.pop("refresh", None)
 
-            # Set it in an HttpOnly cookie
+            # Store refresh token in HttpOnly cookie
             response.set_cookie(
                 key="refresh_token",
                 value=refresh_token,
                 httponly=True,
-                secure=not settings.DEBUG,  # only send over HTTPS in production
-                samesite="Strict",          # or "Lax" if you need cross-site
-                max_age=24 * 60 * 60,       # 1 day in seconds
+                secure=False,   # True in Production
+                samesite="Lax",           # Change to Strict in Production
+                max_age=24 * 60 * 60,        # 1 day in seconds
+                path="/token/refresh/",      # Cookie sent only for refresh requests
             )
 
         return response
@@ -53,14 +56,32 @@ class MyTokenRefreshCookieView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         refresh = request.COOKIES.get("refresh_token")
         if not refresh:
-            raise InvalidToken("No refresh token cookie set")
+            return Response({"detail": "No refresh token cookie set"}, status=status.HTTP_401_UNAUTHORIZED)
         
         serializer = self.get_serializer(data={"refresh": refresh})
         serializer.is_valid(raise_exception=True)
 
-        # Access token is returned in JSON
-        return Response({"access": serializer.validated_data["access"]})
+        data = {"access": serializer.validated_data["access"]}
 
+        # If rotating refresh tokens, send new one in cookie
+        if "refresh" in serializer.validated_data:
+            data["refresh"] = serializer.validated_data["refresh"]
+            response = Response(data)
+            response.set_cookie(
+                key="refresh_token",
+                value=serializer.validated_data["refresh"],
+                httponly=True,
+                secure=not settings.DEBUG,
+                samesite="Strict",
+                max_age=24 * 60 * 60,
+                path="/token/refresh/",
+            )
+            return response
+        
+        return Response(data)
+    
+    
+    
 class RegisterView(APIView):
     
     permission_classes = [AllowAny]
@@ -123,54 +144,46 @@ class ActivateAccountView(APIView):
         
         
 
-"""
-class ProfileView(APIView):
-    
-    #Handles retrieving and updating a user's profile.
-    
-    #permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        profile = Profile.objects.get(user=request.user)
-        serializer = ProfileSerializer(profile)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def put(self, request):
-        profile = Profile.objects.get(user=request.user)
-        serializer = ProfileSerializer(profile, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-"""
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_object(self, username):
-        try:
-            user = CustomUser.objects.get(username=username)
-            return Profile.objects.get(user=user)
-        except CustomUser.DoesNotExist:
-            raise NotFound({"detail": "User not found"})
-        except Profile.DoesNotExist:
-            raise NotFound({"detail": "Profile not found for this user"})
+    def get_object(self, username, request_user):
+        """
+        Resolve profile either by username (if provided) or current user.
+        """
+        if username:
+            try:
+                user = CustomUser.objects.get(username=username)
+                return Profile.objects.get(user=user)
+            except CustomUser.DoesNotExist:
+                raise NotFound({"detail": "User not found"})
+            except Profile.DoesNotExist:
+                raise NotFound({"detail": "Profile not found for this user"})
+        else:
+            # Fallback → logged-in user
+            return request_user.profile
 
     def get(self, request, username=None):
-        profile = self.get_object(username or request.user.username)
-        serializer = ProfileSerializer(profile)
+        profile = self.get_object(username, request.user)
+        serializer = ProfileSerializer(profile, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request, username=None):
-        profile = self.get_object(username or request.user.username)
-        serializer = ProfileSerializer(profile, data=request.data, partial=True)
+        profile = self.get_object(username, request.user)
+
+        # ✅ Ensure only owner can update their profile
+        if profile.user != request.user:
+            raise PermissionDenied("You cannot edit another user's profile.")
+
+        serializer = ProfileSerializer(profile, data=request.data, partial=True, context={'request': request})
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+ 
+ 
     
 class LogoutAndBlacklistRefreshTokenForUserView(APIView):
     permission_classes = (IsAuthenticated,)

@@ -1,18 +1,21 @@
 import React from "react";
+import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { toggleLikePost } from "../../features/blog/BlogList-slice";
 import "./BlogPost.css";
 
 const BlogPost = ({
   id,
   title,
   author,
-  date,
   authorImage,
   images = [],
   text,
-  likes,
+  liked = false,
+  like_count = 0,
 }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const handleTitleClick = () => {
     navigate(`/blog/${id}`);
@@ -20,6 +23,10 @@ const BlogPost = ({
 
   const handleUserClick = () => {
     navigate(`/user/${author}`);
+  };
+
+  const handleToggleLike = () => {
+    dispatch(toggleLikePost(id));
   };
 
   return (
@@ -47,7 +54,6 @@ const BlogPost = ({
         >
           {author}
         </span>
-        <p className="blog-date">{date}</p>
       </div>
 
       {images?.length > 0 && (
@@ -60,9 +66,25 @@ const BlogPost = ({
 
       <p className="blog-text">{text}</p>
 
-      <div className="blog-likes">
-        <span role="img" aria-label="heart">❤️</span> {likes} Likes
-      </div>
+      <button
+        className="like-button"
+        onClick={handleToggleLike}
+        style={{
+          cursor: "pointer",
+          background: "none",
+          border: "none",
+          fontSize: "1rem",
+        }}
+      >
+        <span
+          role="img"
+          aria-label="heart"
+          style={{ color: liked ? "red" : "darkgray" }}
+        >
+          ❤️
+        </span>{" "}
+        {like_count || 0} Likes
+      </button>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchSinglePost } from '../../features/blog/BlogList-slice';
+import { fetchSinglePost, toggleLikePost } from '../../features/blog/BlogList-slice';
 import { useParams } from 'react-router-dom';
 import CommentSection from '../../components/CommentSection/CommentSection';
 import Loader from '../../components/Loader';
@@ -18,6 +18,12 @@ const BlogPostPage = () => {
       dispatch(fetchSinglePost(id));
     }
   }, [dispatch, id]);
+
+  const handleToggleLike = () => {
+    if (singlePost) {
+      dispatch(toggleLikePost(singlePost.id));
+    }
+  };
 
   if (loading) return <Loader />;
   if (error) return <Message variant="danger">{error}</Message>;
@@ -52,8 +58,24 @@ const BlogPostPage = () => {
             </div>
           )}
 
-          <button className="like-button">
-            <span role="img" aria-label="heart">❤️</span> {singlePost.likes_count || 0} Likes
+          <button
+            className="like-button"
+            onClick={handleToggleLike}
+            style={{
+              cursor: 'pointer',
+              background: 'none',
+              border: 'none',
+              fontSize: '1.2rem',
+            }}
+          >
+            <span
+              role="img"
+              aria-label="heart"
+              style={{ color: singlePost.liked ? 'red' : 'darkgray' }}
+            >
+              ❤️
+            </span>{' '}
+            {singlePost.like_count || 0} Likes
           </button>
 
           <p className="post-summary">{singlePost.summary}</p>

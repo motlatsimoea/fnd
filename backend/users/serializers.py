@@ -3,15 +3,24 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .utils import generate_user_token, generate_login_token
 from django.db import models
 from .models import Profile, Sector, CustomUser 
+from blog.serializers import PostSerializer
+from market.serializers import ProductSerializer
+
 
 class ProfileSerializer(serializers.ModelSerializer):
-    """
-    Serializer for the Profile model.
-    """
+    username = serializers.CharField(source="user.username", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+    posts = PostSerializer(many=True, read_only=True, source="user.posts")
+    products = ProductSerializer(many=True, read_only=True, source="user.products")
+
     class Meta:
         model = Profile
-        fields = ['first_name', 'last_name', 'location', 'phone_number', 'bio', 'profile_picture']
-        
+        fields = [
+            'username', 'email',
+            'first_name', 'last_name', 'location',
+            'phone_number', 'bio', 'profile_picture',
+            'posts', 'products'
+        ]
 
 class SectorSerializer(serializers.ModelSerializer):
     class Meta:

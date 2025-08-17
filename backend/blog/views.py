@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework import status
 from .models import Post, Comment, Like, Media
 from .serializers import PostSerializer, CommentSerializer
@@ -112,21 +112,28 @@ class PostDetailView(APIView):
 class LikeView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, pk):
+    def post(self, request, post_id):
         # Get Post by Id
-        post = get_object_or_404(Post, id=pk)
+        post = get_object_or_404(Post, id=post_id)
 
         # Check if the user has already liked the post
         like, created = Like.objects.get_or_create(post=post, user=request.user)
+
         if not created:
+            # User already liked, so unlike
             like.delete()
+            like_count = post.likes.count()
             return Response(
-                {"message": "Post unliked successfully."},
+                {
+                    "message": "Post unliked successfully.",
+                    "liked": False,
+                    "like_count": like_count
+                },
                 status=status.HTTP_200_OK,
             )
 
         # Send notification if user is not the post author
-        if request.user != post.author:  # Prevent self-notifications
+        if request.user != post.author:
             message = f"{request.user.username} liked your post."
             send_notification(
                 user=post.author,
@@ -136,8 +143,13 @@ class LikeView(APIView):
                 post=post
             )
 
+        like_count = post.likes.count()
         return Response(
-            {"message": "Post liked successfully."},
+            {
+                "message": "Post liked successfully.",
+                "liked": True,
+                "like_count": like_count
+            },
             status=status.HTTP_201_CREATED,
         )
 
@@ -199,7 +211,11 @@ class CommentView(APIView):
 
 
 class CommentDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    lookup_field = 'id'           # use model's PK field
+    lookup_url_kwarg = 'id'
 
     def get(self, request, post_id, id):
         # Retrieve a specific comment and its replies

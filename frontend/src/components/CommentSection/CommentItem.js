@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { deleteComment } from '../../features/blog/Comment-slice';
 import CommentForm from './CommentForm';
 
@@ -9,9 +9,30 @@ const CommentItem = ({ comment, postId, depth = 0 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
+  // ⬇️ Check if comment still exists in store
+  const existingComment = useSelector((state) => {
+    const findComment = (tree, id) => {
+      for (let node of tree) {
+        if (node.id === id) return node;
+        if (node.replies) {
+          const found = findComment(node.replies, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+    return findComment(state.comments.items, comment.id);
+  });
+
+  if (!existingComment) {
+    return null; // ⬅️ If deleted, don't render
+  }
+
   const handleDelete = async () => {
     if (window.confirm('Delete this comment?')) {
       await dispatch(deleteComment({ postId, commentId: comment.id }));
+      setShowReply(false);   // reset reply state
+      setIsEditing(false);   // reset edit state
     }
   };
 
@@ -19,7 +40,9 @@ const CommentItem = ({ comment, postId, depth = 0 }) => {
     <div className="comment-item" style={{ marginLeft: depth * 20 }}>
       <div className="comment-header">
         <strong>{comment.author}</strong>
-        <span className="comment-date">{new Date(comment.created_at).toLocaleString()}</span>
+        <span className="comment-date">
+          {new Date(comment.created_at).toLocaleString()}
+        </span>
         <button onClick={() => setCollapsed(!collapsed)} className="collapse-btn">
           {collapsed ? 'Expand' : 'Collapse'}
         </button>
@@ -53,9 +76,9 @@ const CommentItem = ({ comment, postId, depth = 0 }) => {
             />
           )}
 
-          {comment.replies && comment.replies.length > 0 && (
+          {existingComment.replies && existingComment.replies.length > 0 && (
             <div className="comment-replies">
-              {comment.replies.map((reply) => (
+              {existingComment.replies.map((reply) => (
                 <CommentItem
                   key={reply.id}
                   comment={reply}

@@ -1,14 +1,19 @@
 // src/features/blog/blogSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../../utils/axiosInstance'; 
+import axiosInstance from '../../utils/axiosInstance';
 
-// Fetch all posts (no auth required)
-export const fetchBlogPosts = createAsyncThunk('blogs/fetchBlogPosts', async () => {
-  const response = await axiosInstance.get('/api/posts/');
-  return response.data;
-});
+// ─── Async Thunks ─────────
 
-// Fetch single post (auth required)
+// Fetch all posts
+export const fetchBlogPosts = createAsyncThunk(
+  'blogs/fetchBlogPosts',
+  async () => {
+    const response = await axiosInstance.get('/api/posts/');
+    return response.data;
+  }
+);
+
+// Fetch single post
 export const fetchSinglePost = createAsyncThunk(
   'blogs/fetchSinglePost',
   async (postId, thunkAPI) => {
@@ -23,7 +28,7 @@ export const fetchSinglePost = createAsyncThunk(
   }
 );
 
-// Create a new post (auth required)
+// Create a new post
 export const createPost = createAsyncThunk(
   'blogs/createPost',
   async (postData, thunkAPI) => {
@@ -38,7 +43,7 @@ export const createPost = createAsyncThunk(
   }
 );
 
-// Delete a post by ID (auth required)
+// Delete a post
 export const deletePost = createAsyncThunk(
   'blogs/deletePost',
   async (postId, thunkAPI) => {
@@ -53,14 +58,32 @@ export const deletePost = createAsyncThunk(
   }
 );
 
+// Toggle like/unlike a post
+export const toggleLikePost = createAsyncThunk(
+  'blogs/toggleLikePost',
+  async (postId, thunkAPI) => {
+    try {
+      const response = await axiosInstance.post(`/api/posts/${postId}/like/`);
+      // backend returns { liked: true/false, like_count: number }
+      return { postId, ...response.data };
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.detail || 'Failed to toggle like'
+      );
+    }
+  }
+);
+
+// ─── Slice Definition ───────
 const blogSlice = createSlice({
-  name: 'blogs',
+  name: 'BlogList',
   initialState: {
     posts: [],
     singlePost: null,
     loading: false,
     error: null,
   },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       // Fetch all posts
@@ -111,11 +134,29 @@ const blogSlice = createSlice({
       })
       .addCase(deletePost.fulfilled, (state, action) => {
         state.loading = false;
-        state.posts = state.posts.filter(post => post.id !== action.payload);
+        state.posts = state.posts.filter((post) => post.id !== action.payload);
       })
       .addCase(deletePost.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || action.error.message;
+      })
+
+      // Toggle like/unlike
+      .addCase(toggleLikePost.fulfilled, (state, action) => {
+        const { postId, liked, like_count } = action.payload;
+
+        // Update singlePost if currently viewing it
+        if (state.singlePost && state.singlePost.id === postId) {
+          state.singlePost.liked = liked;
+          state.singlePost.like_count = like_count;
+        }
+
+        // Update posts list for HomeScreen
+        const postIndex = state.posts.findIndex((p) => p.id === postId);
+        if (postIndex !== -1) {
+          state.posts[postIndex].liked = liked;
+          state.posts[postIndex].like_count = like_count;
+        }
       });
   },
 });

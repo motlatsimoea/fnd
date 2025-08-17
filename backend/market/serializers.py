@@ -5,14 +5,19 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username']
+
 class ReviewSerializer(serializers.ModelSerializer):
     # include parent so replies can be created / validated
     parent = serializers.PrimaryKeyRelatedField(queryset=Review.objects.all(), required=False, allow_null=True)
-
+    author = UserSerializer(read_only=True) 
     class Meta:
         model = Review
         fields = ['id', 'author', 'rating', 'content', 'created_at', 'parent', 'product']
-        read_only_fields = ['author', 'created_at']
+        read_only_fields = ['author', 'created_at', 'product']
         # include 'product' read-only for clarity in responses; if you want it writable remove from read_only_fields
 
     def validate_rating(self, value):

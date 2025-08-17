@@ -36,6 +36,7 @@ const HomeScreen = () => {
               images={post.media}
               text={post.content}
               likes={post.likes_count}
+              liked={post.liked_by_user}
             />
           ))
         )}

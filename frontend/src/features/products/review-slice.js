@@ -39,10 +39,10 @@ export const createReview = createAsyncThunk(
 // Update review
 export const updateReview = createAsyncThunk(
   "reviews/update",
-  async ({ reviewId, updatedData }, thunkAPI) => {
+  async ({ productId, reviewId, updatedData }, thunkAPI) => {
     try {
-      const res = await axiosInstance.put(`/api/reviews/${reviewId}/`, updatedData);
-      return res.data;
+      const res = await axiosInstance.put(`/api/products/reviews/${reviewId}/`, updatedData);
+      return { productId, review: res.data };
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
@@ -52,10 +52,10 @@ export const updateReview = createAsyncThunk(
 // Delete review
 export const deleteReview = createAsyncThunk(
   "reviews/delete",
-  async (reviewId, thunkAPI) => {
+  async ({ productId, reviewId }, thunkAPI) => {
     try {
-      await axiosInstance.delete(`/api/reviews/${reviewId}/`);
-      return reviewId;
+      await axiosInstance.delete(`/api/products/reviews/${reviewId}/`);
+      return { productId, reviewId };
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
     }
@@ -103,9 +103,7 @@ const reviewsSlice = createSlice({
       })
       .addCase(createReview.fulfilled, (state, action) => {
         const { productId, review } = action.payload;
-        if (!state.reviewsByProduct[productId]) {
-          state.reviewsByProduct[productId] = [];
-        }
+        if (!state.reviewsByProduct[productId]) state.reviewsByProduct[productId] = [];
         state.reviewsByProduct[productId].push(review);
         state.createStatus = "succeeded";
       })
@@ -120,11 +118,10 @@ const reviewsSlice = createSlice({
         state.error = null;
       })
       .addCase(updateReview.fulfilled, (state, action) => {
-        const updatedReview = action.payload;
-        const productId = updatedReview.product;
+        const { productId, review } = action.payload;
         const reviews = state.reviewsByProduct[productId] ?? [];
         state.reviewsByProduct[productId] = reviews.map((r) =>
-          r.id === updatedReview.id ? updatedReview : r
+          r.id === review.id ? review : r
         );
         state.updateStatus = "succeeded";
       })
@@ -139,12 +136,10 @@ const reviewsSlice = createSlice({
         state.error = null;
       })
       .addCase(deleteReview.fulfilled, (state, action) => {
-        const deletedId = action.payload;
-        Object.keys(state.reviewsByProduct).forEach((productId) => {
-          state.reviewsByProduct[productId] = state.reviewsByProduct[productId].filter(
-            (r) => r.id !== deletedId
-          );
-        });
+        const { productId, reviewId } = action.payload;
+        state.reviewsByProduct[productId] = state.reviewsByProduct[productId].filter(
+          (r) => r.id !== reviewId
+        );
         state.deleteStatus = "succeeded";
       })
       .addCase(deleteReview.rejected, (state, action) => {

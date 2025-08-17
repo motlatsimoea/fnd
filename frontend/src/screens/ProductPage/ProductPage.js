@@ -26,7 +26,7 @@ const ProductPage = () => {
     : [];
 
   useEffect(() => {
-    dispatch(fetchProductById(id));
+    if (id) dispatch(fetchProductById(id));
   }, [dispatch, id]);
 
   const nextImage = () => {
@@ -71,7 +71,8 @@ const ProductPage = () => {
         </Link>
       </p>
 
-      <Reviews reviews={product.reviews || []} />
+      {/* Pass productId to Reviews so API calls work */}
+      {product.id && <Reviews productId={product.id} />}
     </div>
   );
 };

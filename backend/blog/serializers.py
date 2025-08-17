@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils.timesince import timesince
 from .models import Post, Media, Like, Comment
-from users.serializers import UserSerializer
+#from users.serializers import UserSerializer
 from users.models import CustomUser
 
 

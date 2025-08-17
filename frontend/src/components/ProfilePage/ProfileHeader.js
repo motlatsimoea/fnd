@@ -9,44 +9,51 @@ const ProfileHeader = ({ user, currentUser }) => {
   if (!user) return null;
 
   const {
+    id,
     username,
     bio,
     location,
     birth_date,
     interests = [],
     profile_picture,
-    background_picture
+    background_picture,
   } = user;
 
   const handleInboxClick = () => {
-    const chatKey = [currentUser.id, user.id].sort().join('-');
+    const chatKey = [currentUser.id, id].sort().join('-');
     navigate(`/chat/${chatKey}`);
+  };
+
+  const handleEditClick = () => {
+    navigate('/edit-profile');
   };
 
   return (
     <div className="profile-header">
       <div
         className="background-image"
-        style={{ backgroundImage: `url(${background_picture})` }}
+        style={{ backgroundImage: `url(${background_picture || ''})` }}
       ></div>
 
       <div className="profile-section">
         <div
           className="profile-picture"
-          style={{ backgroundImage: `url(${profile_picture})` }}
+          style={{ backgroundImage: `url(${profile_picture || ''})` }}
         ></div>
 
         <div className="user-info">
           <h2>{username}</h2>
 
           <div className="action-buttons">
-            {currentUser?.id !== user.id && (
+            {currentUser?.id !== id && (
               <button className="inbox-button" onClick={handleInboxClick} title="Message User">
                 <FaEnvelope />
               </button>
             )}
-            {currentUser?.id === user.id && (
-              <button className="edit-button">Edit Profile</button>
+            {currentUser?.id === id && (
+              <button className="edit-button" onClick={handleEditClick}>
+                Edit Profile
+              </button>
             )}
           </div>
 

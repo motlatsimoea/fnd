@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { createComment, editComment } from '../../features/blog/Comment-slice';
+import { createComment, updateComment } from '../../features/blog/Comment-slice';
 import Loader from '../Loader';
 
 const CommentForm = ({ postId, parentId = null, initialText = '', onCancel, isEditing = false }) => {
@@ -18,7 +18,7 @@ const CommentForm = ({ postId, parentId = null, initialText = '', onCancel, isEd
     setLoading(true);
     try {
       if (isEditing) {
-        await dispatch(editComment({ postId, commentId: parentId, text })).unwrap();
+        await dispatch(updateComment({ postId, commentId: parentId, text })).unwrap();
         onCancel?.();
       } else {
         await dispatch(createComment({ postId, text, parent: parentId })).unwrap();

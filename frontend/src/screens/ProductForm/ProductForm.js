@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
   createProduct,
   resetProductForm,
@@ -11,12 +12,14 @@ import "./ProductForm.css";
 
 const ProductForm = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const {
     createStatus: loading,
     error,
     formResetFlag,
     successMessage,
-  } = useSelector((state) => state.products);
+  } = useSelector((state) => state.product);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -26,9 +29,12 @@ const ProductForm = () => {
     additionalImages: [],
   });
 
-  // Preview URLs for images
   const [thumbnailPreview, setThumbnailPreview] = useState(null);
   const [additionalPreviews, setAdditionalPreviews] = useState([]);
+
+  // Refs for file inputs
+  const thumbnailRef = useRef();
+  const additionalRef = useRef();
 
   // Reset form & previews after successful creation
   useEffect(() => {
@@ -42,6 +48,9 @@ const ProductForm = () => {
       });
       setThumbnailPreview(null);
       setAdditionalPreviews([]);
+
+      if (thumbnailRef.current) thumbnailRef.current.value = "";
+      if (additionalRef.current) additionalRef.current.value = "";
 
       const timeout = setTimeout(() => {
         dispatch(resetProductForm());
@@ -61,9 +70,7 @@ const ProductForm = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({ ...prev, [name]: value }));
-
     if (error) dispatch(clearError());
   };
 
@@ -71,9 +78,7 @@ const ProductForm = () => {
     const file = e.target.files[0];
     setFormData((prev) => ({ ...prev, thumbnail: file }));
 
-    if (thumbnailPreview) {
-      URL.revokeObjectURL(thumbnailPreview);
-    }
+    if (thumbnailPreview) URL.revokeObjectURL(thumbnailPreview);
 
     if (file) {
       setThumbnailPreview(URL.createObjectURL(file));
@@ -110,14 +115,19 @@ const ProductForm = () => {
     data.append("name", formData.name);
     data.append("description", formData.description);
     data.append("price", formData.price);
-    if (formData.thumbnail) {
-      data.append("thumbnail", formData.thumbnail);
-    }
-    formData.additionalImages.forEach((file) => {
-      data.append("additional_images", file);
-    });
+    if (formData.thumbnail) data.append("thumbnail", formData.thumbnail);
+    formData.additionalImages.forEach((file) =>
+      data.append("additional_images", file)
+    );
 
-    dispatch(createProduct(data));
+    dispatch(createProduct(data))
+      .unwrap()
+      .then((newProduct) => {
+        navigate(`/product/${newProduct.id}`); // Redirect to new product page
+      })
+      .catch((err) => {
+        console.error("Product creation failed:", err);
+      });
   };
 
   return (
@@ -158,6 +168,7 @@ const ProductForm = () => {
         name="thumbnail"
         accept="image/*"
         onChange={handleThumbnailChange}
+        ref={thumbnailRef}
       />
       {thumbnailPreview && (
         <img
@@ -174,9 +185,15 @@ const ProductForm = () => {
         multiple
         accept="image/*"
         onChange={handleAdditionalImagesChange}
+        ref={additionalRef}
       />
       <div
-        style={{ display: "flex", gap: "10px", marginTop: "10px", flexWrap: "wrap" }}
+        style={{
+          display: "flex",
+          gap: "10px",
+          marginTop: "10px",
+          flexWrap: "wrap",
+        }}
       >
         {additionalPreviews.map((url, idx) => (
           <img
