@@ -2,7 +2,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 from datetime import timedelta
-from cryptography.fernet import Fernet
 from decouple import config
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -206,6 +205,9 @@ CORS_ALLOWED_ORIGINS = [
     "http://192.168.1.66:3000",
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+]
 
 
 # email stuff

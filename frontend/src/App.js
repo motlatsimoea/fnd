@@ -4,8 +4,8 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
-import { startTokenRefreshTimer, refreshToken, setUser } from './features/users/auth-slice';
-import axiosInstance, { setAccessToken } from './utils/axiosInstance';
+import { startTokenRefreshTimer, refreshToken } from './features/users/auth-slice';
+import { setAccessToken } from './utils/axiosInstance';
 
 import Header from './components/Header/Header';
 import HomeScreen from './screens/HomeScreen';
@@ -19,8 +19,8 @@ import ArticlePage from './screens/InfoPage/ArticlePage';
 import RegistrationPage from './screens/RegistrationPage/RegistrationPage';
 
 import InboxPage from './screens/InboxPage/InboxPage';
-import ChatPage from './screens/InboxPage/ChatPage';
-import Chat from './components/chat';
+import ChatPage from './components/chat/ChatPage';
+import Chat from './components/chat/chat';
 
 import LoginPage from './screens/LoginPage/LoginPage';
 import ProfilePage from './components/ProfilePage/ProfilePage';
@@ -33,33 +33,33 @@ const App = () => {
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   useEffect(() => {
-    const bootstrapAuth = async () => {
-      try {
-        const hasSession = sessionStorage.getItem('hasSession') === 'true';
-  
-        if (!hasSession) {
-          setLoadingAuth(false);
-          return;
-        }
-  
-        const result = await dispatch(refreshToken()).unwrap();
-        const access = result?.access ?? result;
-  
-        setAccessToken(access);
-  
-        const { data: user } = await axiosInstance.get('/api/users/me/');
-        dispatch(setUser(user));
-  
-        startTokenRefreshTimer(dispatch, access);
-      } catch (err) {
-        // Silently fail — user is not logged in
-      } finally {
+  const bootstrapAuth = async () => {
+    try {
+      const hasSession = sessionStorage.getItem('hasSession') === 'true';
+
+      if (!hasSession) {
         setLoadingAuth(false);
+        return;
       }
-    };
-  
-    bootstrapAuth();
-  }, [dispatch]);
+
+      // Refresh token and automatically populate userInfo
+      const result = await dispatch(refreshToken()).unwrap();
+      console.log("refresh result:", result); // { access, user }
+
+      const access = result?.access ?? result;
+      setAccessToken(access);
+
+      // Start auto-refresh timer
+      startTokenRefreshTimer(dispatch, access);
+    } catch (err) {
+      console.error("Bootstrap auth failed:", err);
+    } finally {
+      setLoadingAuth(false);
+    }
+  };
+
+  bootstrapAuth();
+}, [dispatch]);
   
 
   if (loadingAuth) return <Loader />;

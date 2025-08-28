@@ -1,114 +1,35 @@
-/* Container for the entire profile page */
-.profile-container {
+/* Container */
+.profile-page {
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
   background-color: #f9f9f9;
   font-family: Arial, sans-serif;
+  padding-bottom: 40px;
 }
 
-/* Background Image (banner) */
-.background-image {
-  width: 100%;
-  height: 200px; /* Adjust the height of the banner */
-  background-size: cover;
-  background-position: center;
-  position: relative;
-}
-
-/* Profile Section (including picture and user details) */
-.profile-section {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  padding: 20px;
-  width: 70%; /* Adjust width */
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-top: -50px; /* Move upwards closer to the navbar */
-  position: relative;
-  z-index: 1;
-}
-
-/* Profile Picture */
-.profile-picture {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background-size: cover;
-  background-position: center;
-  border: 3px solid #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-/* User Info Section */
-.user-info {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  flex: 1;
-}
-
-.user-info h2 {
-  margin: 0;
-  font-size: 1.8rem;
-}
-
-.user-info p {
-  margin: 5px 0;
-  color: #555;
-}
-
-.tags {
-  margin: 10px 0;
-}
-
-.tag {
-  display: inline-block;
-  margin-right: 5px;
-  padding: 5px 10px;
-  background-color: #e8f5e9;
-  color: #2e7d32;
-  border-radius: 5px;
-  font-size: 0.9rem;
-}
-
-/* Edit button styling */
-.edit-button {
-  background-color: #2d7d46; /* Green for agriculture */
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.edit-button:hover {
-  background-color: #1a5b2d; /* Darker green on hover */
-}
-
-/* Tabs (Posts, Products, Liked Articles) */
+/* Tabs */
 .tabs {
   display: flex;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   width: 90%;
-  margin-top: 10px;
+  margin: 20px 0;
 }
 
 .tabs button {
   flex: 1;
   padding: 12px 20px;
-  font-size: 1.1rem;
-  font-weight: bold;
+  font-size: 1rem;
+  font-weight: 600;
   color: #fff;
   background-color: #6c757d;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
   text-align: center;
+  transition: background-color 0.2s ease;
 }
 
 .tabs button.active {
@@ -119,92 +40,66 @@
   background-color: #0056b3;
 }
 
-/* Main Content */
+/* Layout for content + sidebar */
 .content {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* 2/3 main content, 1/3 sidebar */
+  gap: 24px;
   width: 90%;
-  margin: 20px auto;
-  gap: 20px; /* Add spacing between sections */
+  margin-top: 20px;
+  align-items: start;
 }
 
-/* Main Content - Left Section */
 .main-content {
-  flex: 3;
-  background-color: #fff;
-  padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-/* Sidebar */
 .sidebar {
-  flex: 1;
-  background-color: #fff;
-  padding: 15px;
-  border-radius: 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  align-self: flex-start; /* Align sidebar to the top */
+  background: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
-/* Links styling: remove underline and adjust color */
-.link {
-  text-decoration: none;
-  color: #2d7d46; /* Green for agriculture theme */
-}
-
-.link:hover {
-  color: #1a5b2d; /* Darker green on hover */
-}
-
-/* Product styling */
-.product-item {
-  margin: 10px 0;
-  list-style: none;
-}
-
-.product-image {
-  width: 100px;
-  height: 100px;
-  margin: 10px 0;
-}
-
-.product-price {
+/* Section titles */
+.main-content h3,
+.sidebar h3 {
+  margin-bottom: 12px;
   font-size: 1.2rem;
   color: #333;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 6px;
 }
 
-/* Styling for liked articles and posts */
-.articles-list, .posts-list {
+/* Cards for posts/products/liked */
+.main-content ul,
+.sidebar ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
-.articles-list li, .posts-list li {
-  margin-bottom: 15px; /* Space between titles */
+.main-content li,
+.sidebar li {
+  background: #fdfdfd;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border-radius: 6px;
+  border: 1px solid #eee;
+  transition: box-shadow 0.2s ease;
 }
 
-.articles-list a, .posts-list a {
-  text-decoration: none; /* Remove underline */
-  color: #2d7d46; /* Green for agriculture */
-  font-size: 1.1rem;
+.main-content li:hover,
+.sidebar li:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.articles-list a:hover, .posts-list a:hover {
-  color: #1a5b2d; /* Darker green on hover */
-}
-
-/* Adjust content width and spacing */
-.main-content, .sidebar {
-  width: 100%; /* Adjusted to fill the space */
-}
-
-.main-content {
-  padding: 20px; /* More padding for better spacing */
-}
-
-.sidebar {
-  padding: 20px; /* More padding for better spacing */
+/* Post/Product titles */
+.main-content li h4 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  color: #222;
 }

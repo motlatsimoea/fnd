@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toggleLikePost } from "../../features/blog/BlogList-slice";
+import ImageCarouselModal from "../../components/ImageCarouselModal";
 import "./BlogPost.css";
 
 const BlogPost = ({
@@ -9,7 +10,7 @@ const BlogPost = ({
   title,
   author,
   authorImage,
-  images = [],
+  images = [],        // array of { file } or strings
   text,
   liked = false,
   like_count = 0,
@@ -17,25 +18,21 @@ const BlogPost = ({
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const handleTitleClick = () => {
-    navigate(`/blog/${id}`);
-  };
+  const [showGallery, setShowGallery] = useState(false);
+  const [startIndex, setStartIndex] = useState(0);
 
-  const handleUserClick = () => {
-    navigate(`/user/${author}`);
-  };
+  const handleTitleClick = () => navigate(`/blog/${id}`);
+  const handleUserClick = () => navigate(`/profile/${author}`);
+  const handleToggleLike = () => dispatch(toggleLikePost(id));
 
-  const handleToggleLike = () => {
-    dispatch(toggleLikePost(id));
+  const openGalleryAt = (idx) => {
+    setStartIndex(idx);
+    setShowGallery(true);
   };
 
   return (
     <div className="blog-post">
-      <div
-        onClick={handleTitleClick}
-        className="blog-title-link"
-        style={{ cursor: "pointer" }}
-      >
+      <div onClick={handleTitleClick} className="blog-title-link" style={{ cursor: "pointer" }}>
         <h2 className="blog-title">{title}</h2>
       </div>
 
@@ -47,20 +44,25 @@ const BlogPost = ({
             className="author-img"
           />
         </div>
-        <span
-          onClick={handleUserClick}
-          className="author-name"
-          style={{ cursor: "pointer" }}
-        >
+        <span onClick={handleUserClick} className="author-name" style={{ cursor: "pointer" }}>
           {author}
         </span>
       </div>
 
       {images?.length > 0 && (
         <div className="blog-images">
-          {images.map((img, idx) => (
-            <img key={idx} src={img.file} alt={`Blog image ${idx + 1}`} />
-          ))}
+          {images.map((img, idx) => {
+            const src = img?.file || img; // supports {file} or plain url
+            return (
+              <img
+                key={idx}
+                src={src}
+                alt={`Blog ${idx + 1}`}
+                onClick={() => openGalleryAt(idx)}
+                style={{ cursor: "pointer" }}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -69,22 +71,21 @@ const BlogPost = ({
       <button
         className="like-button"
         onClick={handleToggleLike}
-        style={{
-          cursor: "pointer",
-          background: "none",
-          border: "none",
-          fontSize: "1rem",
-        }}
+        style={{ cursor: "pointer", background: "none", border: "none", fontSize: "1rem" }}
       >
-        <span
-          role="img"
-          aria-label="heart"
-          style={{ color: liked ? "red" : "darkgray" }}
-        >
+        <span role="img" aria-label="heart" style={{ color: liked ? "red" : "darkgray" }}>
           ❤️
         </span>{" "}
         {like_count || 0} Likes
       </button>
+
+      {showGallery && (
+        <ImageCarouselModal
+          images={images}              // can pass array of {file} or urls
+          initialIndex={startIndex}
+          onClose={() => setShowGallery(false)}
+        />
+      )}
     </div>
   );
 };

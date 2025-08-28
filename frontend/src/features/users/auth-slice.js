@@ -1,7 +1,7 @@
 // features/users/auth-slice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance, { setAccessToken } from '../../utils/axiosInstance';
-import { jwtDecode } from 'jwt-decode'; // default import
+import { jwtDecode } from 'jwt-decode';
 
 const initialState = {
   userInfo: null,
@@ -17,13 +17,11 @@ export const login = createAsyncThunk(
       const config = { headers: { 'Content-Type': 'application/json' } };
       const { data } = await axiosInstance.post('/login/', { username, password }, config);
 
-      if (data?.access) {
-        setAccessToken(data.access);
-      }
+      if (data?.access) setAccessToken(data.access);
 
       return {
-        user: data?.user || null,
-        access: data?.access || null,
+        access: data?.access ?? null,
+        user: data?.user ?? null,
       };
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -36,18 +34,15 @@ export const refreshToken = createAsyncThunk(
   'auth/refreshToken',
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.post('/token/refresh/');
-
-      // handle both shapes: if backend returns { access, user } or just { access }
-      // ensure we write access into memory
-      const access = data?.access ?? data; // if backend returns string, data is access
+      // 1️⃣ Refresh access token
+      const { data: refreshData } = await axiosInstance.post('/token/refresh/');
+      const access = refreshData?.access ?? refreshData;
       if (access) setAccessToken(access);
 
-      // Return consistent shape: { access, user? }
-      return {
-        access: access,
-        user: data?.user ?? null,
-      };
+      // 2️⃣ Fetch current user immediately after refresh
+      const { data: user } = await axiosInstance.get('/api/users/me/');
+
+      return { access, user };
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.detail || error.message || 'Session expired. Please log in again.'
@@ -58,7 +53,6 @@ export const refreshToken = createAsyncThunk(
 
 // --- REFRESH TIMER ---
 let refreshTimeout = null;
-
 export const startTokenRefreshTimer = (dispatch, accessToken) => {
   if (!accessToken) return;
 
@@ -66,7 +60,7 @@ export const startTokenRefreshTimer = (dispatch, accessToken) => {
     const { exp } = jwtDecode(accessToken);
     const expiryTime = exp * 1000;
     const now = Date.now();
-    const timeout = expiryTime - now - 30000; // refresh 30 seconds early
+    const timeout = expiryTime - now - 30000; // refresh 30s early
 
     if (timeout <= 0) {
       dispatch(refreshToken());
@@ -76,7 +70,6 @@ export const startTokenRefreshTimer = (dispatch, accessToken) => {
     refreshTimeout = setTimeout(async () => {
       try {
         const result = await dispatch(refreshToken()).unwrap();
-        // result is { access, user? } now
         const newAccess = result?.access ?? result;
         startTokenRefreshTimer(dispatch, newAccess);
       } catch {
@@ -100,30 +93,23 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    // existing logout action
     logout: (state) => {
       state.userInfo = null;
       state.loading = false;
       state.error = null;
       stopTokenRefreshTimer();
-
       sessionStorage.removeItem('hasSession');
-      // Note: server logout (blacklist + clear cookie) should be triggered by a component/API call
     },
-
-    // ADD setUser so App bootstrap can populate user metadata
     setUser: (state, action) => {
       state.userInfo = action.payload;
     },
-
-    // optional: a clearError helper
     clearError: (state) => {
       state.error = null;
     },
   },
   extraReducers: (builder) => {
     builder
-      // --- LOGIN FLOW ---
+      // --- LOGIN ---
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -132,7 +118,6 @@ const authSlice = createSlice({
         state.loading = false;
         state.userInfo = action.payload?.user || null;
         state.error = null;
-
         sessionStorage.setItem('hasSession', 'true');
       })
       .addCase(login.rejected, (state, action) => {
@@ -140,14 +125,10 @@ const authSlice = createSlice({
         state.error = action.payload?.detail || action.payload || 'Login failed';
       })
 
-      // --- REFRESH FLOW ---
+      // --- REFRESH ---
       .addCase(refreshToken.fulfilled, (state, action) => {
-        // action.payload is { access, user? }
-        // optionally update userInfo if backend supplied it
-        const payload = action.payload || {};
-        if (payload.user) {
-          state.userInfo = payload.user;
-        }
+        const { user } = action.payload || {};
+        if (user) state.userInfo = user;
         state.error = null;
       })
       .addCase(refreshToken.rejected, (state, action) => {

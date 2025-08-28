@@ -8,6 +8,7 @@ import commentReducer from './features/blog/Comment-slice'
 import productReducer from './features/products/Product-slice'
 import reviewReducer from './features/products/review-slice'
 import notificationReducer from './features/notifications/notice-slice'
+import chatReducer from './features/chats/Chat-slice'
 
 const reducer = combineReducers({
   auth: authReducer,
@@ -18,6 +19,7 @@ const reducer = combineReducers({
   product: productReducer,
   reviews: reviewReducer,
   notifications: notificationReducer,
+  chats: chatReducer,
 })
 
 const initialState = {

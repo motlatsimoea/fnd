@@ -1,40 +1,51 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../../utils/axiosInstance'; // 👈 replace axios
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axiosInstance from "../../utils/axiosInstance";
 
+// ─── Fetch Profile ───────────────────────────────
 export const fetchProfile = createAsyncThunk(
-  'profile/fetchProfile',
-  async (username = '', { rejectWithValue }) => {
+  "profile/fetchProfile",
+  async (username, { rejectWithValue }) => {
     try {
-      const url = username ? `/api/profile/${username}/` : '/api/profile/';
-      const response = await axiosInstance.get(url); // 👈 uses axiosInstance
+      // If username is provided, fetch that profile; otherwise fallback to current user
+      const url = username
+        ? `/api/users/profile/${username}/`
+        : "/api/users/profile/";
+      const response = await axiosInstance.get(url);
       return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to fetch profile');
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to fetch profile");
     }
   }
 );
 
+// ─── Update Profile (with FormData) ──────────────
 export const updateProfile = createAsyncThunk(
-  'profile/updateProfile',
-  async ({ username = '', formData }, { rejectWithValue }) => {
+  "profile/updateProfile",
+  async ({ username, formData }, { rejectWithValue }) => {
     try {
-      const url = username ? `/api/profile/${username}/` : '/api/profile/';
-      const response = await axiosInstance.put(url, formData); // 👈 uses axiosInstance
+      const data = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) data.append(key, value);
+      });
+
+      const url = username
+        ? `/api/users/profile/${username}/`
+        : "/api/users/profile/";
+
+      const response = await axiosInstance.put(url, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to update profile');
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to update profile");
     }
   }
 );
 
 const profileSlice = createSlice({
-  name: 'profile',
-  initialState: {
-    profile: null,
-    loading: false,
-    error: null,
-  },
-  reducers: {},
+  name: "profile",
+  initialState: { profile: null, loading: false, error: null },
+  reducers: { clearProfileError: (state) => (state.error = null) },
   extraReducers: (builder) => {
     builder
       .addCase(fetchProfile.pending, (state) => {
@@ -49,11 +60,13 @@ const profileSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-
-      .addCase(updateProfile.fulfilled, (state, action) => {
-        state.profile = action.payload;
-        state.loading = false;
+      .addCase(updateProfile.pending, (state) => {
+        state.loading = true;
         state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.loading = false;
+        state.profile = action.payload;
       })
       .addCase(updateProfile.rejected, (state, action) => {
         state.loading = false;
@@ -62,4 +75,5 @@ const profileSlice = createSlice({
   },
 });
 
+export const { clearProfileError } = profileSlice.actions;
 export default profileSlice.reducer;

@@ -1,17 +1,18 @@
+// src/features/notifications/notice-slice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axiosInstance from '../../utils/axiosInstance'; // 👈 USE THIS INSTEAD OF axios
+import axiosInstance from '../../utils/axiosInstance';
 
 export const fetchNotifications = createAsyncThunk(
   'notifications/fetchAll',
-  async (unreadOnly = false, thunkAPI) => {
+  async (unreadOnly = false) => {
     const response = await axiosInstance.get(`/api/notifications/?unread=${unreadOnly}`);
-    return response.data;
+    return response.data; // contains count, next, previous, results[], unread_count
   }
 );
 
 export const fetchInboxNotifications = createAsyncThunk(
   'notifications/fetchInbox',
-  async (unreadOnly = false, thunkAPI) => {
+  async (unreadOnly = false) => {
     const response = await axiosInstance.get(`/api/notifications/inbox/?unread=${unreadOnly}`);
     return response.data;
   }
@@ -19,7 +20,7 @@ export const fetchInboxNotifications = createAsyncThunk(
 
 export const markNotificationAsRead = createAsyncThunk(
   'notifications/markAsRead',
-  async (notificationId, thunkAPI) => {
+  async (notificationId) => {
     await axiosInstance.post(`/api/notifications/mark-as-read/${notificationId}/`);
     return notificationId;
   }
@@ -27,7 +28,7 @@ export const markNotificationAsRead = createAsyncThunk(
 
 export const markAllGeneralAsRead = createAsyncThunk(
   'notifications/markAllGeneralAsRead',
-  async (_, thunkAPI) => {
+  async () => {
     await axiosInstance.post(`/api/notifications/mark-all-read/`);
     return 'general';
   }
@@ -35,7 +36,7 @@ export const markAllGeneralAsRead = createAsyncThunk(
 
 export const markAllInboxAsRead = createAsyncThunk(
   'notifications/markAllInboxAsRead',
-  async (_, thunkAPI) => {
+  async () => {
     await axiosInstance.post(`/api/notifications/inbox/mark-all-read/`);
     return 'inbox';
   }
@@ -74,16 +75,17 @@ const notificationsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      // general notifications
       .addCase(fetchNotifications.pending, (state) => {
         state.general.loading = true;
         state.general.error = null;
       })
       .addCase(fetchNotifications.fulfilled, (state, action) => {
-        const { notifications, meta } = action.payload;
-        state.general.items = notifications;
-        state.general.unreadCount = meta.unread_count;
-        state.general.totalCount = meta.total_count;
-        state.general.latestTimestamp = meta.latest_timestamp;
+        const { results, unread_count, count } = action.payload;
+        state.general.items = results;
+        state.general.unreadCount = unread_count;
+        state.general.totalCount = count;
+        state.general.latestTimestamp = results.length > 0 ? results[0].timestamp : null;
         state.general.loading = false;
       })
       .addCase(fetchNotifications.rejected, (state, action) => {
@@ -91,16 +93,17 @@ const notificationsSlice = createSlice({
         state.general.error = action.error.message;
       })
 
+      // inbox notifications
       .addCase(fetchInboxNotifications.pending, (state) => {
         state.inbox.loading = true;
         state.inbox.error = null;
       })
       .addCase(fetchInboxNotifications.fulfilled, (state, action) => {
-        const { notifications, meta } = action.payload;
-        state.inbox.items = notifications;
-        state.inbox.unreadCount = meta.unread_count;
-        state.inbox.totalCount = meta.total_count;
-        state.inbox.latestTimestamp = meta.latest_timestamp;
+        const { results, unread_count, count } = action.payload;
+        state.inbox.items = results;
+        state.inbox.unreadCount = unread_count;
+        state.inbox.totalCount = count;
+        state.inbox.latestTimestamp = results.length > 0 ? results[0].timestamp : null;
         state.inbox.loading = false;
       })
       .addCase(fetchInboxNotifications.rejected, (state, action) => {
@@ -108,10 +111,11 @@ const notificationsSlice = createSlice({
         state.inbox.error = action.error.message;
       })
 
+      // mark single notification as read
       .addCase(markNotificationAsRead.fulfilled, (state, action) => {
         const id = action.payload;
         ['general', 'inbox'].forEach(type => {
-          const index = state[type].items.findIndex(n => n.notification_id === id);
+          const index = state[type].items.findIndex(n => n.id === id);
           if (index !== -1 && !state[type].items[index].is_read) {
             state[type].items[index].is_read = true;
             state[type].unreadCount = Math.max(state[type].unreadCount - 1, 0);
@@ -119,11 +123,11 @@ const notificationsSlice = createSlice({
         });
       })
 
+      // mark all as read
       .addCase(markAllGeneralAsRead.fulfilled, (state) => {
         state.general.items.forEach(n => { n.is_read = true; });
         state.general.unreadCount = 0;
       })
-
       .addCase(markAllInboxAsRead.fulfilled, (state) => {
         state.inbox.items.forEach(n => { n.is_read = true; });
         state.inbox.unreadCount = 0;

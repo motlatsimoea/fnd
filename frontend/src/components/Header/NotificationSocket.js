@@ -21,8 +21,8 @@ const useNotificationsSocket = () => {
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (data?.type === 'notification') {
-          dispatch(prependNotification(data.payload));
+        if (data?.event === 'notification') {
+          dispatch(prependNotification(data));
         }
       } catch (err) {
         console.error('Failed to parse WebSocket message:', err);

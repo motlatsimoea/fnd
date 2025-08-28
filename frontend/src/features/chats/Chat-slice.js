@@ -1,6 +1,6 @@
 // src/redux/chatSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 
 // === ASYNC THUNKS ===
 
@@ -9,7 +9,7 @@ export const fetchUserChats = createAsyncThunk(
   'chats/fetchUserChats',
   async (_, thunkAPI) => {
     try {
-      const res = await axios.get('/');
+      const res = await axiosInstance.get('/api/inbox/');
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
@@ -22,7 +22,8 @@ export const fetchMessages = createAsyncThunk(
   'chats/fetchMessages',
   async (chatId, thunkAPI) => {
     try {
-      const res = await axios.get(`/${chatId}/`);
+      const res = await axiosInstance.get(`/api/inbox/${chatId}/messages/`);
+      // Use payload as-is, backend already has sender_info
       return { chatId, messages: res.data };
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
@@ -35,7 +36,7 @@ export const createChatAndSendMessage = createAsyncThunk(
   'chats/createChatAndSendMessage',
   async ({ recipientId, message }, thunkAPI) => {
     try {
-      const res = await axios.post(`/create-chat/${recipientId}/`, { message });
+      const res = await axiosInstance.post(`/api/inbox/create-chat/${recipientId}/`, { message });
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
@@ -48,8 +49,8 @@ export const sendMessage = createAsyncThunk(
   'chats/sendMessage',
   async ({ chatId, message }, thunkAPI) => {
     try {
-      const res = await axios.post(`/${chatId}/messages/`, { content: message });
-      return { chatId, message: res.data };
+      const res = await axiosInstance.post(`/api/inbox/${chatId}/messages/`, { content: message });
+      return { chatId, message: res.data }; // res.data already has sender_info
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
@@ -75,7 +76,6 @@ const chatSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-
       // === fetchUserChats ===
       .addCase(fetchUserChats.pending, (state) => {
         state.loading = true;
@@ -111,7 +111,7 @@ const chatSlice = createSlice({
       })
       .addCase(createChatAndSendMessage.fulfilled, (state, action) => {
         state.loading = false;
-        // Optionally: Add the new chat to chatRooms here if response includes it
+        if (action.payload.chat) state.chatRooms.push(action.payload.chat);
       })
       .addCase(createChatAndSendMessage.rejected, (state, action) => {
         state.loading = false;

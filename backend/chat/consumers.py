@@ -28,7 +28,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message_text = data['message']
         sender_id = data['sender']
 
-        fernet = Fernet(settings.SECRET_KEY.encode())
+        fernet = Fernet(settings.SECRET_KEY_FOR_ENCRYPTION.encode())
         encrypted_text = fernet.encrypt(message_text.encode()).decode()
 
         sender = await sync_to_async(User.objects.get)(id=sender_id)

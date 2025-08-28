@@ -79,8 +79,14 @@ class Profile(models.Model):
         upload_to=profile_picture_upload_to, 
         blank=True, 
         null=True, 
-        default='profile_pictures/default.jpg'
+        default='profile_pictures/default.png'
     )
-
+    background_picture = models.ImageField(
+        upload_to="background_pictures/", 
+        blank=True, 
+        null=True, 
+        default="background_pictures/default.jpg"
+    )
+    
     def __str__(self):
         return f"{self.user.username}'s Profile"

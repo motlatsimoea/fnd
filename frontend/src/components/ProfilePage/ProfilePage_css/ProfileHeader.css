@@ -1,56 +1,138 @@
 .profile-header {
   position: relative;
-  height: 200px;
   width: 100%;
   margin-bottom: 20px;
 }
 
-.profile-header-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 100%;
+/* Background banner */
+.background-image {
   width: 100%;
-  background-color: rgba(0, 0, 0, 0.4);
+  height: 220px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 10px 10px 0 0;
 }
 
-.profile-info {
+/* Section containing picture + user info */
+.profile-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  margin-top: -50px; /* overlap nicely with banner */
   position: relative;
-  color: white;
-  text-align: center;
-  padding: 10px;
+  z-index: 2;
 }
 
+/* Profile picture */
 .profile-picture {
+  width: 140px;
+  height: 140px;
   border-radius: 50%;
-  height: 100px;
-  width: 100px;
-  margin-bottom: 10px;
+  background-size: cover;
+  background-position: center;
+  border: 4px solid #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
 }
 
-.edit-profile-btn,
-.change-background-btn {
-  margin-top: 10px;
-  padding: 5px 10px;
+/* User info text */
+.user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
+.user-info h2 {
+  margin: 0 0 10px;
+  font-size: 1.8rem;
+}
+
+.user-info p {
+  margin: 5px 0;
+  color: #555;
+}
+
+/* Buttons */
 .action-buttons {
   display: flex;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin: 10px 0;
 }
 
-.message-button {
+.edit-button {
+  background-color: #2d7d46;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.edit-button:hover {
+  background-color: #1a5b2d;
+}
+
+.inbox-button {
   background-color: #007bff;
   border: none;
   color: white;
-  padding: 8px;
-  border-radius: 5px;
+  padding: 8px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
 }
 
-.message-button:hover {
+.inbox-button:hover {
   background-color: #0056b3;
+}
+
+.username-tag {
+  font-size: 0.9rem;
+  color: gray;
+  margin-top: -4px; /* tuck it closer under the name */
+}
+
+/* Fullscreen dark overlay */
+.image-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+/* Inner modal box */
+.image-modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+}
+
+/* Zoomed image */
+.image-modal-content img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 0 15px rgba(0,0,0,0.5);
+}
+
+/* Close button */
+.close-button {
+  position: absolute;
+  top: -40px;
+  right: -10px;
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: white;
+  cursor: pointer;
 }

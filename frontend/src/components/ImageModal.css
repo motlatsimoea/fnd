@@ -1,0 +1,66 @@
+.imgmodal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.imgmodal-content {
+  position: relative;
+  max-width: 92vw;
+  max-height: 92vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.imgmodal-img {
+  max-width: 90vw;
+  max-height: 85vh;
+  border-radius: 8px;
+}
+
+.imgmodal-close {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.imgmodal-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: #ffffffee;
+  font-size: 26px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.imgmodal-prev { left: -20px; }
+.imgmodal-next { right: -20px; }
+
+.imgmodal-counter {
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 14px;
+}

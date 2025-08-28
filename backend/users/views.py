@@ -46,7 +46,7 @@ class MyTokenObtainPairView(TokenObtainPairView):
                 secure=False,   # True in Production
                 samesite="Lax",           # Change to Strict in Production
                 max_age=24 * 60 * 60,        # 1 day in seconds
-                path="/token/refresh/",      # Cookie sent only for refresh requests
+                path="/",      # Cookie sent only for refresh requests
             )
 
         return response
@@ -72,9 +72,9 @@ class MyTokenRefreshCookieView(TokenRefreshView):
                 value=serializer.validated_data["refresh"],
                 httponly=True,
                 secure=not settings.DEBUG,
-                samesite="Strict",
+                samesite="Lax",
                 max_age=24 * 60 * 60,
-                path="/token/refresh/",
+                path="/",
             )
             return response
         

@@ -6,7 +6,6 @@ from .models import Notification
 def _build_notification_payload(notification):
     """Builds a structured payload from a Notification instance."""
     return {
-        "type": "send_notification",
         "sender": notification.sender.username,
         "notification_type": notification.notification_type,
         "message": notification.message,
@@ -25,7 +24,10 @@ def _send_websocket_notification(user, payload):
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         f"notifications_{user.id}",
-        payload
+        {
+            "type": "send_notification",  # consumer method name
+            "payload": payload            # actual notification data
+        }
     )
 
 
@@ -42,7 +44,7 @@ def send_notification(user, sender, notification_type, message=None, post=None, 
     elif notification_type == "review_reply":
         message = f"{sender.username} replied to your review."
     elif notification_type == "message" and not message:
-        # In case message is not given
+        # fallback if no message provided
         message = f"You have a new message from {sender.username}."
 
     notification = Notification.objects.create(
@@ -65,7 +67,7 @@ def send_message_notification(user, sender, message, inbox):
         user=user,
         sender=sender,
         notification_type="message",
-        message=f"You have a new message from {sender.username}.",
+        message=message or f"You have a new message from {sender.username}.",
         inbox=inbox
     )
 

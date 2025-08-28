@@ -1,16 +1,24 @@
 from rest_framework import serializers
 from .models import Inbox, Message
 from django.contrib.auth import get_user_model
+from users.serializers import UserSerializer
 
 User = get_user_model()
 
 class MessageSerializer(serializers.ModelSerializer):
     content = serializers.CharField(write_only=True)  # Accept plaintext for writing
     decrypted_content = serializers.CharField(read_only=True, source='get_content')  # Decrypt for reading
+    sender_info = serializers.SerializerMethodField()  # New field for id + username
 
     class Meta:
         model = Message
-        fields = ['id', 'chat', 'sender', 'content', 'decrypted_content', 'timestamp']
+        fields = ['id', 'inbox', 'sender', 'sender_info', 'content', 'decrypted_content', 'timestamp']
+
+    def get_sender_info(self, obj):
+        return {
+            "id": obj.sender.id,
+            "username": obj.sender.username,
+        }
 
     def create(self, validated_data):
         content = validated_data.pop('content')  # Extract plaintext content
@@ -22,7 +30,7 @@ class MessageSerializer(serializers.ModelSerializer):
 
 
 class ChatRoomSerializer(serializers.ModelSerializer):
-    participants = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True)
+    participants = UserSerializer(many=True, read_only=True)
     last_message = serializers.SerializerMethodField()
     current_user = serializers.SerializerMethodField()
 
@@ -37,7 +45,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         if last_msg:
             return {
                 'sender_id': last_msg.sender.id,
-                'text': last_msg.get_content(),  # Decrypt message
+                'text': getattr(last_msg, "text", None),  # Decrypt message
                 'timestamp': last_msg.timestamp,
             }
         return None

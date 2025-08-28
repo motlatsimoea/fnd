@@ -14,39 +14,38 @@ class NotificationConsumer(AsyncWebsocketConsumer):
                 await self.channel_layer.group_add(self.room_group_name, self.channel_name)
                 await self.accept()
                 await self.send(text_data=json.dumps({
-                    "type": "connection_status",
+                    "event": "connection_status",
                     "status": "connected",
                     "message": "WebSocket connection established."
                 }))
             else:
                 await self.send(text_data=json.dumps({
-                    "type": "connection_status",
+                    "event": "connection_status",
                     "status": "unauthorized",
                     "message": "User is not authenticated."
                 }))
                 await self.close()
-        except Exception as e:
+        except Exception:
             logger.exception("Error during WebSocket connection:")
-            await self.send(text_data=json.dumps({
-                "type": "connection_status",
-                "status": "error",
-                "message": "Failed to connect. Please try again later."
-            }))
             await self.close()
 
     async def disconnect(self, close_code):
         try:
             if hasattr(self, "room_group_name"):
                 await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-        except Exception as e:
+        except Exception:
             logger.exception("Error during WebSocket disconnection:")
 
     async def send_notification(self, event):
+        """
+        Called when a notification is sent via group_send.
+        The `event` dict will contain all the fields from utils._build_notification_payload.
+        """
         try:
-            await self.send(text_data=json.dumps(event))
-        except Exception as e:
+            # Remove the internal "type" field (used for routing only)
+            payload = event.get("payload", {})
+            payload["event"] = "notification"  # explicit event marker
+
+            await self.send(text_data=json.dumps(payload))
+        except Exception:
             logger.exception("Error sending WebSocket notification:")
-            await self.send(text_data=json.dumps({
-                "type": "error",
-                "message": "Failed to deliver notification."
-            }))

@@ -8,8 +8,8 @@ from market.serializers import ProductSerializer
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source="user.username", read_only=True)
-    email = serializers.EmailField(source="user.email", read_only=True)
+    username = serializers.CharField(source="user.username", required=False)
+    email = serializers.EmailField(source="user.email", required=False)
     posts = PostSerializer(many=True, read_only=True, source="user.posts")
     products = ProductSerializer(many=True, read_only=True, source="user.products")
 
@@ -18,9 +18,21 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = [
             'username', 'email',
             'first_name', 'last_name', 'location',
-            'phone_number', 'bio', 'profile_picture',
+            'phone_number', 'bio', 'profile_picture', 'background_picture',
             'posts', 'products'
         ]
+        
+    def update(self, instance, validated_data):
+        # Handle nested user fields (username, email)
+        user_data = validated_data.pop("user", {})
+        for attr, value in user_data.items():
+            setattr(instance.user, attr, value)
+        instance.user.save()
+
+        # Update profile fields
+        return super().update(instance, validated_data)
+    
+    
 
 class SectorSerializer(serializers.ModelSerializer):
     class Meta:

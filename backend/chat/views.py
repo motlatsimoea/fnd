@@ -12,7 +12,6 @@ from cryptography.fernet import Fernet
 from django.conf import settings
 from asgiref.sync import async_to_sync
 from notifications.utils import send_message_notification
-from notifications.models import Notification
 from django.shortcuts import get_object_or_404
 
 
@@ -25,7 +24,7 @@ class ChatListView(APIView):
     def get(self, request):
         # Get all chats the user is part of
         chats = Inbox.objects.filter(participants=request.user)
-        serializer = ChatRoomSerializer(chats, many=True)
+        serializer = ChatRoomSerializer(chats, many=True, context={"request": request})
         return Response(serializer.data, status=200)
     
     
@@ -46,7 +45,7 @@ class ChatDetailView(ListAPIView):
         return Message.objects.filter(chat=chat).order_by('timestamp')
     
     
-class CreateChatView(APIView):
+class ChatView(APIView):
     def post(self, request, recipient_id):
         sender = request.user
         recipient = get_object_or_404(User, id=recipient_id)
@@ -68,16 +67,18 @@ class CreateChatView(APIView):
         # Save the message
         message = Message.objects.create(inbox=inbox, sender=sender, content=message_text)
 
-        # Create notification
-        Notification.objects.create(
-            user=recipient, sender=sender, notification_type="message", inbox=inbox, message=message_text
+        # Use helper to create notification + send over WebSocket
+        send_message_notification(
+            user=recipient,
+            sender=sender,
+            message=message_text,
+            inbox=inbox
         )
 
-        # Send WebSocket notification
-        send_message_notification(user=recipient, sender=sender, message=message_text, inbox=inbox)
-
-        return Response({"message": "Message sent successfully.", "inbox_id": inbox.id}, status=status.HTTP_201_CREATED)
-        
+        return Response(
+            {"message": "Message sent successfully.", "inbox_id": inbox.id},
+            status=status.HTTP_201_CREATED
+        )
         
     
     def delete(self, request, chat_id):
@@ -108,40 +109,38 @@ class MessageView(APIView):
     """
     Handles message creation and retrieval.
     """
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, chat_id):
         """
-        Retrieves all messages in a chat (decrypting them).
+        Retrieves all messages in a chat, decrypting them and including sender info.
         """
-        try:
-            chat = Inbox.objects.get(id=chat_id, participants=request.user)
-        except Inbox.DoesNotExist:
-            return Response({"error": "Chat not found or access denied"}, status=403)
-
+        chat = get_object_or_404(Inbox, id=chat_id, participants=request.user)
         messages = Message.objects.filter(inbox=chat).order_by("timestamp")
-        fernet = Fernet(settings.SECRET_KEY.encode())
+        fernet = Fernet(settings.SECRET_KEY_FOR_ENCRYPTION.encode())
 
         decrypted_messages = []
         for msg in messages:
             decrypted_messages.append({
                 "id": msg.id,
-                "sender": msg.sender.id,
+                "sender_info": {
+                    "id": msg.sender.id,
+                    "username": msg.sender.username,
+                },
                 "message": fernet.decrypt(msg.encrypted_content.encode()).decode(),
                 "timestamp": msg.timestamp,
             })
+            print(decrypted_messages)
 
         return Response(decrypted_messages, status=200)
 
     def post(self, request, chat_id):
         """
-        Saves and broadcasts new messages.
+        Saves a new message and broadcasts it to WebSocket clients.
         """
-        try:
-            chat = Inbox.objects.get(id=chat_id, participants=request.user)
-        except Inbox.DoesNotExist:
-            return Response({"error": "Chat not found or access denied"}, status=403)
+        chat = get_object_or_404(Inbox, id=chat_id, participants=request.user)
 
-        data = request.data
+        data = request.data.copy()
         data["inbox"] = chat.id
         data["sender"] = request.user.id
 
@@ -149,17 +148,21 @@ class MessageView(APIView):
         if serializer.is_valid():
             message = serializer.save()
 
-            # Send decrypted message to WebSocket clients
-            fernet = Fernet(settings.SECRET_KEY.encode())
+            # Decrypt the message for WebSocket broadcast
+            fernet = Fernet(settings.SECRET_KEY_FOR_ENCRYPTION.encode())
             decrypted_text = fernet.decrypt(message.encrypted_content.encode()).decode()
 
+            # Send to WebSocket clients
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
                 f"chat_{chat.id}",
                 {
                     "type": "chat_message",
                     "message": decrypted_text,
-                    "sender": request.user.id,
+                    "sender_info": {
+                        "id": request.user.id,
+                        "username": request.user.username,
+                    },
                     "chat_id": chat.id,
                 },
             )

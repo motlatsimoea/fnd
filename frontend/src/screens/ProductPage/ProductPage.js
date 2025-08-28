@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchProductById } from "../../features/products/Product-slice";
 import Reviews from "./Reviews";
+import ImageModal from "../../components/ImageModal"; // ✅ import modal
 import "./ProductPage.css";
 
 const ProductPage = () => {
@@ -15,13 +16,14 @@ const ProductPage = () => {
   } = useSelector((state) => state.product);
 
   const [currentImage, setCurrentImage] = useState(0);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  // Compose an array of images to display: additional_images first, fallback to thumbnail
+  // Compose an array of image URLs
   const images = product
     ? product.additional_images?.length > 0
-      ? product.additional_images
+      ? product.additional_images.map((img) => img.file || img)
       : product.thumbnail
-      ? [product.thumbnail]
+      ? [product.thumbnail.file || product.thumbnail]
       : []
     : [];
 
@@ -30,10 +32,12 @@ const ProductPage = () => {
   }, [dispatch, id]);
 
   const nextImage = () => {
+    if (images.length === 0) return;
     setCurrentImage((prev) => (prev + 1) % images.length);
   };
 
   const prevImage = () => {
+    if (images.length === 0) return;
     setCurrentImage((prev) => (prev - 1 + images.length) % images.length);
   };
 
@@ -50,6 +54,8 @@ const ProductPage = () => {
             src={images[currentImage]}
             alt={`Product image ${currentImage + 1}`}
             className="product-image"
+            style={{ cursor: "pointer" }}
+            onClick={() => setModalOpen(true)} // open modal on click
           />
           <button onClick={nextImage}>&gt;</button>
         </div>
@@ -73,6 +79,15 @@ const ProductPage = () => {
 
       {/* Pass productId to Reviews so API calls work */}
       {product.id && <Reviews productId={product.id} />}
+
+      {/* ✅ Image modal */}
+      {modalOpen && (
+        <ImageModal
+          images={images} // pass the full array for slider
+          initialIndex={currentImage} // start at currently displayed image
+          onClose={() => setModalOpen(false)}
+        />
+      )}
     </div>
   );
 };

@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchSinglePost, toggleLikePost } from '../../features/blog/BlogList-slice';
 import { useParams } from 'react-router-dom';
 import CommentSection from '../../components/CommentSection/CommentSection';
 import Loader from '../../components/Loader';
 import Message from '../../components/Message';
+import ImageModal from '../../components/ImageModal';
+import ImageCarouselModal from '../../components/ImageCarouselModal';
 import './BlogPostPage.css';
 
 const BlogPostPage = () => {
@@ -12,6 +14,10 @@ const BlogPostPage = () => {
   const dispatch = useDispatch();
 
   const { singlePost, loading, error } = useSelector((state) => state.BlogList);
+
+  const [zoomImage, setZoomImage] = useState(null); // single-image zoom (profile)
+  const [showGallery, setShowGallery] = useState(false); // multi-image gallery
+  const [galleryStartIndex, setGalleryStartIndex] = useState(0);
 
   useEffect(() => {
     if (id) {
@@ -23,6 +29,11 @@ const BlogPostPage = () => {
     if (singlePost) {
       dispatch(toggleLikePost(singlePost.id));
     }
+  };
+
+  const openGalleryAt = (index) => {
+    setGalleryStartIndex(index);
+    setShowGallery(true);
   };
 
   if (loading) return <Loader />;
@@ -38,6 +49,8 @@ const BlogPostPage = () => {
               src={singlePost.authorImage || 'https://via.placeholder.com/50'}
               alt="User profile"
               className="user-image"
+              onClick={() => singlePost.authorImage && setZoomImage(singlePost.authorImage)}
+              style={{ cursor: 'pointer' }}
             />
             <div className="user-details">
               <h3 className="post-title">{singlePost.title}</h3>
@@ -53,7 +66,13 @@ const BlogPostPage = () => {
           {singlePost.media && singlePost.media.length > 0 && (
             <div className="post-images">
               {singlePost.media.map((img, i) => (
-                <img key={i} src={img.file} alt={`Image ${i + 1}`} />
+                <img
+                  key={i}
+                  src={img.file}
+                  alt={`Image ${i + 1}`}
+                  onClick={() => openGalleryAt(i)}
+                  style={{ cursor: 'pointer' }}
+                />
               ))}
             </div>
           )}
@@ -61,17 +80,11 @@ const BlogPostPage = () => {
           <button
             className="like-button"
             onClick={handleToggleLike}
-            style={{
-              cursor: 'pointer',
-              background: 'none',
-              border: 'none',
-              fontSize: '1.2rem',
-            }}
           >
             <span
               role="img"
               aria-label="heart"
-              style={{ color: singlePost.liked ? 'red' : 'darkgray' }}
+              style={{ color: singlePost.liked ? 'red' : 'darkgray', fontSize: '1.2rem' }}
             >
               ❤️
             </span>{' '}
@@ -83,6 +96,18 @@ const BlogPostPage = () => {
       </div>
 
       <CommentSection postId={id} />
+
+      {/* Single-image zoom modal */}
+      {zoomImage && <ImageModal imageUrl={zoomImage} onClose={() => setZoomImage(null)} />}
+
+      {/* Multi-image slider gallery */}
+      {showGallery && (
+        <ImageCarouselModal
+          images={singlePost.media}
+          initialIndex={galleryStartIndex}
+          onClose={() => setShowGallery(false)}
+        />
+      )}
     </div>
   );
 };

@@ -9,35 +9,38 @@ from .pagination import NotificationPagination
 class NotificationBaseView(APIView):
     permission_classes = [IsAuthenticated]
     notification_types = None  
-
+    
     def get_queryset(self):
-        return Notification.objects.filter(
-            user=self.request.user,
-            notification_type__in=self.notification_types if isinstance(self.notification_types, list) else [self.notification_types]
-        ).order_by("-timestamp")
-
+            qs = Notification.objects.filter(user=self.request.user)
+            if self.notification_types:
+                qs = qs.filter(
+                    notification_type__in=(
+                        self.notification_types
+                        if isinstance(self.notification_types, list)
+                        else [self.notification_types]
+                    )
+                )
+            return qs.order_by("-timestamp")
 
     def get(self, request):
         notifications = self.get_queryset()
 
+        # unread filter
         if request.query_params.get("unread") == "true":
             notifications = notifications.filter(is_read=False)
 
         unread_count = self.get_queryset().filter(is_read=False).count()
 
+        # paginate results
         paginator = NotificationPagination()
         page = paginator.paginate_queryset(notifications, request)
         serializer = NotificationSerializer(page, many=True)
 
-        return paginator.get_paginated_response({
-            "notifications": serializer.data,
-            "meta": {
-                "total_count": self.get_queryset().count(),
-                "unread_count": unread_count,
-                "latest_timestamp": self.get_queryset().first().timestamp if self.get_queryset().exists() else None
-            }
-        })
-
+        # Correct usage: pass serializer.data (list) into get_paginated_response
+        paginated_response = paginator.get_paginated_response(serializer.data)
+        # attach unread_count at top level
+        paginated_response.data['unread_count'] = unread_count
+        return paginated_response
 
 
 class NotificationListView(NotificationBaseView):
@@ -48,8 +51,6 @@ class InboxNotificationView(NotificationBaseView):
     notification_types = "message"
 
 
-
-    
 class MarkNotificationReadView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -61,7 +62,6 @@ class MarkNotificationReadView(APIView):
             return Response({"success": True})
         except Notification.DoesNotExist:
             return Response({"error": "Notification not found"}, status=404)
-        
 
 
 class MarkAllNotificationsReadView(APIView):
@@ -69,11 +69,15 @@ class MarkAllNotificationsReadView(APIView):
     notification_types = None  
 
     def post(self, request):
-        Notification.objects.filter(
-            user=request.user,
-            is_read=False,
-            notification_type__in=self.notification_types if isinstance(self.notification_types, list) else [self.notification_types]
-        ).update(is_read=True)
+        filters = {"user": request.user, "is_read": False}
+        if self.notification_types:
+            filters["notification_type__in"] = (
+                self.notification_types
+                if isinstance(self.notification_types, list)
+                else [self.notification_types]
+            )
+
+        Notification.objects.filter(**filters).update(is_read=True)
         return Response({"success": True, "message": "Notifications marked as read."})
 
 
@@ -83,4 +87,3 @@ class MarkAllGeneralNotificationsReadView(MarkAllNotificationsReadView):
 
 class MarkAllInboxNotificationsReadView(MarkAllNotificationsReadView):
     notification_types = "message"
-    

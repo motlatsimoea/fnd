@@ -163,9 +163,8 @@ class CommentView(APIView):
             return [AllowAny()]
         return [IsAuthenticated()]
 
+
     def post(self, request, post_id):
-        #print(f"User: {request.user} (Authenticated: {request.user.is_authenticated})")
-        #print(f"User ID: {request.user.id}")
         try:
             post = Post.objects.get(id=post_id)
         except Post.DoesNotExist:
@@ -174,29 +173,56 @@ class CommentView(APIView):
         # Prepare comment data
         data = request.data.copy()
         data['post'] = post.id
-        #data['author'] = request.user.id
-        #print("Prepared data:", data)
 
         serializer = CommentSerializer(data=data, context={'request': request})
-        
+
         if serializer.is_valid():
             comment = serializer.save()
 
-            # Send notification for top-level comments only (no parent comment)
-            if request.user != post.author and comment.parent is None:
-                message = f"{request.user.username} commented on your post: {comment.content}"
-                send_notification(
-                    user=post.author,
-                    sender=request.user,
-                    notification_type="comment",
-                    message=message,
-                    post=post,
-                    comment=comment
-                )
+            # --- CASE 1: Top-level comment ---
+            if comment.parent is None:
+                # Notify post author (if not commenting on own post)
+                if request.user != post.author:
+                    message = f"{request.user.username} commented on your post: {comment.content}"
+                    send_notification(
+                        user=post.author,
+                        sender=request.user,
+                        notification_type="comment",
+                        message=message,
+                        post=post,
+                        comment=comment
+                    )
+
+            # --- CASE 2: Reply to a comment ---
+            else:
+                # Notify parent comment author (if not replying to own comment)
+                if request.user != comment.parent.author:
+                    message = f"{request.user.username} replied to your comment: {comment.content}"
+                    send_notification(
+                        user=comment.parent.author,
+                        sender=request.user,
+                        notification_type="reply",
+                        message=message,
+                        post=post,
+                        comment=comment
+                    )
+
+                # Also notify post author (if not replying to own post)
+                if request.user != post.author:
+                    message = f"{request.user.username} replied to a comment on your post: {comment.content}"
+                    send_notification(
+                        user=post.author,
+                        sender=request.user,
+                        notification_type="comment",
+                        message=message,
+                        post=post,
+                        comment=comment
+                    )
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
     def get(self, request, post_id):
         try:

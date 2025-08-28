@@ -7,7 +7,7 @@ export const setAccessToken = (token) => {
 };
 
 const axiosInstance = axios.create({
-  withCredentials: true, // Send cookies
+  withCredentials: true, // Send cookies with every request
 });
 
 // Attach Authorization header
@@ -32,18 +32,13 @@ axiosInstance.interceptors.response.use(
         const { store } = await import('../store');
         const { refreshToken } = await import('../features/users/auth-slice');
 
-        // 🛡️ Guard clause: if user is not logged in, skip refresh
-        const state = store.getState();
-        if (!state.auth.userInfo) {
-          return Promise.reject(error); // Don't refresh if user not logged in
-        }
-
+        // ✅ Always try refreshing (cookies decide if it succeeds)
         const result = await store.dispatch(refreshToken()).unwrap();
 
         if (result?.access) {
           setAccessToken(result.access);
           originalRequest.headers['Authorization'] = `Bearer ${result.access}`;
-          return axiosInstance(originalRequest); // Retry
+          return axiosInstance(originalRequest); // Retry original request
         }
       } catch (e) {
         const { store } = await import('../store');
@@ -55,6 +50,5 @@ axiosInstance.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 
 export default axiosInstance;
