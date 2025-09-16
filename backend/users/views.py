@@ -28,12 +28,14 @@ def get_current_user(request):
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
-    
+
     def post(self, request, *args, **kwargs):
         # Run the default token generation
         response = super().post(request, *args, **kwargs)
 
         refresh_token = response.data.get("refresh")
+        access_token = response.data.get("access")
+
         if refresh_token:
             # Remove refresh token from JSON body
             response.data.pop("refresh", None)
@@ -43,42 +45,70 @@ class MyTokenObtainPairView(TokenObtainPairView):
                 key="refresh_token",
                 value=refresh_token,
                 httponly=True,
-                secure=False,   # True in Production
-                samesite="Lax",           # Change to Strict in Production
-                max_age=24 * 60 * 60,        # 1 day in seconds
-                path="/",      # Cookie sent only for refresh requests
+                secure=False,      # True in production
+                samesite=None,     # None allows cross-origin in dev
+                max_age=24 * 60 * 60,  # 1 day
+                path="/",
+            )
+
+        if access_token:
+            # Optional: store access token in HttpOnly cookie as well
+            response.set_cookie(
+                key="access_token",
+                value=access_token,
+                httponly=True,
+                secure=False,
+                samesite=None,
+                max_age=5 * 60,  # 5 minutes
+                path="/",
             )
 
         return response
-    
+
 
 class MyTokenRefreshCookieView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         refresh = request.COOKIES.get("refresh_token")
         if not refresh:
-            return Response({"detail": "No refresh token cookie set"}, status=status.HTTP_401_UNAUTHORIZED)
-        
+            return Response(
+                {"detail": "No refresh token cookie set"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
         serializer = self.get_serializer(data={"refresh": refresh})
         serializer.is_valid(raise_exception=True)
 
         data = {"access": serializer.validated_data["access"]}
 
-        # If rotating refresh tokens, send new one in cookie
+        # If rotating refresh tokens, update cookie
         if "refresh" in serializer.validated_data:
             data["refresh"] = serializer.validated_data["refresh"]
+
             response = Response(data)
             response.set_cookie(
                 key="refresh_token",
                 value=serializer.validated_data["refresh"],
                 httponly=True,
-                secure=not settings.DEBUG,
-                samesite="Lax",
+                secure=False,      # True in production
+                samesite=None,     # None allows cross-origin in dev
                 max_age=24 * 60 * 60,
                 path="/",
             )
             return response
-        
-        return Response(data)
+
+        # Optional: refresh access token cookie
+        response = Response(data)
+        response.set_cookie(
+            key="access_token",
+            value=data["access"],
+            httponly=True,
+            secure=False,
+            samesite=None,
+            max_age=5 * 60,
+            path="/",
+        )
+
+        return response
     
     
     

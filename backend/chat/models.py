@@ -33,13 +33,13 @@ class Message(models.Model):
     
     def set_content(self, content):
         """Encrypts the content before saving."""
-        fernet = Fernet(settings.SECRET_KEY.encode())  # Use the key from settings
+        fernet = Fernet(settings.SECRET_KEY_FOR_ENCRYPTION.encode())  # Use the key from settings
         self.encrypted_content = fernet.encrypt(content.encode()).decode()
         self.content = ""  # Clear plaintext content after encrypting
 
     def get_content(self):
         """Decrypts the content when accessed."""
-        fernet = Fernet(settings.SECRET_KEY.encode())
+        fernet = Fernet(settings.SECRET_KEY_FOR_ENCRYPTION.encode())
         return fernet.decrypt(self.encrypted_content.encode()).decode()
     
     def save(self, *args, **kwargs):

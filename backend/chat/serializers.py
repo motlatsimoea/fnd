@@ -45,7 +45,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
         if last_msg:
             return {
                 'sender_id': last_msg.sender.id,
-                'text': getattr(last_msg, "text", None),  # Decrypt message
+                'text': last_msg.get_content(),          #getattr(last_msg, "text", None),  # Decrypt message
                 'timestamp': last_msg.timestamp,
             }
         return None

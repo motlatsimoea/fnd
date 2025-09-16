@@ -130,14 +130,14 @@ class MessageView(APIView):
                 "message": fernet.decrypt(msg.encrypted_content.encode()).decode(),
                 "timestamp": msg.timestamp,
             })
-            print(decrypted_messages)
+            #print(decrypted_messages)
 
         return Response(decrypted_messages, status=200)
-
+    """
     def post(self, request, chat_id):
-        """
+        
         Saves a new message and broadcasts it to WebSocket clients.
-        """
+
         chat = get_object_or_404(Inbox, id=chat_id, participants=request.user)
 
         data = request.data.copy()
@@ -155,7 +155,7 @@ class MessageView(APIView):
             # Send to WebSocket clients
             channel_layer = get_channel_layer()
             async_to_sync(channel_layer.group_send)(
-                f"chat_{chat.id}",
+                f"chat_{chat.unique_key}",
                 {
                     "type": "chat_message",
                     "message": decrypted_text,
@@ -170,3 +170,4 @@ class MessageView(APIView):
             return Response(serializer.data, status=201)
 
         return Response(serializer.errors, status=400)
+"""
