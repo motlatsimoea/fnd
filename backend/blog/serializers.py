@@ -66,7 +66,7 @@ class CommentSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     author = PublicUserSerializer(read_only=True)
     media = MediaSerializer(many=True, read_only=True)
-    likes_count = serializers.SerializerMethodField()
+    like_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
     comments = CommentSerializer(many=True, read_only=True)
     time_since_posted = serializers.SerializerMethodField()
@@ -79,10 +79,10 @@ class PostSerializer(serializers.ModelSerializer):
             'id', 'title', 'content', 'author', 'tags',
             'created_at', 'updated_at', 'time_since_posted',
             'media_count', 'media',
-            'likes_count', 'is_liked', 'comments', 'authorImage'
+            'like_count', 'is_liked', 'comments', 'authorImage'
         ]
 
-    def get_likes_count(self, obj):
+    def get_like_count(self, obj):
         return obj.likes.count()
 
     def get_is_liked(self, obj):
