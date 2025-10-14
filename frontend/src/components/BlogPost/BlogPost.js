@@ -9,9 +9,11 @@ const BlogPost = ({
   id,
   title,
   author,
+  date,
   authorImage,
   images = [],        // array of { file } or strings
   text,
+  likes,
   liked = false,
   like_count = 0,
 }) => {
@@ -44,11 +46,15 @@ const BlogPost = ({
             className="author-img"
           />
         </div>
-        <span onClick={handleUserClick} className="author-name" style={{ cursor: "pointer" }}>
-          {author}
-        </span>
+        <div className="author-info">
+          <span onClick={handleUserClick} className="author-name" style={{ cursor: "pointer" }}>
+            {author}
+          </span>
+          <span className="blog-date">{date}</span>
+        </div>
       </div>
 
+      <p className="blog-text">{text}</p>
       {images?.length > 0 && (
         <div className="blog-images">
           {images.map((img, idx) => {
@@ -66,17 +72,14 @@ const BlogPost = ({
         </div>
       )}
 
-      <p className="blog-text">{text}</p>
-
       <button
         className="like-button"
         onClick={handleToggleLike}
-        style={{ cursor: "pointer", background: "none", border: "none", fontSize: "1rem" }}
       >
         <span role="img" aria-label="heart" style={{ color: liked ? "red" : "darkgray" }}>
           ❤️
         </span>{" "}
-        {like_count || 0} Likes
+        {likes || 0} Likes
       </button>
 
       {showGallery && (

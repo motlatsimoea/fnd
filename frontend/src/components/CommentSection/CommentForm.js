@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { createComment, updateComment } from '../../features/blog/Comment-slice';
 import Loader from '../Loader';
+import './CommentSection.css';
 
 const CommentForm = ({ postId, parentId = null, initialText = '', onCancel, isEditing = false }) => {
   const [text, setText] = useState(initialText);
@@ -34,17 +35,21 @@ const CommentForm = ({ postId, parentId = null, initialText = '', onCancel, isEd
   return (
     <form onSubmit={handleSubmit} className="comment-form">
       <textarea
+        className="comment-textarea"
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="Write a comment..."
+        placeholder={isEditing ? 'Edit your comment...' : 'Write a comment...'}
         disabled={loading}
       />
+
       <div className="form-actions">
-        <button type="submit" disabled={loading || !text.trim()}>
-          {isEditing ? 'Update' : 'Post'}
+        <button type="submit" disabled={loading || !text.trim()} className="btn-submit">
+          {isEditing ? '💬 Update' : '📝 Post'}
         </button>
         {onCancel && (
-          <button type="button" onClick={onCancel} disabled={loading}>Cancel</button>
+          <button type="button" onClick={onCancel} disabled={loading} className="btn-cancel">
+            ❌ Cancel
+          </button>
         )}
         {loading && <Loader />}
       </div>

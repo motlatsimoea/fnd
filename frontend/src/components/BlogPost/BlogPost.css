@@ -1,207 +1,144 @@
-.blog-section {
+/* Blog header: profile + author info */
+.blog-author {
   display: flex;
-  flex-direction: column;
-  align-items: center; /* Center posts horizontally */
-  padding: 20px;
-  gap: 20px; /* Add spacing between posts */
-}
-
-.blog-post {
-  width: 90%; /* Constrain width on larger screens */
-  max-width: 800px; /* Maximum width for the blog post */
-  background-color: #f9f9f9; /* Light background for blog post */
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.blog-header {
-  display: flex;
-  align-items: flex-start; /* Align content at the top */
-  gap: 15px;
+  align-items: center; /* Align profile picture and author info */
+  gap: 10px;
   margin-bottom: 15px;
 }
 
-.author-image {
+/* Author image */
+.author-img {
   width: 50px;
   height: 50px;
-  border-radius: 50%; /* Circular image */
+  border-radius: 50%;
+  object-fit: cover;
   border: 2px solid #2c5f2d;
 }
 
-.blog-meta {
+/* Author info container (username + date) */
+.author-info {
   display: flex;
-  flex-direction: column; /* Stack name and date vertically */
+  flex-direction: column;
 }
 
-.blog-author {
-  font-weight: bold;
+/* Username */
+.author-name {
+  font-weight: 600;
   font-size: 1rem;
   color: #333;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: 'Inter', sans-serif; /* modern clean font */
 }
 
+.blog-post {
+  width: 33%;               /* ✅ Make the entire post take one-third of the page */
+  margin: 0 0 40px 40px;      /* ✅ Center it horizontally */
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;      /* ✅ Keeps inner content neatly centered */
+}
+
+
+.blog-title { 
+  font-size: 1.5rem; 
+  color: #2c5f2d; /* Dark green for agricultural theme */ 
+  margin: 0; 
+}
+
+.blog-meta { 
+  display: flex; 
+  flex-direction: column; /* Stack name and date vertically */ 
+}
+
+.author-name:hover {
+  color: #264653;
+}
+
+/* Date below username */
 .blog-date {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #777;
+  margin-top: 2px;
+  font-family: 'Inter', sans-serif;
 }
 
-.blog-title {
-  font-size: 1.5rem;
-  color: #2c5f2d; /* Dark green for agricultural theme */
-  margin: 0;
-}
-
-.blog-images {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); /* 2x2 grid */
-  gap: 10px;
-  margin: 15px 0;
-}
-
-.blog-images img {
-  width: 100%;
-  height: auto;
-  border-radius: 5px;
-  border: 1px solid #ddd;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-}
-
+/* Blog text */
 .blog-text {
   font-size: 1rem;
+  line-height: 1.7;
   color: #444;
-  line-height: 1.6;
   margin-bottom: 15px;
   text-align: justify;
+  font-family: 'Roboto', 'Inter', sans-serif; /* clean readable font */
 }
 
-.blog-likes {
-  font-size: 1rem;
-  color: #1dc70d; /* Red color for likes */
-  font-weight: bold;
-  margin-top: 10px;
-  display: flex;
-  align-items: center; /* Align content vertically */
-  justify-content: flex-start; /* Align content to the left */
-}
-
-.blog-title-link {
-  text-decoration: none;
-  color: #2a9d8f; /* Dark green color */
-  transition: color 0.2s ease;
-}
-
-.blog-title-link:hover {
-  color: #264653; /* Even darker green for hover */
-}
-
-.author-link {
-  text-decoration: none;
-}
-
-.author-name {
-  margin-left: 10px;
-  color: #2a9d8f;
-  font-weight: bold;
-  cursor: pointer;
-  transition: color 0.2s ease;
-  text-decoration: none; /* Ensures no underline */
-}
-
-.author-name:hover {
-  color: #264653;
-}
-
-.author-img {
-  width: 50px; /* Fixed width */
-  height: 50px; /* Fixed height */
-  border-radius: 50%; /* Makes it round */
-  object-fit: cover; /* Ensures the image fits within the circle */
-}
-
-/* Add hover effect for username link */
-.author-name:hover {
-  color: #264653;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .blog-post {
-    width: 95%;
-  }
-
-  .blog-header {
-    flex-direction: column; /* Stack header on smaller screens */
-    align-items: flex-start;
-  }
-
-  .blog-images {
-    grid-template-columns: 1fr; /* Single column for images on small screens */
-  }
-}
-
-.image-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
-
-.image-modal-content {
-  position: relative;
-  max-width: 90%;
-  max-height: 90%;
-}
-
-.modal-image {
-  max-width: 100%;
-  max-height: 80vh;
-  border-radius: 8px;
-}
-
-.close-button,
-.prev-button,
-.next-button {
-  position: absolute;
-  background: rgba(0, 0, 0, 0.6);
-  border: none;
-  color: white;
-  font-size: 1.5rem;
-  padding: 10px;
-  cursor: pointer;
-  border-radius: 50%;
-}
-
-.close-button {
-  top: 10px;
-  right: 10px;
-}
-
-.prev-button {
-  top: 50%;
-  left: -50px;
-  transform: translateY(-50%);
-}
-
-.next-button {
-  top: 50%;
-  right: -50px;
-  transform: translateY(-50%);
-}
+/* Blog images - keep 2x2 grid */
+.blog-images { 
+  display: grid; 
+  grid-template-columns: repeat(2, 1fr); /* 2x2 grid */ 
+  gap: 10px; 
+  margin: 15px 0; 
+} 
 
 .blog-images img {
-  max-width: 100%;
-  border-radius: 8px;
-  margin: 5px;
-  transition: transform 0.2s;
+  width: 100%;              /* fill grid cell width */
+  aspect-ratio: 1 / 1;      /* square shape */
+  object-fit: cover;        /* crop evenly */
+  max-width: 250px;         /* cap their max size (optional tweak) */
+  justify-self: center;     /* center inside the grid cell */
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
 }
 
 .blog-images img:hover {
   transform: scale(1.05);
+}
+
+
+.image-modal-overlay { 
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  bottom: 0; 
+  background: rgba(0, 0, 0, 0.85); 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  z-index: 2000; 
+} 
+.image-modal-content { 
+  position: relative; 
+  max-width: 90%; 
+  max-height: 90%; 
+} 
+  
+.modal-image { 
+  max-width: 100%; 
+  max-height: 80vh; 
+  border-radius: 8px; 
+}
+
+/* Like button */
+.like-button {
+  background-color: #2d7d46;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 20px;
+  transition: background-color 0.2s ease;
+}
+
+.like-button:hover {
+  background-color: #2d7d46;
 }

@@ -1,138 +1,165 @@
 .profile-header {
   position: relative;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 30px;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  color: #1f2937;
 }
 
-/* Background banner */
+/* Banner background */
 .background-image {
   width: 100%;
-  height: 220px;
+  height: 240px;
   background-size: cover;
   background-position: center;
-  border-radius: 10px 10px 0 0;
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* Section containing picture + user info */
+/* Main section */
 .profile-section {
   display: flex;
+  justify-content: space-between;
   align-items: flex-start;
-  gap: 20px;
-  padding: 20px;
-  background: #fff;
-  border-radius: 0 0 10px 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  margin-top: -50px; /* overlap nicely with banner */
+  background: #ffffff;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  margin-top: -60px;
   position: relative;
   z-index: 2;
 }
 
+/* 🟩 Edit button — top right */
+.edit-button {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  background-color: #30ad5e;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-button:hover {
+  background-color: #111827;
+  transform: translateY(-1px);
+}
+
+/* 👤 Left: Profile pic + names + message button */
+.profile-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 0 0 240px;
+  gap: 12px;
+}
+
 /* Profile picture */
 .profile-picture {
-  width: 140px;
-  height: 140px;
+  width: 160px;
+  height: 160px;
   border-radius: 50%;
   background-size: cover;
   background-position: center;
   border: 4px solid #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin-top: -100px;
+  position: relative;
+  z-index: 3;
 }
 
-/* User info text */
-.user-info {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+/* Name block */
+.name-block {
+  text-align: center;
 }
 
-.user-info h2 {
-  margin: 0 0 10px;
-  font-size: 1.8rem;
-}
-
-.user-info p {
-  margin: 5px 0;
-  color: #555;
-}
-
-/* Buttons */
-.action-buttons {
-  display: flex;
-  gap: 12px;
-  margin: 10px 0;
-}
-
-.edit-button {
-  background-color: #2d7d46;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.edit-button:hover {
-  background-color: #1a5b2d;
-}
-
-.inbox-button {
-  background-color: #007bff;
-  border: none;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.inbox-button:hover {
-  background-color: #0056b3;
+.name-block h2 {
+  margin: 10px 0 4px;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: #111827;
 }
 
 .username-tag {
-  font-size: 0.9rem;
-  color: gray;
-  margin-top: -4px; /* tuck it closer under the name */
+  color: #6b7280;
+  font-size: 0.95rem;
 }
 
-/* Fullscreen dark overlay */
-.image-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
-
-/* Inner modal box */
-.image-modal-content {
-  position: relative;
-  max-width: 90%;
-  max-height: 90%;
-}
-
-/* Zoomed image */
-.image-modal-content img {
-  max-width: 100%;
-  max-height: 100%;
-  border-radius: 8px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.5);
-}
-
-/* Close button */
-.close-button {
-  position: absolute;
-  top: -40px;
-  right: -10px;
-  background: none;
-  border: none;
-  font-size: 28px;
+/* 🟩 Big “Message” button */
+.message-button {
+  background-color: #22c55e;
   color: white;
+  padding: 12px 24px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  width: 80%;
+}
+
+.message-button:hover {
+  background-color: #16a34a;
+  transform: translateY(-2px);
+}
+
+/* 🧾 Right side: bio + sectors */
+.profile-right {
+  flex: 1;
+  padding-left: 40px;
+}
+
+.user-info p {
+  margin: 0 0 10px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.sectors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sectors span {
+  background: #e8f5e9;
+  color: #2d7d46;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.90rem;
+  font-weight: 700;
+}
+
+/* 📱 Responsive */
+@media (max-width: 768px) {
+  .profile-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-left {
+    flex: none;
+    margin-bottom: 20px;
+  }
+
+  .profile-right {
+    padding-left: 0;
+  }
+
+  .edit-button {
+    top: 16px;
+    right: 16px;
+    padding: 6px 12px;
+  }
+
+  .message-button {
+    width: 100%;
+  }
 }

@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserChats } from "../../features/chats/Chat-slice";
 import { Link } from "react-router-dom";
+import "./InboxModal.css"; // ✅ Import the CSS
 
 const InboxModal = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -13,7 +14,7 @@ const InboxModal = ({ onClose }) => {
     dispatch(fetchUserChats());
   }, [dispatch]);
 
-  // 🔹 Normalize error to string for rendering
+  // Normalize error to string for rendering
   const renderError = () => {
     if (!error) return null;
     if (typeof error === "string") return error;
@@ -24,7 +25,7 @@ const InboxModal = ({ onClose }) => {
   return (
     <div className="inbox-modal">
       <div className="modal-header">
-        <h4>Your Chats</h4>
+        <h4>Messages</h4>
         <button onClick={onClose} className="close-btn">&times;</button>
       </div>
 
@@ -35,10 +36,28 @@ const InboxModal = ({ onClose }) => {
         {chatRooms.length > 0 ? (
           chatRooms.map((chat) => {
             const otherUsers = chat.participants?.filter((p) => p.id !== userId) || [];
+            const lastMessage = chat.messages?.[chat.messages.length - 1];
+            const isUnread = lastMessage?.read === false && lastMessage?.senderId !== userId;
+
             return (
-              <li key={chat.id} className="chat-item">
+              <li key={chat.id} className={`chat-item ${isUnread ? 'chat-unread' : ''}`}>
                 <Link to={`/chat/${chat.id}`} onClick={onClose}>
-                  {otherUsers.map((u) => u.username).join(", ")}
+                  {otherUsers.map((u) => (
+                    <img
+                      key={u.id}
+                      src={u.profilePicture || '/default-avatar.png'}
+                      alt={u.username}
+                      className="chat-avatar"
+                    />
+                  ))}
+                  <div className="chat-info">
+                    <span className="chat-username">
+                      {otherUsers.map(u => u.username).join(", ")}
+                    </span>
+                    <span className="chat-message">
+                      {lastMessage ? lastMessage.content : 'No messages yet...'}
+                    </span>
+                  </div>
                 </Link>
               </li>
             );

@@ -1,19 +1,22 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.conf import settings
 from django.http import HttpResponseRedirect
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes
+from django.core.mail import send_mail
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Profile, CustomUser
-from .serializers import UserSerializerWithToken, ProfileSerializer, UserSerializer
+from .serializers import ProfileSerializer, UserSerializer
 from .utils import generate_user_token, send_activation_email
 from django.urls import reverse
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+from rest_framework_simplejwt.exceptions import TokenError
 from .serializers import MyTokenObtainPairSerializer, UserSerializer
 
 User = get_user_model()
@@ -111,6 +114,56 @@ class MyTokenRefreshCookieView(TokenRefreshView):
         return response
     
     
+class RequestPasswordResetView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+        if not email:
+            return Response({"detail": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = CustomUser.objects.get(email=email)
+            token = PasswordResetTokenGenerator().make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+            reset_link = f"http://localhost:3000/reset-password/{uid}/{token}/"
+
+            send_mail(
+                "Password Reset",
+                f"Click here to reset your password: {reset_link}",
+                "noreply@example.com",
+                [email],
+            )
+        except CustomUser.DoesNotExist:
+            # Don’t reveal user existence
+            pass
+
+        return Response({"detail": "If this email exists, a reset link has been sent."})
+    
+
+class ResetPasswordConfirmView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, uidb64, token):
+        try:
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = CustomUser.objects.get(pk=uid)
+        except (CustomUser.DoesNotExist, ValueError, TypeError):
+            return Response({"error": "Invalid link"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not PasswordResetTokenGenerator().check_token(user, token):
+            return Response({"error": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_password = request.data.get("password")
+        if not new_password:
+            return Response({"error": "Password is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(new_password)
+        user.save()
+        return Response({"detail": "Password reset successful"}, status=status.HTTP_200_OK)
+
+
     
 class RegisterView(APIView):
     

@@ -1,18 +1,17 @@
+// src/components/profile-page/Tabs.jsx
 import React from 'react';
 import './ProfilePage_css/Tabs.css';
 
-const Tabs = ({ activeTab, setActiveTab }) => {
-  const tabs = ['Posts', 'Products', 'Liked Articles'];
-
+const Tabs = ({ tabs, activeTab, setActiveTab }) => {
   return (
     <div className="tabs-container">
       {tabs.map((tab) => (
         <button
-          key={tab}
-          className={activeTab === tab ? 'tab active' : 'tab'}
-          onClick={() => setActiveTab(tab)}
+          key={tab.key}
+          className={`tab ${activeTab === tab.key ? 'active' : ''}`}
+          onClick={() => setActiveTab(tab.key)}
         >
-          {tab}
+          {tab.label}
         </button>
       ))}
     </div>

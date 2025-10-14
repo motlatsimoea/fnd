@@ -194,8 +194,10 @@ const ProductForm = () => {
           marginTop: "10px",
           flexWrap: "wrap",
         }}
-      >
-        {additionalPreviews.map((url, idx) => (
+      > 
+
+        <div className="image-previews">
+          {additionalPreviews.map((url, idx) => (
           <img
             key={idx}
             src={url}
@@ -203,6 +205,8 @@ const ProductForm = () => {
             style={{ maxWidth: "100px", maxHeight: "100px", objectFit: "cover" }}
           />
         ))}
+        </div>
+        
       </div>
 
       <button type="submit" disabled={loading === "loading"}>

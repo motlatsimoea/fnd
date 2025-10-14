@@ -1,4 +1,14 @@
 /* Container */
+
+.profile-page-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  width: 90%;
+  margin: 40px auto 0 auto; /* 👈 add space at the top */
+  align-items: start;
+}
+
 .profile-page {
   display: flex;
   flex-direction: column;

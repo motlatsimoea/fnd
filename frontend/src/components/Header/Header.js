@@ -99,7 +99,7 @@ const Header = () => {
   return (
     <nav className="navbar">
       <Link to="/" className="nav-item">
-        <div className="logo">Logo</div>
+        <div className="logo">fnd</div>
       </Link>
 
       {userInfo ? (

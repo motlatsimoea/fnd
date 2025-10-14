@@ -102,6 +102,9 @@ const LoginPage = () => {
       <p className="register-link">
         Don't have an account? <Link to="/register">Register here</Link>.
       </p>
+      <p className="register-link">
+        <Link to="/forgot-password">Forgot your password?</Link>
+      </p>
     </div>
   );
 };

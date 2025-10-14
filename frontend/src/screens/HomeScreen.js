@@ -35,7 +35,7 @@ const HomeScreen = () => {
               authorImage={post.authorImage}
               images={post.media}
               text={post.content}
-              likes={post.likes_count}
+              likes={post.like_count}
               liked={post.liked_by_user}
             />
           ))

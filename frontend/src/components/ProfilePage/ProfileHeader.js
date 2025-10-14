@@ -1,14 +1,13 @@
 import React, { useState } from "react";
-import { FaEnvelope } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import ProfileEditModal from "./ProfileEditModal";
-import ImageModal from "../ImageModal"; // ✅ import shared modal
+import ImageModal from "../ImageModal";
 import "./ProfilePage_css/ProfileHeader.css";
 
 const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
-  const [zoomedImage, setZoomedImage] = useState(null); // track modal image
+  const [zoomedImage, setZoomedImage] = useState(null);
 
   if (!user || !currentUser) return null;
 
@@ -21,6 +20,7 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
     phone_number,
     profile_picture,
     background_picture,
+    sectors,
   } = user;
 
   const displayName =
@@ -30,8 +30,11 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
 
   const isOwnProfile = currentUser.username === username;
 
-  const handleInboxClick = () => {
-    const chatKey = [currentUser.username, username].filter(Boolean).sort().join("-");
+  const handleMessageClick = () => {
+    const chatKey = [currentUser.username, username]
+      .filter(Boolean)
+      .sort()
+      .join("-");
     navigate(`/chat/${chatKey}`);
   };
 
@@ -44,7 +47,7 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
 
   return (
     <div className="profile-header">
-      {/* Background / Cover Image */}
+      {/* Background banner */}
       <div
         className="background-image"
         style={{
@@ -57,47 +60,57 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
         title="Click to zoom"
       />
 
+      {/* Profile content */}
       <div className="profile-section">
-        {/* Profile Picture */}
-        <div
-          className="profile-picture"
-          style={{
-            backgroundImage: `url(${profile_picture || "/default_profile.png"})`,
-            cursor: "pointer",
-          }}
-          onClick={() =>
-            setZoomedImage(profile_picture || "/default_profile.png")
-          }
-          title="Click to zoom"
-        />
+        {/* Top-right edit button */}
+        {isOwnProfile && (
+          <button className="edit-button" onClick={handleEditClick}>
+            Edit Profile
+          </button>
+        )}
 
-        <div className="user-info">
-          <h2>{displayName}</h2>
-          <p className="username-tag">@{username}</p>
-          {phone_number && <p>📞 {phone_number}</p>}
+        {/* Left side: profile picture, name, message button */}
+        <div className="profile-left">
+          <div
+            className="profile-picture"
+            style={{
+              backgroundImage: `url(${profile_picture || "/default_profile.png"})`,
+              cursor: "pointer",
+            }}
+            onClick={() =>
+              setZoomedImage(profile_picture || "/default_profile.png")
+            }
+            title="Click to zoom"
+          />
 
-          <div className="action-buttons">
-            <button
-              className="inbox-button"
-              onClick={handleInboxClick}
-              title="Message User"
-            >
-              <FaEnvelope />
-            </button>
-
-            {isOwnProfile && (
-              <button className="edit-button" onClick={handleEditClick}>
-                Edit Profile
-              </button>
-            )}
+          <div className="name-block">
+            <h2>{displayName}</h2>
+            <p className="username-tag">@{username}</p>
           </div>
 
-          {bio && <p>{bio}</p>}
+          <button className="message-button" onClick={handleMessageClick}>
+            Message
+          </button>
+        </div>
+
+        {/* Right side info */}
+        <div className="profile-right">
+          {bio && <p className="bio">{bio}</p>}
+
+          {sectors && sectors.length > 0 && (
+            <div className="sectors">
+              {sectors.map((sector, index) => (
+                <span key={index}>{sector}</span>
+              ))}
+            </div>
+          )}
+
+          {phone_number && <p>📞 {phone_number}</p>}
           {location && <p>📍 {location}</p>}
         </div>
       </div>
 
-      {/* Profile Edit Modal */}
+      {/* Edit Profile Modal */}
       {isEditing && (
         <ProfileEditModal
           user={user}
@@ -106,7 +119,7 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
         />
       )}
 
-      {/* ✅ Use shared ImageModal */}
+      {/* Image Zoom Modal */}
       {zoomedImage && (
         <ImageModal imageUrl={zoomedImage} onClose={() => setZoomedImage(null)} />
       )}

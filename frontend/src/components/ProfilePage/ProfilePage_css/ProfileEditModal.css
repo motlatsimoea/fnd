@@ -1,3 +1,6 @@
+/* ProfileEditModal.css */
+
+/* Overlay */
 .modal-overlay {
   position: fixed;
   top: 0; left: 0;
@@ -9,38 +12,104 @@
   z-index: 1000;
 }
 
+/* Modal Content */
 .modal-content {
-  background: white;
-  padding: 20px;
-  width: 400px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  background: #fff;
+  padding: 30px 25px;
+  width: 450px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  font-family: 'Arial', sans-serif;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
+/* Modal Heading */
 .modal-content h2 {
   margin-top: 0;
+  margin-bottom: 20px;
+  text-align: center;
+  color: #2d7d46;
 }
 
+/* Form labels and inputs */
+.modal-content label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #333;
+  margin-top: 15px;
+}
+
+.modal-content input[type="text"],
+.modal-content input[type="email"],
+.modal-content input[type="file"],
+.modal-content textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.modal-content textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.modal-content input:focus,
+.modal-content textarea:focus {
+  outline: none;
+  border-color: #2d7d46;
+  box-shadow: 0 0 5px rgba(45,125,70,0.3);
+}
+
+/* Buttons */
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 15px;
+  gap: 12px;
+  margin-top: 20px;
 }
 
 .cancel-btn {
   background: #ccc;
-  padding: 6px 12px;
+  color: #333;
+  padding: 8px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #b3b3b3;
 }
 
 .save-btn {
-  background: #007bff;
-  color: white;
-  padding: 6px 12px;
+  background: #2d7d46;
+  color: #fff;
+  padding: 8px 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
+  transition: background 0.2s;
+}
+
+.save-btn:hover {
+  background: #246139;
+}
+
+/* File input preview spacing */
+.modal-content input[type="file"] {
+  padding: 6px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 500px) {
+  .modal-content {
+    width: 90%;
+    padding: 20px;
+  }
 }

@@ -10,6 +10,7 @@ from market.serializers import ProductSerializer
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", required=False)
     email = serializers.EmailField(source="user.email", required=False)
+    sectors = serializers.SerializerMethodField()
     posts = PostSerializer(many=True, read_only=True, source="user.posts")
     products = ProductSerializer(many=True, read_only=True, source="user.products")
 
@@ -19,8 +20,13 @@ class ProfileSerializer(serializers.ModelSerializer):
             'username', 'email',
             'first_name', 'last_name', 'location',
             'phone_number', 'bio', 'profile_picture', 'background_picture',
+            'sectors',
             'posts', 'products'
         ]
+        
+    def get_sectors(self, obj):
+        """Return user's sector names"""
+        return [sector.name for sector in obj.user.sectors.all()]
         
     def update(self, instance, validated_data):
         # Handle nested user fields (username, email)

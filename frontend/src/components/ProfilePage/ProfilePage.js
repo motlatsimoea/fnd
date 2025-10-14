@@ -5,11 +5,12 @@ import { fetchProfile, updateProfile } from "../../features/users/profile-slice"
 import ProfileHeader from "./ProfileHeader";
 import ContentSection from "./ContentSection";
 import Sidebar from "./Sidebar";
+import Tabs from "./Tabs";
 import "./ProfilePage_css/ProfilePage.css";
 
 const ProfilePage = () => {
   const dispatch = useDispatch();
-  const { username: routeUsername } = useParams(); // <-- get username from URL
+  const { username: routeUsername } = useParams();
   const { profile, loading: profileLoading, error } = useSelector(
     (state) => state.profile
   );
@@ -18,7 +19,12 @@ const ProfilePage = () => {
 
   const [activeTab, setActiveTab] = useState("posts");
 
-  // Fetch profile on load or when routeUsername changes
+  const tabList = [
+    { key: "posts", label: "Posts" },
+    { key: "products", label: "Products" },
+    { key: "liked", label: "Liked Posts" },
+  ];
+
   useEffect(() => {
     if (currentUser) {
       const userToFetch = routeUsername || currentUser.username;
@@ -26,7 +32,6 @@ const ProfilePage = () => {
     }
   }, [dispatch, routeUsername, currentUser]);
 
-  // Handler to save profile edits
   const handleSaveProfile = (formData) => {
     if (!profile) return;
     const usernameToUpdate = profile.user?.username || profile.username;
@@ -41,39 +46,19 @@ const ProfilePage = () => {
 
   return (
     <div className="profile-page-grid">
-      {/* Main content 2/3 */}
       <div className="profile-main">
         <ProfileHeader
           user={profile}
           currentUser={currentUser}
-          onSaveProfile={handleSaveProfile} // pass handler
+          onSaveProfile={handleSaveProfile}
         />
 
-        <div className="tabs">
-          <button
-            className={activeTab === "posts" ? "active" : ""}
-            onClick={() => setActiveTab("posts")}
-          >
-            Posts
-          </button>
-          <button
-            className={activeTab === "products" ? "active" : ""}
-            onClick={() => setActiveTab("products")}
-          >
-            Products
-          </button>
-          <button
-            className={activeTab === "liked" ? "active" : ""}
-            onClick={() => setActiveTab("liked")}
-          >
-            Liked Posts
-          </button>
-        </div>
+        {/* Reusable Tabs */}
+        <Tabs tabs={tabList} activeTab={activeTab} setActiveTab={setActiveTab} />
 
         <ContentSection activeTab={activeTab} profile={profile} />
       </div>
 
-      {/* Sidebar 1/3 */}
       <div className="profile-sidebar">
         <Sidebar />
       </div>

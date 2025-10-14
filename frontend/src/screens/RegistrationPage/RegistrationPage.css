@@ -1,114 +1,35 @@
+/* --- Base Layout --- */
 .registration-page {
-    max-width: 500px;
-    margin: 0 auto;
-    padding: 20px;
-    text-align: center;
-    font-family: Arial, sans-serif;
-  }
-  
-  .registration-page h1 {
-    font-size: 2rem;
-    margin-bottom: 20px;
-  }
-  
-  .registration-form {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .registration-form label {
-    margin-top: 10px;
-    text-align: left;
-  }
-  
-  .registration-form input {
-    padding: 10px;
-    margin-top: 5px;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-  }
-  
-  .farming-sectors {
-    margin-top: 15px;
-    text-align: left;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr); /* 2 columns */
-    gap: 10px;
-    justify-items: start; /* Align checkboxes to the left */
-  }
-  
-  .farming-sectors legend {
-    font-size: 1.1rem;
-    font-weight: bold;
-    margin-bottom: 10px;
-    grid-column: span 2; /* Make legend span both columns */
-  }
-  
-  .farming-sectors label {
-    display: flex;
-    align-items: center;
-    margin-top: 5px;
-  }
-  
-  .submit-button {
-    margin-top: 20px;
-    padding: 10px 20px;
-    background-color: #2ecc71;
-    color: white;
-    font-size: 1rem;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  
-  .submit-button:hover {
-    background-color: #27ae60;
-  }
-  
-  .login-link {
-    margin-top: 20px;
-  }
-  
-  .login-link a {
-    color: #3498db;
-    text-decoration: none;
-  }
-  
-  .login-link a:hover {
-    text-decoration: underline;
-  }
-  
-
-/* Error Messages */
-.error {
-  color: red;
-  font-size: 0.9rem;
-  margin-top: 5px;
-  text-align: left; /* Align with input fields */
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+  font-family: Arial, sans-serif;
 }
 
-/* Password Strength Indicator */
-.strength {
-  font-size: 0.9rem;
-  margin-top: 5px;
-  text-align: left; /* Align with input fields */
+/* --- Header --- */
+.registration-page h1 {
+  font-size: 2rem;
+  margin-bottom: 25px;
+  color: #2e7d32; /* same green tone used across your site */
 }
 
-.strength.weak {
-  color: red;
+/* --- Form Layout --- */
+.registration-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* cleaner spacing between inputs */
 }
 
-.strength.moderate {
-  color: orange;
+/* --- Labels (now bold) --- */
+.registration-form label {
+  margin-top: 10px;
+  text-align: left;
+  font-weight: bold;           /* ✅ Make labels bold */
+  color: #333;
 }
 
-.strength.strong {
-  color: green;
-}
-
-/* Adjustments for Inputs */
+/* --- Inputs --- */
 .registration-form input {
   padding: 10px;
   margin-top: 5px;
@@ -116,10 +37,96 @@
   border: 1px solid #ccc;
   border-radius: 5px;
   outline: none;
-  transition: border-color 0.3s ease; /* Smooth transition for focus */
+  transition: border-color 0.3s ease;
 }
 
 .registration-form input:focus {
-  border-color: #3498db; /* Highlight border on focus */
-  box-shadow: 0 0 5px rgba(52, 152, 219, 0.5); /* Subtle glow effect */
+  border-color: #2e7d32;       /* ✅ green highlight */
+  box-shadow: 0 0 5px rgba(46, 125, 50, 0.4);
+}
+
+/* --- Farming Sectors --- */
+.farming-sectors {
+  margin-top: 20px;
+  text-align: left;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); /* still 2 columns */
+  gap: 8px 20px;              /* ✅ improved spacing: 8px row, 20px col */
+  background-color: #f9f9f9;
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.farming-sectors legend {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  grid-column: span 2;
+  color: #2e7d32;
+}
+
+.farming-sectors label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #444;
+}
+
+/* --- Password Strength --- */
+.strength {
+  font-size: 0.9rem;
+  margin-top: 3px;
+  text-align: left;
+  font-weight: bold;         /* ✅ make bold */
+}
+
+.strength.weak {
+  color: red;
+}
+.strength.moderate {
+  color: orange;
+}
+.strength.strong {
+  color: green;
+}
+
+/* --- Register Button --- */
+.registration-form button {
+  margin-top: 25px;          /* ✅ space between last input and button */
+  padding: 12px;
+  background-color: #2e7d32; /* ✅ same green used globally */
+  color: white;
+  font-size: 1.05rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.registration-form button:hover {
+  background-color: #2ecc71;
+  transform: translateY(-1px);
+}
+
+.registration-form button:disabled {
+  background-color: #a5d6a7;
+  cursor: not-allowed;
+}
+
+/* --- Login Link --- */
+.login-link {
+  margin-top: 20px;
+}
+
+.login-link a {
+  color: #2e7d32;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.login-link a:hover {
+  text-decoration: underline;
 }

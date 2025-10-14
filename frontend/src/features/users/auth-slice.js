@@ -30,6 +30,32 @@ export const login = createAsyncThunk(
   }
 );
 
+// RESET PASSWORD REQUEST
+export const requestPasswordReset = createAsyncThunk(
+  "auth/requestPasswordReset",
+  async (email, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post("/password-reset/", { email });
+      return data.detail;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail || "Error sending reset link");
+    }
+  }
+);
+
+// RESET PASSWORD CONFIRM
+export const resetPasswordConfirm = createAsyncThunk(
+  "auth/resetPasswordConfirm",
+  async ({ uid, token, password }, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post(`/password-reset-confirm/${uid}/${token}/`, { password });
+      return data.detail;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.error || "Error resetting password");
+    }
+  }
+);
+
 // --- REFRESH ---
 export const refreshToken = createAsyncThunk(
   'auth/refreshToken',

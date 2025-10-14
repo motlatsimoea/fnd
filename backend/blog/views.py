@@ -232,7 +232,7 @@ class CommentView(APIView):
 
         # Fetch top-level comments (those with no parent comment)
         comments = post.comments.filter(parent__isnull=True)
-        serializer = CommentSerializer(comments, many=True)
+        serializer = CommentSerializer(comments, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -247,7 +247,8 @@ class CommentDetailView(APIView):
         # Retrieve a specific comment and its replies
         try:
             comment = Comment.objects.get(id=id, post__id=post_id)
-            serializer = CommentSerializer(comment)
+            serializer = CommentSerializer(comment, context={'request': request})
+            print("🔍 Serializer Data:", serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Comment.DoesNotExist:
             return Response({'error': 'Comment not found.'}, status=status.HTTP_404_NOT_FOUND)
@@ -265,9 +266,9 @@ class CommentDetailView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
     def delete(self, request, post_id, id):
-        # Delete a specific comment
         try:
             comment = Comment.objects.get(id=id, post__id=post_id, author=request.user)
             comment.delete()

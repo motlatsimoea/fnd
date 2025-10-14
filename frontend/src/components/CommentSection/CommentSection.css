@@ -1,107 +1,277 @@
-/* General Comment Section Styles */
+/* ============================
+   General Comment Section Styles
+============================ */
 .comment-section {
-    background-color: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    margin: 20px 0;
-  }
-  
-  .comment-form,
-  .reply-form {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 15px;
-  }
-  
-  .comment-input,
-  .reply-input {
-    width: 100%;
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; /* Better font */
+}
+
+/* ============================
+   Comment & Reply Form
+============================ */
+.comment-form,
+.reply-form {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.comment-input,
+.reply-input,
+.comment-textarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  resize: vertical;
+  background-color: #f9f9f9;
+  outline: none;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.comment-input:focus,
+.reply-input:focus,
+.comment-textarea:focus {
+  border-color: #2d7d46;
+  background-color: #fff;
+}
+
+.comment-submit,
+.reply-submit,
+.btn-submit,
+.btn-cancel {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.comment-submit,
+.reply-submit,
+.btn-submit {
+  background-color: #2d7d46;
+  color: #fff;
+}
+
+.comment-submit:hover,
+.reply-submit:hover,
+.btn-submit:hover {
+  background-color: #23643b;
+}
+
+.btn-cancel {
+  background-color: #e9ecef;
+  color: #333;
+}
+
+.btn-cancel:hover {
+  background-color: #d6d6d6;
+}
+
+/* ============================
+   Comments List
+============================ */
+.comments-list {
+  margin-top: 25px; /* more space between comment section and previous content */
+}
+
+/* ============================
+   Individual Comment
+============================ */
+.comment-item {
+  margin-bottom: 25px; /* space between comments */
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================
+   Comment Header
+============================ */
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 12px; /* space between avatar and username */
+  margin-bottom: 6px;
+}
+
+.comment-avatar,
+.comment-avatar-fallback {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+  background-color: #e0e0e0;
+  color: #2a9d8f;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.comment-user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.comment-username {
+  font-weight: 600;
+  color: #2a9d8f;
+  font-size: 1rem;
+}
+
+.comment-time {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* ============================
+   Comment Body & Content
+============================ */
+.comment-body {
+  margin-left: 54px; /* aligns text with username instead of avatar */
+  font-size: 0.98rem;
+  color: #333;
+  line-height: 1.5;
+}
+
+.comment-content {
+  margin: 8px 0 10px;
+  padding: 10px 12px;
+  background: #fdfdfd;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+/* ============================
+   Replies Section
+============================ */
+.comment-replies {
+  border-left: 2px solid #e5e7eb;
+  padding-left: 10px;
+  margin-top: 10px;
+  margin-left: 50px; /* indent replies more smoothly */
+}
+
+.reply {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.reply strong {
+  color: #2a9d8f;
+}
+
+.reply div {
+  margin-left: 10px;
+}
+
+/* ============================
+   Buttons (Reply, Edit, Delete)
+============================ */
+.comment-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 10px;
+}
+
+.comment-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 16px;
+  border: none;
+  cursor: pointer;
+  background: #f3f4f6;
+  color: #4b5563;
+  transition: all 0.2s ease;
+}
+
+.comment-btn svg {
+  font-size: 0.9rem;
+}
+
+.comment-btn:hover {
+  transform: translateY(-1px);
+}
+
+.reply-btn {
+  color: #2563eb;
+}
+
+.reply-btn:hover {
+  background: #e0ecff;
+}
+
+.edit-btn {
+  color: #059669;
+}
+
+.edit-btn:hover {
+  background: #d1fae5;
+}
+
+.delete-btn {
+  color: #dc2626;
+}
+
+.delete-btn:hover {
+  background: #fee2e2;
+}
+
+/* ============================
+   Collapsible Replies
+============================ */
+.comment-toggle {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: #2563eb;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.comment-toggle:hover {
+  text-decoration: underline;
+  color: #1d4ed8;
+}
+
+/* ============================
+   Responsive Adjustments
+============================ */
+@media (max-width: 640px) {
+  .comment-form {
     padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    margin-bottom: 10px;
-    font-size: 16px;
-    resize: vertical;
   }
-  
-  .comment-submit,
-  .reply-submit {
-    background-color: #2a9d8f;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
+
+  .comment-textarea {
+    font-size: 14px;
   }
-  
-  .comment-submit:hover,
-  .reply-submit:hover {
-    background-color: #264653;
+
+  .btn-submit,
+  .btn-cancel {
+    padding: 7px 12px;
+    font-size: 13px;
   }
-  
-  .comments-list {
-    margin-top: 20px;
+
+  .comment-body {
+    margin-left: 48px;
   }
-  
-  .comment {
-    background-color: #ffffff;
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-  
-  .comment-header {
-    font-weight: bold;
-    color: #2a9d8f;
-  }
-  
-  .comment-content {
-    margin: 10px 0;
-  }
-  
-  .replies {
-    margin-left: 20px;
-    font-style: italic;
-    color: #6c757d;
-  }
-  
-  .reply {
-    margin-bottom: 10px;
-  }
-  
-  .reply strong {
-    color: #2a9d8f;
-  }
-  
-  .profile-picture {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-right: 10px;
-  }
-  
-  .profile-picture-reply {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    margin-right: 10px;
-  }
-  
-  .comment-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-  
-  .reply {
-    display: flex;
-    align-items: center;
-    margin: 5px 0;
-  }
-  
-  .reply div {
-    margin-left: 10px;
-  }
-  
+}

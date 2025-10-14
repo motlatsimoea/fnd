@@ -27,15 +27,17 @@ class LikeSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     replies = serializers.SerializerMethodField()
     author_username = serializers.CharField(source='author.username', read_only=True) 
+    author_profile_image = serializers.SerializerMethodField()
     time_since_posted = serializers.SerializerMethodField()
 
     class Meta:
         model = Comment
         fields = [
-            'id', 'post', 'author', 'author_username', 'time_since_posted',
+            'id', 'post', 'author', 'author_username', 'author_profile_image', 'time_since_posted',
             'content', 'parent', 'replies', 'created_at', 'updated_at'
         ]
         read_only_fields = ['author', 'created_at', 'updated_at']
+        
 
     def create(self, validated_data):
         request = self.context.get('request')
@@ -50,6 +52,17 @@ class CommentSerializer(serializers.ModelSerializer):
         if parent and parent.post != post:
             raise serializers.ValidationError("Parent comment must belong to the same post.")
         return data
+    
+    
+    def get_author_profile_image(self, obj):
+        request = self.context.get('request')
+        try:
+            profile = obj.author.profile
+            if profile and profile.profile_picture:
+                return request.build_absolute_uri(profile.profile_picture.url)
+        except Exception:
+            pass
+        return None
 
     def get_replies(self, obj):
         if obj.replies.exists():

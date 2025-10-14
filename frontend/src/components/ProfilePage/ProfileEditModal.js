@@ -1,6 +1,62 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import "./ProfilePage_css/ProfileEditModal.css";
+
+// Lazy-load Google Maps script
+const loadGoogleMapsScript = (apiKey) => {
+  return new Promise((resolve, reject) => {
+    if (document.getElementById("google-maps-script")) {
+      resolve();
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.id = "google-maps-script";
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject("Google Maps script failed to load");
+    document.body.appendChild(script);
+  });
+};
+
+// LocationInput that waits for Google Maps script
+const LocationInput = ({ value, onChange, placeholder }) => {
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    const initAutocomplete = () => {
+      if (!window.google || !inputRef.current) return;
+
+      const autocomplete = new window.google.maps.places.Autocomplete(
+        inputRef.current,
+        { types: ["geocode"] } // country, city, village
+      );
+
+      autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        if (place.formatted_address) {
+          onChange(place.formatted_address);
+        } else if (place.name) {
+          onChange(place.name);
+        }
+      });
+    };
+
+    initAutocomplete();
+  }, [onChange]);
+
+  return (
+    <input
+      ref={inputRef}
+      type="text"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder || "Enter your location"}
+    />
+  );
+};
 
 const ProfileEditModal = ({ user, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -14,6 +70,15 @@ const ProfileEditModal = ({ user, onClose, onSave }) => {
     profile_picture: null,
     background_picture: null,
   });
+
+  const [mapsLoaded, setMapsLoaded] = useState(false);
+
+  // Load Google Maps script when modal mounts
+  useEffect(() => {
+    loadGoogleMapsScript("YOUR_API_KEY_HERE")
+      .then(() => setMapsLoaded(true))
+      .catch((err) => console.error(err));
+  }, []);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -34,7 +99,6 @@ const ProfileEditModal = ({ user, onClose, onSave }) => {
       <div className="modal-content">
         <h2>Edit Profile</h2>
         <form onSubmit={handleSubmit}>
-          
           <label>
             Username
             <input
@@ -77,12 +141,23 @@ const ProfileEditModal = ({ user, onClose, onSave }) => {
 
           <label>
             Location
-            <input
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-            />
+            {mapsLoaded ? (
+              <LocationInput
+                value={formData.location}
+                onChange={(val) =>
+                  setFormData((prev) => ({ ...prev, location: val }))
+                }
+              />
+            ) : (
+              <input
+                type="text"
+                value={formData.location}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, location: e.target.value }))
+                }
+                placeholder="Enter your location"
+              />
+            )}
           </label>
 
           <label>

@@ -24,6 +24,8 @@ import Chat from './components/chat/chat';
 
 import LoginPage from './screens/LoginPage/LoginPage';
 import ProfilePage from './components/ProfilePage/ProfilePage';
+import ForgotPasswordPage from './screens/PassowordReset/ForgotPasswordPage'
+import ResetPasswordPage from './screens/PassowordReset/ResetPasswordPage'
 
 import Loader from './components/Loader';
 
@@ -74,6 +76,10 @@ const App = () => {
 
         {/* Login Page Route */}
         <Route path="/login" element={<LoginPage />} />
+
+        {/* Reset Password Routes */}
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
 
         {/* Blog Routes */}
         <Route path="/" element={<HomeScreen />} />
