@@ -1,22 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchSinglePost, toggleLikePost } from '../../features/blog/BlogList-slice';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import CommentSection from '../../components/CommentSection/CommentSection';
 import Loader from '../../components/Loader';
 import Message from '../../components/Message';
 import ImageModal from '../../components/ImageModal';
 import ImageCarouselModal from '../../components/ImageCarouselModal';
+import { FaArrowLeft } from 'react-icons/fa';
 import './BlogPostPage.css';
 
 const BlogPostPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const { singlePost, loading, error } = useSelector((state) => state.BlogList);
 
-  const [zoomImage, setZoomImage] = useState(null); // single-image zoom (profile)
-  const [showGallery, setShowGallery] = useState(false); // multi-image gallery
+  const [zoomImage, setZoomImage] = useState(null);
+  const [showGallery, setShowGallery] = useState(false);
   const [galleryStartIndex, setGalleryStartIndex] = useState(0);
 
   useEffect(() => {
@@ -42,12 +44,17 @@ const BlogPostPage = () => {
 
   return (
     <div className="blog-post-page">
+      {/* 🔙 Back Arrow Button */}
+      <button className="back-arrow" onClick={() => navigate(-1)} aria-label="Go back">
+        <FaArrowLeft />
+      </button>
+
       <div className="blog-post">
         <div className="post-header">
           <div className="user-info">
             <img
               src={singlePost.authorImage || 'https://via.placeholder.com/50'}
-              alt="User profile"
+              alt={`${singlePost.author.username}'s profile`}
               className="user-image"
               onClick={() => singlePost.authorImage && setZoomImage(singlePost.authorImage)}
               style={{ cursor: 'pointer' }}
@@ -69,7 +76,7 @@ const BlogPostPage = () => {
                 <img
                   key={i}
                   src={img.file}
-                  alt={`Image ${i + 1}`}
+                  alt={`Post image ${i + 1}`}
                   onClick={() => openGalleryAt(i)}
                   style={{ cursor: 'pointer' }}
                 />
@@ -97,10 +104,7 @@ const BlogPostPage = () => {
 
       <CommentSection postId={id} />
 
-      {/* Single-image zoom modal */}
       {zoomImage && <ImageModal imageUrl={zoomImage} onClose={() => setZoomImage(null)} />}
-
-      {/* Multi-image slider gallery */}
       {showGallery && (
         <ImageCarouselModal
           images={singlePost.media}

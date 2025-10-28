@@ -1,27 +1,194 @@
 .product-page {
+  max-width: 1000px;
+  margin: 40px auto;
+  padding: 30px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  font-family: "Inter", sans-serif;
+  color: #333;
+}
+
+/* --- Product Slider --- */
+.product-slider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.product-slider button {
+  background: #27ae60;
+  color: #fff;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 22px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.product-slider button:hover {
+  background: #219150;
+}
+
+.product-slider img {
+  width: 350px;
+  height: 350px;
+  object-fit: cover;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  margin: 0 20px;
+  transition: transform 0.3s ease;
+}
+
+.product-slider img:hover {
+  transform: scale(1.03);
+}
+
+/* --- Product Info --- */
+.product-page h1 {
+  font-size: 2rem;
+  color: #27ae60;
+  margin-bottom: 10px;
+}
+
+.product-page p {
+  line-height: 1.6;
+  margin: 8px 0;
+}
+
+.price {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #27ae60;
+  margin-top: 10px;
+}
+
+.seller a {
+  color: #27ae60;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.seller a:hover {
+  text-decoration: underline;
+}
+
+/* --- Reviews Section --- */
+.reviews {
+  margin-top: 40px;
+  border-top: 1px solid #eaeaea;
+  padding-top: 20px;
+}
+
+.reviews h3 {
+  color: #27ae60;
+  font-size: 1.3rem;
+  margin-bottom: 16px;
+}
+
+.review {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 15px 20px;
+  margin-bottom: 15px;
+  transition: box-shadow 0.3s ease;
+}
+
+.review:hover {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+.review .author {
+  font-weight: 600;
+  color: #27ae60;
+}
+
+.review .date {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.review .content {
+  margin-top: 8px;
+  color: #444;
+}
+
+@media (max-width: 768px) {
+  .product-slider img {
+    width: 90%;
+    height: auto;
+  }
+  .product-page {
     padding: 20px;
   }
-  
-  .product-slider {
-    display: flex;
-    align-items: center;
-  }
-  
-  .product-slider img {
-    width: 300px;
-    height: 300px;
-    margin: 0 10px;
-  }
-  
-  h1, .price {
-    color: #27ae60;
-  }
-  
-  .reviews {
-    margin-top: 20px;
-  }
-  
-  .review {
-    margin-bottom: 10px;
-  }
-  
+}
+
+
+/* --- Edit/Delete Buttons --- */
+.product-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.product-actions button {
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.edit-btn {
+  background-color: #27ae60;
+  color: white;
+}
+
+.edit-btn:hover {
+  background-color: #219150;
+  transform: scale(1.03);
+}
+
+.delete-btn {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #c0392b;
+  transform: scale(1.03);
+}
+
+
+/* --- Back Button --- */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #27ae60;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+  margin-bottom: 20px;
+}
+
+.back-btn:hover {
+  background: #219150;
+  transform: translateX(-3px);
+}
+
+.back-btn svg {
+  font-size: 1rem;
+}

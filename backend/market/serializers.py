@@ -14,9 +14,10 @@ class ReviewSerializer(serializers.ModelSerializer):
     # include parent so replies can be created / validated
     parent = serializers.PrimaryKeyRelatedField(queryset=Review.objects.all(), required=False, allow_null=True)
     author = UserSerializer(read_only=True) 
+    profile_image = serializers.SerializerMethodField()
     class Meta:
         model = Review
-        fields = ['id', 'author', 'rating', 'content', 'created_at', 'parent', 'product']
+        fields = ['id', 'author', 'rating', 'content', 'created_at', 'profile_image', 'parent', 'product']
         read_only_fields = ['author', 'created_at', 'product']
         # include 'product' read-only for clarity in responses; if you want it writable remove from read_only_fields
 
@@ -24,6 +25,16 @@ class ReviewSerializer(serializers.ModelSerializer):
         if not (1 <= value <= 5):
             raise serializers.ValidationError("Rating must be between 1 and 5.")
         return value
+    
+    def get_profile_image(self, obj):
+        request = self.context.get('request')
+        try:
+            profile = obj.author.profile
+            if profile and profile.profile_picture:
+                return request.build_absolute_uri(profile.profile_picture.url)
+        except Exception:
+            pass
+        return None
     
     def validate(self, data):
         parent = data.get('parent', None)
@@ -42,8 +53,8 @@ class ProductImageSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'image']
         
     def validate(self, attrs):
-        product = self.context['product']
-        if product.additional_images.count() >= 4:
+        product = self.context.get('product')
+        if product and product.additional_images.count() >= 4:
             raise serializers.ValidationError("A product can only have up to 4 additional images.")
         return attrs
         

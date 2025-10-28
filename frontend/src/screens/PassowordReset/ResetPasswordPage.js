@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { resetPasswordConfirm } from "../../features/users/auth-slice";
 import Message from "../../components/Message";
+import "./ResetPasswordPage.css";
 
 const ResetPasswordPage = () => {
   const { uid, token } = useParams();
@@ -21,22 +22,33 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="login-page">
-      <h1>Set New Password</h1>
-      {resetStatus && <Message variant="success">{resetStatus}</Message>}
-      {error && <Message variant="danger">{error}</Message>}
-      <form onSubmit={handleSubmit} className="login-form">
-        <input
-          type="password"
-          value={password}
-          placeholder="New password"
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit" className="login-button" disabled={loading}>
-          Reset Password
-        </button>
-      </form>
+    <div className="reset-password-page">
+      <div className="reset-password-card animate-fadein">
+        <h1>Set a New Password</h1>
+        <p className="description">
+          Enter your new password below to regain access to your account.
+        </p>
+
+        {resetStatus && <Message variant="success">{resetStatus}</Message>}
+        {error && <Message variant="danger">{error}</Message>}
+
+        <form onSubmit={handleSubmit} className="reset-password-form">
+          <label htmlFor="password" className="sr-only">
+            New Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            value={password}
+            placeholder="Enter new password"
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit" className="submit-button" disabled={loading}>
+            {loading ? "Resetting..." : "Reset Password"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

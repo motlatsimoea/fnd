@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
+import { Link } from "react-router-dom";
 import {
   fetchReviews,
   createReview,
@@ -43,17 +44,22 @@ const Reviews = ({ productId }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!isFormValid()) return alert("Please provide a valid rating (1-5) and comment!");
+    if (!isFormValid())
+      return alert("Please provide a valid rating (1-5) and comment!");
 
     const payload = { rating: Number(rating), content: comment.trim(), parent: null };
 
     try {
       if (editingId) {
-        await dispatch(updateReview({ productId, reviewId: editingId, updatedData: payload })).unwrap();
+        await dispatch(
+          updateReview({ productId, reviewId: editingId, updatedData: payload })
+        ).unwrap();
         setEditingId(null);
         setSuccessMessage("Review updated successfully!");
       } else {
-        await dispatch(createReview({ productId, reviewData: payload })).unwrap();
+        await dispatch(
+          createReview({ productId, reviewData: payload })
+        ).unwrap();
         setSuccessMessage("Review submitted successfully!");
       }
 
@@ -82,13 +88,21 @@ const Reviews = ({ productId }) => {
     }
   };
 
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   return (
     <div className="reviews-section" id="reviews-section">
       <h3>Customer Reviews</h3>
 
-      {/* REVIEW FORM AT TOP */}
       {userInfo && (
-        <div className="review-form">
+        <div className="review-form modern-form">
           <h4>{editingId ? "Edit Review" : "Write a Review"}</h4>
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -99,7 +113,6 @@ const Reviews = ({ productId }) => {
                     key={star}
                     className={star <= rating ? "star filled" : "star"}
                     onClick={() => setRating(star)}
-                    style={{ cursor: "pointer" }}
                   >
                     ★
                   </span>
@@ -120,9 +133,14 @@ const Reviews = ({ productId }) => {
 
             <button
               type="submit"
+              className="btn-submit"
               disabled={!isFormValid() || createStatus === "loading" || updateStatus === "loading"}
             >
-              {editingId ? "Update Review" : createStatus === "loading" ? "Submitting..." : "Submit Review"}
+              {editingId
+                ? "Update Review"
+                : createStatus === "loading"
+                ? "Submitting..."
+                : "Submit Review"}
             </button>
 
             {error && <p className="error-message">{error}</p>}
@@ -131,21 +149,43 @@ const Reviews = ({ productId }) => {
         </div>
       )}
 
-      {/* LIST OF REVIEWS BELOW FORM */}
       {reviews.length === 0 ? (
         <p>No reviews yet. Be the first!</p>
       ) : (
         reviews.map((review) => (
           <div key={review.id} className="review-card">
-            <strong>{review.author?.username || "Anonymous"}</strong>
-            <p>
-              Rating: {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
-            </p>
-            <p>{review.content}</p>
+            <div className="review-header">
+              <img
+                src={review.profile_image || "/default-avatar.png"}
+                alt={review.author?.username || "User"}
+                className="review-avatar"
+              />
+              <div className="review-user-info">
+                <Link to={`/profile/${review.author.username}`} className="review-author">
+                  {review.author?.username || "Anonymous"}
+                </Link>
+                <span className="review-date">
+                  {review.created_at ? formatDate(review.created_at) : ""}
+                </span>
+              </div>
+            </div>
+
+            <div className="review-body">
+              <div className="review-stars">
+                {"★".repeat(review.rating)}
+                {"☆".repeat(5 - review.rating)}
+              </div>
+              <p className="review-content">{review.content}</p>
+            </div>
+
             {userInfo && review.author?.id === userInfo.id && (
               <div className="review-actions">
-                <button onClick={() => handleEdit(review)}>Edit</button>
-                <button onClick={() => handleDelete(review.id)}>Delete</button>
+                <button className="btn-edit" onClick={() => handleEdit(review)}>
+                  ✏️ Edit
+                </button>
+                <button className="btn-delete" onClick={() => handleDelete(review.id)}>
+                  🗑 Delete
+                </button>
               </div>
             )}
           </div>

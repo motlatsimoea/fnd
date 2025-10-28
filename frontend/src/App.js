@@ -13,6 +13,7 @@ import BlogPostPage from './screens/BlogPostPage/BlogPostPage';
 import CreatePost from './screens/CreatePost/CreatePost';
 import MarketPage from './screens/MarketPage/MarketPage';
 import ProductPage from './screens/ProductPage/ProductPage';
+import EditProduct from './screens/ProductPage/EditProduct';
 import AddProductForm from './screens/ProductForm/ProductForm';
 import InfoPage from './screens/InfoPage/InfoPage';
 import ArticlePage from './screens/InfoPage/ArticlePage';
@@ -89,6 +90,7 @@ const App = () => {
         {/* Market Place Routes */}
         <Route path="/market" element={<MarketPage />} />
         <Route path="/product/:id" element={<ProductPage />} />
+        <Route path="/edit-product/:id" element={<EditProduct />} />
         <Route path="/add-product" element={<AddProductForm />} />
 
         {/* Information Page Routes */}

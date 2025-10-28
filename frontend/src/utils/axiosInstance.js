@@ -1,3 +1,4 @@
+// utils/axiosInstance.js
 import axios from 'axios';
 
 let accessToken = null;
@@ -10,15 +11,28 @@ const axiosInstance = axios.create({
   withCredentials: true, // Send cookies with every request
 });
 
-// Attach Authorization header
+// ✅ Public endpoints that don't need Authorization
+const PUBLIC_ENDPOINTS = [
+  '/login/',
+  '/password-reset/',
+  '/password-reset-confirm/',
+  '/register/',
+];
+
+// ✅ Request interceptor
 axiosInstance.interceptors.request.use((config) => {
-  if (accessToken) {
+  const isPublic = PUBLIC_ENDPOINTS.some((url) => config.url.includes(url));
+
+  if (!isPublic && accessToken) {
     config.headers['Authorization'] = `Bearer ${accessToken}`;
+  } else {
+    delete config.headers['Authorization']; // ensure none is sent
   }
+
   return config;
 });
 
-// Handle 401 errors and refresh
+// ✅ Response interceptor (handle refresh)
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -28,17 +42,15 @@ axiosInstance.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // Lazy import store and slice
         const { store } = await import('../store');
         const { refreshToken } = await import('../features/users/auth-slice');
 
-        // ✅ Always try refreshing (cookies decide if it succeeds)
         const result = await store.dispatch(refreshToken()).unwrap();
 
         if (result?.access) {
           setAccessToken(result.access);
           originalRequest.headers['Authorization'] = `Bearer ${result.access}`;
-          return axiosInstance(originalRequest); // Retry original request
+          return axiosInstance(originalRequest);
         }
       } catch (e) {
         const { store } = await import('../store');

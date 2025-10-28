@@ -43,7 +43,7 @@ const MarketPage = () => {
               <h3>
                 <Link to={`/product/${product.id}`}>{product.name}</Link>
               </h3>
-              <p>${product.price}</p>
+              <p>R{product.price}</p>
               <Link to={`/product/${product.id}`}>View Product</Link>
             </div>
           ))

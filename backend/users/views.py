@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
@@ -119,25 +120,33 @@ class RequestPasswordResetView(APIView):
 
     def post(self, request):
         email = request.data.get("email")
+        print(email)
         if not email:
             return Response({"detail": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user = CustomUser.objects.get(email=email)
+            print(user)
             token = PasswordResetTokenGenerator().make_token(user)
+            print(token)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
+            print(uid)
 
             reset_link = f"http://localhost:3000/reset-password/{uid}/{token}/"
-
+            print(reset_link)
             send_mail(
                 "Password Reset",
                 f"Click here to reset your password: {reset_link}",
-                "noreply@example.com",
+                settings.DEFAULT_FROM_EMAIL,
                 [email],
             )
+            print("📧 Email sent successfully!")
         except CustomUser.DoesNotExist:
-            # Don’t reveal user existence
+            print("⚠️ No user with that email")
             pass
+        except Exception as e:
+            print("❌ ERROR:", e)
+            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({"detail": "If this email exists, a reset link has been sent."})
     

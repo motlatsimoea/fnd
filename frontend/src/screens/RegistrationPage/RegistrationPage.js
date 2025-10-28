@@ -22,8 +22,27 @@ const RegistrationPage = () => {
   const [passwordStrength, setPasswordStrength] = useState('');
 
   const farmingSectors = [
-    'Livestock', 'Crop Farming', 'Aquaculture', 'Horticulture', 'Agroforestry', 'Poultry Farming',
-  ];
+  'Livestock',
+  'Crop Farming',
+  'Aquaculture',
+  'Horticulture',
+  'Agroforestry',
+  'Poultry Farming',
+  'Dairy Farming',
+  'Beekeeping',
+  'Viticulture(Grapes & Wine)',
+  'Sericulture(Silk Production)',
+  'Mushroom Farming',
+  'Organic Farming',
+  'Greenhouse Farming',
+  'Hydroponics',
+  'Arable Farming',
+  'Mixed Farming',
+  'Fish Farming',
+  'Goat Farming',
+  'Sheep Farming',
+  'Pig Farming'
+];
 
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
 
@@ -33,7 +52,7 @@ const RegistrationPage = () => {
       return;
     }
     try {
-      const response = await axios.post('/api/check-email/', { email: formData.email });
+      const response = await axios.post('/api/users/check-email/', { email: formData.email });
       if (response.data.exists) {
         setErrors((prev) => ({ ...prev, email: 'Email already in use. Please use a different email.' }));
       } else {
