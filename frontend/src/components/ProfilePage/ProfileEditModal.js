@@ -75,7 +75,7 @@ const ProfileEditModal = ({ user, onClose, onSave }) => {
 
   // Load Google Maps script when modal mounts
   useEffect(() => {
-    loadGoogleMapsScript("YOUR_API_KEY_HERE")
+    loadGoogleMapsScript(process.env.REACT_APP_GOOGLE_MAPS_API_KEY)
       .then(() => setMapsLoaded(true))
       .catch((err) => console.error(err));
   }, []);

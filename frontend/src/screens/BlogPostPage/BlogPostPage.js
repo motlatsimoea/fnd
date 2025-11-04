@@ -76,7 +76,7 @@ const BlogPostPage = () => {
                 <img
                   key={i}
                   src={img.file}
-                  alt={`Post image ${i + 1}`}
+                  alt={`Post Slide ${i + 1}`}
                   onClick={() => openGalleryAt(i)}
                   style={{ cursor: 'pointer' }}
                 />

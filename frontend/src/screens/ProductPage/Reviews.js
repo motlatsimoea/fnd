@@ -180,11 +180,19 @@ const Reviews = ({ productId }) => {
 
             {userInfo && review.author?.id === userInfo.id && (
               <div className="review-actions">
-                <button className="btn-edit" onClick={() => handleEdit(review)}>
+                <button
+                  className="btn-edit"
+                  onClick={() => handleEdit(review)}
+                  disabled={deleteStatus === "loading"}
+                >
                   ✏️ Edit
                 </button>
-                <button className="btn-delete" onClick={() => handleDelete(review.id)}>
-                  🗑 Delete
+                <button
+                  className="btn-delete"
+                  onClick={() => handleDelete(review.id)}
+                  disabled={deleteStatus === "loading"}
+                >
+                  {deleteStatus === "loading" ? "Deleting..." : "🗑 Delete"}
                 </button>
               </div>
             )}

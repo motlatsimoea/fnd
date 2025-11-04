@@ -40,7 +40,7 @@ const ImageCarouselModal = ({ images = [], initialIndex = 0, onClose }) => {
         <button className="imgmodal-close" onClick={onClose} aria-label="Close">×</button>
 
         <button className="imgmodal-nav imgmodal-prev" onClick={prev} aria-label="Previous">‹</button>
-        <img src={urls[index]} alt={`image ${index + 1}`} className="imgmodal-img" />
+        <img src={urls[index]} alt={`Slide ${index + 1}`} className="imgmodal-img" />
         <button className="imgmodal-nav imgmodal-next" onClick={next} aria-label="Next">›</button>
 
         <div className="imgmodal-counter">{index + 1} / {urls.length}</div>

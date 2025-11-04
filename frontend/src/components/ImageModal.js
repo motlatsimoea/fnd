@@ -1,9 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import "./ImageModal.css";
 
 const ImageModal = ({ images = [], initialIndex = 0, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  // ✅ Memoized navigation functions
+  const next = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  }, [images.length]);
+
+  const prev = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  }, [images.length]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -13,12 +22,9 @@ const ImageModal = ({ images = [], initialIndex = 0, onClose }) => {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, next, prev]); // ✅ now properly includes dependencies
 
   if (images.length === 0) return null;
-
-  const next = () => setCurrentIndex((prev) => (prev + 1) % images.length);
-  const prev = () => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
 
   return createPortal(
     <div className="imgmodal-overlay" onClick={onClose}>
@@ -27,7 +33,7 @@ const ImageModal = ({ images = [], initialIndex = 0, onClose }) => {
         <button className="imgmodal-prev" onClick={prev}>&lt;</button>
         <img
           src={images[currentIndex]}
-          alt={`Image ${currentIndex + 1}`}
+          alt={`Slide ${currentIndex + 1}`}
           className="imgmodal-img"
         />
         <button className="imgmodal-next" onClick={next}>&gt;</button>

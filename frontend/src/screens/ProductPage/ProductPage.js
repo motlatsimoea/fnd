@@ -55,6 +55,10 @@ const ProductPage = () => {
 
   useEffect(() => {
     if (id) dispatch(fetchProductById(id));
+    
+    return () => {
+      dispatch(clearError());
+    };
   }, [dispatch, id]);
 
   const nextImage = () => {
