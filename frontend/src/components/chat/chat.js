@@ -20,14 +20,12 @@ const Chat = ({ chatKey, user, initialMessages }) => {
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 10;
 
-  // Queues per chatKey
   const messageQueues = useRef({});
   const pushToQueue = useCallback((key, payload) => {
     messageQueues.current[key] = messageQueues.current[key] || [];
     messageQueues.current[key].push(payload);
   }, []);
 
-  // Seen message IDs per chat
   const seenIds = useRef({});
   const markSeen = useCallback((chatId, id) => {
     if (!seenIds.current[chatId]) seenIds.current[chatId] = new Set();
@@ -180,8 +178,8 @@ const Chat = ({ chatKey, user, initialMessages }) => {
           onKeyDown={handleKeyDown}
           placeholder="Type your message..."
         />
-        <button onClick={sendMessage}>
-          {wsConnected ? "Send" : "Queue (offline)"}
+        <button onClick={sendMessage} disabled={!message.trim()}>
+          {wsConnected ? "Send" : "Queue"}
         </button>
       </div>
     </div>

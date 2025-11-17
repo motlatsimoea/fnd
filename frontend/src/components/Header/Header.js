@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { markNotificationAsRead, fetchNotifications, fetchInboxNotifications } from '../../features/notifications/notice-slice';
@@ -16,7 +16,12 @@ import './Header.css';
 const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showInbox, setShowInbox] = useState(false); // ✅ Added inbox state
+  const [showInbox, setShowInbox] = useState(false);
+
+  const notificationsRef = useRef(null);
+  const inboxRef = useRef(null);
+  const userMenuRef = useRef(null);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,8 +32,8 @@ const Header = () => {
 
   useNotificationsSocket();
 
-  const toggleUserMenu = () => setShowUserMenu(!showUserMenu);
-  const toggleNotifications = () => setShowNotifications(!showNotifications);
+  const toggleUserMenu = () => setShowUserMenu((prev) => !prev);
+  const toggleNotifications = () => setShowNotifications((prev) => !prev);
 
   const handleLogout = async () => {
     try {
@@ -61,9 +66,10 @@ const Header = () => {
   useEffect(() => {
     setShowUserMenu(false);
     setShowNotifications(false);
+    setShowInbox(false);
   }, [location.pathname]);
 
-  // auto mark as read when dropdown opens
+  // Automatically mark notifications as read when opened
   useEffect(() => {
     if (showNotifications && notifications.length > 0) {
       notifications.forEach((n) => {
@@ -74,7 +80,7 @@ const Header = () => {
     }
   }, [showNotifications, notifications, dispatch]);
 
-  // handle cross-tab logout
+  // Handle cross-tab logout
   useEffect(() => {
     let bc;
     try {
@@ -96,6 +102,29 @@ const Header = () => {
     }
   }, [dispatch, navigate]);
 
+  // ✅ Close modals when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target)
+      ) {
+        setShowNotifications(false);
+      }
+
+      if (inboxRef.current && !inboxRef.current.contains(event.target)) {
+        setShowInbox(false);
+      }
+
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
     <nav className="navbar">
       <Link to="/" className="nav-item">
@@ -108,7 +137,7 @@ const Header = () => {
             <Link to="/create-post" className="nav-item" title="Create Post"><FaPlusCircle /></Link>
 
             {/* 🔔 Notifications */}
-            <span className="notification-wrapper">
+            <span className="notification-wrapper" ref={notificationsRef}>
               <button
                 className="nav-item notification-button"
                 onClick={toggleNotifications}
@@ -155,7 +184,10 @@ const Header = () => {
                                 </p>
                                 <span className="notification-time">
                                   {notification.timestamp
-                                    ? new Date(notification.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                    ? new Date(notification.timestamp).toLocaleTimeString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                      })
                                     : ''}
                                 </span>
                               </div>
@@ -173,7 +205,7 @@ const Header = () => {
             <Link to="/market" className="nav-item" title="Marketplace"><FaStore /></Link>
 
             {/* 📩 Inbox */}
-            <span className="inbox-wrapper">
+            <span className="inbox-wrapper" ref={inboxRef}>
               <button
                 className="nav-item inbox-button"
                 onClick={() => setShowInbox(true)}
@@ -187,7 +219,7 @@ const Header = () => {
             <Link to="/info" className="nav-item" title="Info"><FaBook /></Link>
           </div>
 
-          <div className="user-dropdown">
+          <div className="user-dropdown" ref={userMenuRef}>
             <button className="user-btn" onClick={toggleUserMenu}><FaUserCircle /></button>
             {showUserMenu && (
               <div className="user-menu">

@@ -106,33 +106,33 @@ class ChatView(APIView):
 
 
 class MessageView(APIView):
-    """
-    Handles message creation and retrieval.
-    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request, chat_id):
-        """
-        Retrieves all messages in a chat, decrypting them and including sender info.
-        """
         chat = get_object_or_404(Inbox, id=chat_id, participants=request.user)
         messages = Message.objects.filter(inbox=chat).order_by("timestamp")
         fernet = Fernet(settings.SECRET_KEY_FOR_ENCRYPTION.encode())
 
-        decrypted_messages = []
+        result = []
         for msg in messages:
-            decrypted_messages.append({
+            sender = msg.sender
+            profile_picture = (
+                request.build_absolute_uri(sender.profile_picture.url)
+                if getattr(sender, "profile_picture", None)
+                else None
+            )
+            result.append({
                 "id": msg.id,
                 "sender_info": {
-                    "id": msg.sender.id,
-                    "username": msg.sender.username,
+                    "id": sender.id,
+                    "username": sender.username,
+                    "profile_picture": profile_picture,
                 },
                 "message": fernet.decrypt(msg.encrypted_content.encode()).decode(),
                 "timestamp": msg.timestamp,
             })
-            #print(decrypted_messages)
+        return Response(result, status=200)
 
-        return Response(decrypted_messages, status=200)
     """
     def post(self, request, chat_id):
         

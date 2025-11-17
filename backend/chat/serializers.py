@@ -15,10 +15,18 @@ class MessageSerializer(serializers.ModelSerializer):
         fields = ['id', 'inbox', 'sender', 'sender_info', 'content', 'decrypted_content', 'timestamp']
 
     def get_sender_info(self, obj):
+        request = self.context.get('request')
+        profile_picture = (
+            request.build_absolute_uri(obj.sender.profile_picture.url)
+            if getattr(obj.sender, "profile_picture", None)
+            else None
+        )
         return {
             "id": obj.sender.id,
             "username": obj.sender.username,
+            "profile_picture": profile_picture,
         }
+        
 
     def create(self, validated_data):
         content = validated_data.pop('content')  # Extract plaintext content
