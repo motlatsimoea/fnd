@@ -1,11 +1,14 @@
-# Project Name
+# Farmer Next-Door
 
-A brief description of your project.
+This is a development of a platform where small scale farmers can come together to share ideas, sell their products and learn about how they can develop thier farming initiatives.
 
 ## Features
 
-- Feature 1
-- Feature 2
+- A blog section to post and comment;
+- An online Market place to sell produce;
+- An information center to find researched information;
+- Private messaging;
+- etc;
 
 ## Setup Instructions
 
