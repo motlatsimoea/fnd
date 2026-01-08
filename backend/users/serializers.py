@@ -48,7 +48,7 @@ class SectorSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer(read_only=True)
+    #profile = ProfileSerializer(read_only=True)
     sectors = serializers.ListField(
         child=serializers.CharField(max_length=100),
         write_only=True  
@@ -126,16 +126,4 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['user'] = UserSerializerWithToken(self.user).data 
         return data
 
-class UserSerializer(serializers.ModelSerializer):
-    profile_picture = serializers.SerializerMethodField()
-    
-    class Meta:
-        model = CustomUser
-        fields = ['id', 'username', 'email', 'is_staff', 'profile_picture']
-        
-    def get_profile_picture(self, obj):
-        request = self.context.get('request')
-        if obj.profile.profile_picture:
-            return request.build_absolute_uri(obj.profile.profile_picture.url)
-        return None
-    
+

@@ -171,3 +171,29 @@ class MessageView(APIView):
 
         return Response(serializer.errors, status=400)
 """
+
+class GetOrCreateChat(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user1 = request.user
+        user2 = get_object_or_404(User, id=request.data.get("user2"))
+
+        inbox = Inbox.objects.filter(
+            participants=user1
+        ).filter(
+            participants=user2
+        ).first()
+
+        if not inbox:
+            unique_key = f"{min(user1.id, user2.id)}_{max(user1.id, user2.id)}"
+            inbox = Inbox.objects.create(unique_key=unique_key)
+            inbox.participants.add(user1, user2)
+
+        return Response(
+            {
+                "chat_id": inbox.id,
+                "unique_key": inbox.unique_key,
+            },
+            status=status.HTTP_200_OK,
+        )

@@ -1,10 +1,28 @@
 from rest_framework import serializers
 from .models import Inbox, Message
 from django.contrib.auth import get_user_model
-from users.serializers import UserSerializer
+
 
 User = get_user_model()
 
+
+class UserSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'is_staff', 'profile_picture']
+        
+    
+    def get_profile_picture(self, obj):
+        request = self.context.get('request')
+        profile = getattr(obj, "profile", None)  # Safely get profile
+        if profile and getattr(profile, "profile_picture", None):
+            return request.build_absolute_uri(profile.profile_picture.url)
+        # Return default avatar for users without a profile
+        return request.build_absolute_uri('/media/profile_pictures/default.png')
+    
+    
 class MessageSerializer(serializers.ModelSerializer):
     content = serializers.CharField(write_only=True)  # Accept plaintext for writing
     decrypted_content = serializers.CharField(read_only=True, source='get_content')  # Decrypt for reading
@@ -16,11 +34,11 @@ class MessageSerializer(serializers.ModelSerializer):
 
     def get_sender_info(self, obj):
         request = self.context.get('request')
-        profile_picture = (
-            request.build_absolute_uri(obj.sender.profile_picture.url)
-            if getattr(obj.sender, "profile_picture", None)
-            else None
-        )
+        
+        profile_picture = None
+        if hasattr(obj.sender, "profile") and obj.sender.profile.profile_picture:
+            profile_picture = request.build_absolute_uri(obj.sender.profile.profile_picture.url)
+            
         return {
             "id": obj.sender.id,
             "username": obj.sender.username,
@@ -44,20 +62,39 @@ class ChatRoomSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Inbox
-        fields = ['id', 'unique_key', 'participants', 'last_message', 'current_user']
-        
-        
-        
+        fields = [
+            'id',
+            'unique_key',
+            'participants',
+            'last_message',
+            'current_user'
+        ]
+
     def get_last_message(self, obj):
         last_msg = obj.messages.order_by('-timestamp').first()
-        if last_msg:
-            return {
-                'sender_id': last_msg.sender.id,
-                'text': last_msg.get_content(),          #getattr(last_msg, "text", None),  # Decrypt message
-                'timestamp': last_msg.timestamp,
-            }
-        return None
-
+        if not last_msg:
+            print("No last message found")
+            return None
+        
+        sender = last_msg.sender
+        request = self.context.get("request")
+        
+        try:
+            profile_picture = None
+            if hasattr(sender, "profile") and getattr(sender.profile, "profile_picture", None):
+                profile_picture = request.build_absolute_uri(sender.profile.profile_picture.url)
+            print(f"Sender: {sender.username}, profile picture: {profile_picture}")
+        except Exception as e:
+            print(f"Error fetching sender profile picture: {e}")
+        
+        return {
+            "id": last_msg.id,
+            "sender_id": sender.id,
+            "sender_username": sender.username,
+            "sender_profile_picture": profile_picture,
+            "text": last_msg.get_content(),
+            "timestamp": last_msg.timestamp,
+        }
     def get_current_user(self, obj):
         request = self.context.get('request')
         return request.user.id if request and hasattr(request, 'user') else None

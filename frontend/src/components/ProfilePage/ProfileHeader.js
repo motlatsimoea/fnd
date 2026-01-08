@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import ProfileEditModal from "./ProfileEditModal";
 import ImageModal from "../ImageModal";
 import "./ProfilePage_css/ProfileHeader.css";
+import axiosInstance from "../../utils/axiosInstance";
+
 
 const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
   const navigate = useNavigate();
@@ -30,13 +32,18 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
 
   const isOwnProfile = currentUser.username === username;
 
-  const handleMessageClick = () => {
-    const chatKey = [currentUser.username, username]
-      .filter(Boolean)
-      .sort()
-      .join("-");
-    navigate(`/chat/${chatKey}`);
-  };
+  const handleMessageClick = async () => {
+  try {
+    const res = await axiosInstance.post("/api/inbox/get-or-create/", {
+      user2: user.id,   // the user being messaged
+    });
+   
+
+    navigate(`/chat/${res.data.unique_key}`);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const handleEditClick = () => setIsEditing(true);
   const handleCloseModal = () => setIsEditing(false);

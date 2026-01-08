@@ -16,15 +16,16 @@ export const fetchUserChats = createAsyncThunk(
 
 export const fetchMessages = createAsyncThunk(
   "chats/fetchMessages",
-  async (chatId, thunkAPI) => {
+  async ({ chatId, chatKey }, thunkAPI) => { // 🔄 CHANGED
     try {
       const res = await axiosInstance.get(`/api/inbox/${chatId}/messages/`);
-      return { chatId, messages: res.data };
+      return { chatKey, messages: res.data }; // 🔄 CHANGED
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
+
 
 const chatSlice = createSlice({
   name: "chats",
@@ -103,16 +104,16 @@ const chatSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchMessages.fulfilled, (state, action) => {
-        state.loading = false;
-        const { chatId, messages } = action.payload;
-        const existing = state.messages[chatId] || [];
+        state.loading = false;  
+        const { chatKey, messages } = action.payload;
 
+        const existing = state.messages[chatKey] || [];
         const merged = [...existing, ...messages].filter(
           (msg, idx, self) => idx === self.findIndex((m) => m.id === msg.id)
         );
 
         merged.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        state.messages[chatId] = merged;
+        state.messages[chatKey] = merged;
       })
       .addCase(fetchMessages.rejected, (state, action) => {
         state.loading = false;

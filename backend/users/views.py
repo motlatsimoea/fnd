@@ -50,7 +50,7 @@ class MyTokenObtainPairView(TokenObtainPairView):
                 value=refresh_token,
                 httponly=True,
                 secure=False,      # True in production
-                samesite=None,     # None allows cross-origin in dev
+                samesite='Lax',     # None allows cross-origin in dev
                 max_age=24 * 60 * 60,  # 1 day
                 path="/",
             )

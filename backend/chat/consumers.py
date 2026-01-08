@@ -8,24 +8,46 @@ from .models import Inbox, Message
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        self.unique_key = self.scope['url_route']['kwargs']['unique_key']
+        self.unique_key = self.scope["url_route"]["kwargs"]["unique_key"]
         self.room_group_name = f"chat_{self.unique_key}"
-        user = self.scope["user"]
+        self.user = self.scope["user"]
 
-        print(f"[CONNECT] Attempting WS connection | unique_key={self.unique_key} | user={user}")
+        print(f"[CONNECT] Attempting WS | key={self.unique_key} | user={self.user}")
 
-        if user.is_anonymous:
-            print("[CONNECT] ❌ Connection rejected: anonymous user")
+        # Reject anonymous users
+        if self.user.is_anonymous:
+            print("[CONNECT] ❌ Anonymous user")
             await self.close()
             return
 
-        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+        # Ensure user is a participant
+        if not await self.user_in_chat(self.user, self.unique_key):
+            print("[CONNECT] ❌ User not a participant")
+            await self.close()
+            return
+
+        # Resolve inbox once
+        try:
+            self.chat = await self.get_inbox(self.unique_key)
+        except Inbox.DoesNotExist:
+            print("[CONNECT] ❌ Inbox not found")
+            await self.close()
+            return
+
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name,
+        )
+
         await self.accept()
-        print(f"[CONNECT] ✅ Connection accepted | group={self.room_group_name}")
+        print(f"[CONNECT] ✅ Connected | group={self.room_group_name}")
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-        print(f"[DISCONNECT] Channel removed from group={self.room_group_name} | code={close_code}")
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name,
+        )
+        print(f"[DISCONNECT] group={self.room_group_name} | code={close_code}")
 
     async def receive(self, text_data):
         """
@@ -33,23 +55,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
         - Save to DB
         - Broadcast to all users in the same chat room
         """
+        
         try:
             data = json.loads(text_data)
             message_text = data.get("message")
             temp_id = data.get("temp_id")
-            sender = self.scope["user"]
 
-            print(f"[RECEIVE] Incoming message | sender={sender} | text='{message_text}'")
+            # Validate message
+            if not message_text or not message_text.strip():
+                print("[RECEIVE] ❌ Empty message ignored")
+                return
 
-            # Get inbox (chat)
-            chat = await self.get_inbox(self.unique_key)
-            print(f"[RECEIVE] ✅ Found chat | id={chat.id}")
+            print(f"[RECEIVE] From {self.user}: {message_text}")
 
-            # Save message to DB
-            message = await self.create_message(chat, sender, message_text)
-            print(f"[RECEIVE] ✅ Message saved | id={message.id} | inbox={chat.id}")
+            # Save message
+            message = await self.create_message(
+                chat=self.chat,
+                sender=self.user,
+                text=message_text,
+            )
 
-            # Broadcast
+            print(f"[RECEIVE] ✅ Saved message id={message.id}")
+
+            # Broadcast to room
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
@@ -57,27 +85,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     "id": message.id,
                     "temp_id": temp_id,
                     "sender_info": {
-                        "id": sender.id,
-                        "username": sender.username,
+                        "id": self.user.id,
+                        "username": self.user.username,
                     },
-                    "message": message_text,  # decrypted for frontend
+                    "message": message_text,
                     "timestamp": message.timestamp.isoformat(),
-                }
+                },
             )
-            print(f"[RECEIVE] 📢 Broadcast sent | message_id={message.id}")
+
+            print(f"[RECEIVE] 📢 Broadcast sent")
 
         except Exception as e:
-            print(f"[RECEIVE] ❌ ERROR processing message | {str(e)}")
+            print(f"[RECEIVE] ❌ ERROR: {str(e)}")
 
     async def chat_message(self, event):
-        """Send broadcasted message to WebSocket"""
         try:
             await self.send(text_data=json.dumps(event))
-            print(f"[SEND] Sent to WS | event={event}")
+            print(f"[SEND] Delivered | id={event.get('id')}")
         except Exception as e:
-            print(f"[SEND] ❌ ERROR sending to WS | {str(e)}")
+            print(f"[SEND] ❌ ERROR sending | {str(e)}")
 
     # ---------- DB HELPERS ----------
+
+    @database_sync_to_async
+    def user_in_chat(self, user, unique_key):
+        return Inbox.objects.filter(
+            unique_key=unique_key,
+            participants=user
+        ).exists()
 
     @database_sync_to_async
     def get_inbox(self, unique_key):
@@ -88,6 +123,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return Message.objects.create(
             inbox=chat,
             sender=sender,
-            encrypted_content=Fernet(settings.SECRET_KEY_FOR_ENCRYPTION.encode()).encrypt(text.encode()).decode(),
+            encrypted_content=Fernet(
+                settings.SECRET_KEY_FOR_ENCRYPTION.encode()
+            ).encrypt(text.encode()).decode(),
             content="",  # no plaintext stored
         )

@@ -6,39 +6,45 @@ import Chat from "./chat";
 import { fetchMessages, fetchUserChats } from "../../features/chats/Chat-slice";
 
 const ChatPage = () => {
-  const { chatId } = useParams(); // numeric from URL
+  const { uniqueKey } = useParams(); // 🔄 CHANGED: unique_key from URL
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const user = useSelector((state) => state.auth?.userInfo || null);
-  const messages = useSelector((state) => state.chats?.messages?.[chatId] || []);
-  const chatRooms = useSelector((state) => state.chats?.chatRooms || []);
+  const chatRooms = useSelector((state) => state.chats.chatRooms || []);
+  const messages = useSelector(
+    (state) => state.chats.messages[uniqueKey] || [] // 🔄 CHANGED
+  );
 
   const [chatTitle, setChatTitle] = useState("");
-  const [chatKey, setChatKey] = useState(null); // 🔑 store unique_key for websocket
+  const [chatId, setChatId] = useState(null); // ✅ NEW: numeric ID for REST
 
+  // Load inboxes
   useEffect(() => {
-    if (!user) return;
-    if (chatId) {
-      dispatch(fetchMessages(chatId));
-
-      if (chatRooms.length === 0) {
-        dispatch(fetchUserChats());
-      }
+    if (user && chatRooms.length === 0) {
+      dispatch(fetchUserChats());
     }
-  }, [dispatch, chatId, user, chatRooms.length]);
+  }, [dispatch, user, chatRooms.length]);
 
+  // Resolve chat + fetch messages
   useEffect(() => {
-    const chat = chatRooms.find((c) => String(c.id) === String(chatId));
-    if (chat && user) {
-      // get WebSocket key
-      setChatKey(chat.unique_key);
+    if (!uniqueKey || chatRooms.length === 0) return;
 
-      // show participant names
-      const otherUsers = chat.participants?.filter((p) => p.id !== user.id) || [];
-      setChatTitle(otherUsers.map((u) => u.username).join(", ") || "Unknown User");
-    }
-  }, [chatId, chatRooms, user]);
+    const chat = chatRooms.find((c) => c.unique_key === uniqueKey);
+    if (!chat) return;
+
+    setChatId(chat.id); // ✅ NEW
+    dispatch(fetchMessages({ chatId: chat.id, chatKey: uniqueKey })); // 🔄 CHANGED
+  }, [uniqueKey, chatRooms, dispatch]);
+
+  // Chat title
+  useEffect(() => {
+    const chat = chatRooms.find((c) => c.unique_key === uniqueKey);
+    if (!chat || !user) return;
+
+    const others = chat.participants?.filter((p) => p.id !== user.id) || [];
+    setChatTitle(others.map((u) => u.username).join(", ") || "Unknown User");
+  }, [uniqueKey, chatRooms, user]);
 
   if (!user) {
     return (
@@ -49,15 +55,16 @@ const ChatPage = () => {
     );
   }
 
-  if (!chatKey) {
-    return <p>Loading chat...</p>;
-  }
+  if (!uniqueKey || !chatId) return <p>Loading chat...</p>;
 
   return (
     <div className="chat-page">
       <h2>Chat with {chatTitle}</h2>
-      {/* 🔥 Pass unique_key, not chatId */}
-      <Chat chatKey={chatKey} user={user} initialMessages={messages} />
+      <Chat
+        chatKey={uniqueKey} // 🔑 WebSocket + Redux key
+        user={user}
+        initialMessages={messages}
+      />
     </div>
   );
 };

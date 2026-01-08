@@ -36,7 +36,7 @@ const InboxModal = ({ onClose }) => {
         {chatRooms.length > 0 ? (
           chatRooms.map((chat) => {
             const otherUsers = chat.participants?.filter((p) => p.id !== userId) || [];
-            const lastMessage = chat.messages?.[chat.messages.length - 1];
+            const lastMessage = chat.last_message;
             const isUnread = lastMessage?.read === false && lastMessage?.senderId !== userId;
 
             return (
@@ -45,7 +45,7 @@ const InboxModal = ({ onClose }) => {
                   {otherUsers.map((u) => (
                     <img
                       key={u.id}
-                      src={u.profilePicture || '/default-avatar.png'}
+                      src={u.profile_picture || '/default-avatar.png'}
                       alt={u.username}
                       className="chat-avatar"
                     />

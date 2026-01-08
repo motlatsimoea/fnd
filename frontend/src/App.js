@@ -99,7 +99,7 @@ const App = () => {
 
         {/* Inbox Page Routes */}
         <Route path="/inbox" element={<InboxPage />} />
-        <Route path="/chat/:chatId" element={<ChatPage />} />
+        <Route path="/chat/:uniqueKey" element={<ChatPage />} />
         <Route path="/chat_test/:chat_id" element={<Chat />} />
       </Routes>
 
