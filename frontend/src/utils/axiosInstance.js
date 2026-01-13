@@ -8,6 +8,7 @@ export const setAccessToken = (token) => {
 };
 
 const axiosInstance = axios.create({
+  baseURL: "/api", 
   withCredentials: true, // Send cookies with every request
 });
 

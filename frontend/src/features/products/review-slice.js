@@ -12,7 +12,7 @@ export const fetchReviews = createAsyncThunk(
   "reviews/fetchByProduct",
   async (productId, thunkAPI) => {
     try {
-      const res = await axiosInstance.get(`/api/products/${productId}/reviews/`);
+      const res = await axiosInstance.get(`/products/${productId}/reviews/`);
       return { productId, reviews: res.data };
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -26,7 +26,7 @@ export const createReview = createAsyncThunk(
   async ({ productId, reviewData }, thunkAPI) => {
     try {
       const res = await axiosInstance.post(
-        `/api/products/${productId}/reviews/`,
+        `/products/${productId}/reviews/`,
         reviewData
       );
       return { productId, review: res.data };
@@ -41,7 +41,7 @@ export const updateReview = createAsyncThunk(
   "reviews/update",
   async ({ productId, reviewId, updatedData }, thunkAPI) => {
     try {
-      const res = await axiosInstance.put(`/api/products/reviews/${reviewId}/`, updatedData);
+      const res = await axiosInstance.put(`/products/reviews/${reviewId}/`, updatedData);
       return { productId, review: res.data };
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -54,7 +54,7 @@ export const deleteReview = createAsyncThunk(
   "reviews/delete",
   async ({ productId, reviewId }, thunkAPI) => {
     try {
-      await axiosInstance.delete(`/api/products/reviews/${reviewId}/`);
+      await axiosInstance.delete(`/products/reviews/${reviewId}/`);
       return { productId, reviewId };
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));

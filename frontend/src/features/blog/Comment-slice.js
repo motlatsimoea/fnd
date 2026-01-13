@@ -8,7 +8,7 @@ export const fetchComments = createAsyncThunk(
   'comments/fetchComments',
   async (postId, thunkAPI) => {
     try {
-      const res = await axiosInstance.get(`/api/posts/${postId}/comments/`);
+      const res = await axiosInstance.get(`/posts/${postId}/comments/`);
       return res.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -24,7 +24,7 @@ export const createComment = createAsyncThunk(
   async ({ postId, text, parent = null }, thunkAPI) => {
     try {
       const res = await axiosInstance.post(
-        `/api/posts/${postId}/comments/`,
+        `/posts/${postId}/comments/`,
         { content: text, parent }
       );
       return res.data;
@@ -42,7 +42,7 @@ export const updateComment = createAsyncThunk(
   async ({ postId, commentId, text }, thunkAPI) => {
     try {
       const res = await axiosInstance.patch(
-        `/api/posts/${postId}/comments/${commentId}/`,
+        `/posts/${postId}/comments/${commentId}/`,
         { content: text }
       );
       return { ...res.data, id: commentId };
@@ -59,7 +59,7 @@ export const deleteComment = createAsyncThunk(
   'comments/deleteComment',
   async ({ postId, commentId }, thunkAPI) => {
     try {
-      await axiosInstance.delete(`/api/posts/${postId}/comments/${commentId}/`);
+      await axiosInstance.delete(`/posts/${postId}/comments/${commentId}/`);
       return commentId;
     } catch (error) {
       return thunkAPI.rejectWithValue(

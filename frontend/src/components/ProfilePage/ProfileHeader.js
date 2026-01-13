@@ -14,6 +14,7 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
   if (!user || !currentUser) return null;
 
   const {
+    user_id,
     username,
     first_name,
     last_name,
@@ -31,11 +32,13 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
       : username;
 
   const isOwnProfile = currentUser.username === username;
+  console.log("Profile user object:", user);
+  console.log("Profile user id:", user_id);
 
   const handleMessageClick = async () => {
   try {
-    const res = await axiosInstance.post("/api/inbox/get-or-create/", {
-      user2: user.id,   // the user being messaged
+    const res = await axiosInstance.post("/inbox/get-or-create/", {
+      user2: user_id,   // the user being messaged
     });
    
 

@@ -41,7 +41,7 @@ const InboxModal = ({ onClose }) => {
 
             return (
               <li key={chat.id} className={`chat-item ${isUnread ? 'chat-unread' : ''}`}>
-                <Link to={`/chat/${chat.id}`} onClick={onClose}>
+                <Link to={`/chat/${chat.unique_key}`} onClick={onClose}>
                   {otherUsers.map((u) => (
                     <img
                       key={u.id}

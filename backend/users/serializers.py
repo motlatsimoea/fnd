@@ -8,6 +8,7 @@ from market.serializers import ProductSerializer
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(source="user.id", read_only=True)
     username = serializers.CharField(source="user.username", required=False)
     email = serializers.EmailField(source="user.email", required=False)
     sectors = serializers.SerializerMethodField()
@@ -17,7 +18,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = [
-            'username', 'email',
+             'user_id', 'username', 'email',
             'first_name', 'last_name', 'location',
             'phone_number', 'bio', 'profile_picture', 'background_picture',
             'sectors',

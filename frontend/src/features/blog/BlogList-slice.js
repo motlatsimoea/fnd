@@ -8,7 +8,7 @@ import axiosInstance from '../../utils/axiosInstance';
 export const fetchBlogPosts = createAsyncThunk(
   'blogs/fetchBlogPosts',
   async () => {
-    const response = await axiosInstance.get('/api/posts/');
+    const response = await axiosInstance.get('/posts/');
     return response.data;
   }
 );
@@ -18,7 +18,7 @@ export const fetchSinglePost = createAsyncThunk(
   'blogs/fetchSinglePost',
   async (postId, thunkAPI) => {
     try {
-      const response = await axiosInstance.get(`/api/posts/${postId}/`);
+      const response = await axiosInstance.get(`/posts/${postId}/`);
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -33,7 +33,7 @@ export const createPost = createAsyncThunk(
   'blogs/createPost',
   async (postData, thunkAPI) => {
     try {
-      const response = await axiosInstance.post('/api/posts/create/', postData);
+      const response = await axiosInstance.post('/posts/create/', postData);
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -48,7 +48,7 @@ export const deletePost = createAsyncThunk(
   'blogs/deletePost',
   async (postId, thunkAPI) => {
     try {
-      await axiosInstance.delete(`/api/posts/${postId}/`);
+      await axiosInstance.delete(`/posts/${postId}/`);
       return postId;
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -63,7 +63,7 @@ export const toggleLikePost = createAsyncThunk(
   'blogs/toggleLikePost',
   async (postId, thunkAPI) => {
     try {
-      const response = await axiosInstance.post(`/api/posts/${postId}/like/`);
+      const response = await axiosInstance.post(`/posts/${postId}/like/`);
       // backend returns { liked: true/false, like_count: number }
       return { postId, ...response.data };
     } catch (error) {

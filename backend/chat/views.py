@@ -177,7 +177,21 @@ class GetOrCreateChat(APIView):
 
     def post(self, request):
         user1 = request.user
-        user2 = get_object_or_404(User, id=request.data.get("user2"))
+        user2_id = request.data.get("user2")
+
+        if not user2_id:
+            return Response(
+                {"detail": "user2 is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user2 = User.objects.get(id=user2_id)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "Target user does not exist"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         inbox = Inbox.objects.filter(
             participants=user1

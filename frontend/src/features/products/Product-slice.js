@@ -12,7 +12,7 @@ export const fetchProducts = createAsyncThunk(
   "products/fetchAll",
   async (_, thunkAPI) => {
     try {
-      const res = await axiosInstance.get("/api/products/");
+      const res = await axiosInstance.get("/products/");
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -25,7 +25,7 @@ export const createProduct = createAsyncThunk(
   "products/create",
   async (formData, thunkAPI) => {
     try {
-      const res = await axiosInstance.post("/api/products/", formData);
+      const res = await axiosInstance.post("/products/", formData);
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -38,7 +38,7 @@ export const fetchProductById = createAsyncThunk(
   "products/fetchById",
   async (id, thunkAPI) => {
     try {
-      const res = await axiosInstance.get(`/api/products/${id}/`);
+      const res = await axiosInstance.get(`/products/${id}/`);
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -51,7 +51,7 @@ export const updateProduct = createAsyncThunk(
   "products/update",
   async ({ id, formData }, thunkAPI) => {
     try {
-      const res = await axiosInstance.put(`/api/products/${id}/`, formData);
+      const res = await axiosInstance.put(`/products/${id}/`, formData);
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));
@@ -64,7 +64,7 @@ export const deleteProduct = createAsyncThunk(
   "products/delete",
   async (id, thunkAPI) => {
     try {
-      await axiosInstance.delete(`/api/products/${id}/`);
+      await axiosInstance.delete(`/products/${id}/`);
       return id;
     } catch (err) {
       return thunkAPI.rejectWithValue(getErrorMessage(err));

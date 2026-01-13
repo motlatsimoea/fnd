@@ -11,8 +11,8 @@ from users.views import (MyTokenObtainPairView,
                          ResetPasswordConfirmView)
 
 urlpatterns = [
-    path('login/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path("token/refresh/", MyTokenRefreshCookieView.as_view(), name='token_refresh'),
+    path('api/login/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path("api/token/refresh/", MyTokenRefreshCookieView.as_view(), name='token_refresh'),
     path('logout/', LogoutAndBlacklistRefreshTokenForUserView.as_view()),
     
     path("password-reset/", RequestPasswordResetView.as_view(), name="password-reset"),

@@ -5,7 +5,7 @@ import axiosInstance from '../../utils/axiosInstance';
 export const fetchNotifications = createAsyncThunk(
   'notifications/fetchAll',
   async (unreadOnly = false) => {
-    const response = await axiosInstance.get(`/api/notifications/?unread=${unreadOnly}`);
+    const response = await axiosInstance.get(`/notifications/?unread=${unreadOnly}`);
     return response.data; // contains count, next, previous, results[], unread_count
   }
 );
@@ -13,7 +13,7 @@ export const fetchNotifications = createAsyncThunk(
 export const fetchInboxNotifications = createAsyncThunk(
   'notifications/fetchInbox',
   async (unreadOnly = false) => {
-    const response = await axiosInstance.get(`/api/notifications/inbox/?unread=${unreadOnly}`);
+    const response = await axiosInstance.get(`/notifications/inbox/?unread=${unreadOnly}`);
     return response.data;
   }
 );
@@ -21,7 +21,7 @@ export const fetchInboxNotifications = createAsyncThunk(
 export const markNotificationAsRead = createAsyncThunk(
   'notifications/markAsRead',
   async (notificationId) => {
-    await axiosInstance.post(`/api/notifications/mark-as-read/${notificationId}/`);
+    await axiosInstance.post(`/notifications/mark-as-read/${notificationId}/`);
     return notificationId;
   }
 );
@@ -29,7 +29,7 @@ export const markNotificationAsRead = createAsyncThunk(
 export const markAllGeneralAsRead = createAsyncThunk(
   'notifications/markAllGeneralAsRead',
   async () => {
-    await axiosInstance.post(`/api/notifications/mark-all-read/`);
+    await axiosInstance.post(`/notifications/mark-all-read/`);
     return 'general';
   }
 );
@@ -37,7 +37,7 @@ export const markAllGeneralAsRead = createAsyncThunk(
 export const markAllInboxAsRead = createAsyncThunk(
   'notifications/markAllInboxAsRead',
   async () => {
-    await axiosInstance.post(`/api/notifications/inbox/mark-all-read/`);
+    await axiosInstance.post(`/notifications/inbox/mark-all-read/`);
     return 'inbox';
   }
 );

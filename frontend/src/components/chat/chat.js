@@ -26,6 +26,7 @@ const Chat = ({ chatKey, user, initialMessages }) => {
     messageQueues.current[key].push(payload);
   }, []);
 
+  const hasMergedInitial = useRef(false);
   const seenIds = useRef({});
   const markSeen = useCallback((chatId, id) => {
     if (!seenIds.current[chatId]) seenIds.current[chatId] = new Set();
@@ -47,14 +48,30 @@ const Chat = ({ chatKey, user, initialMessages }) => {
   );
 
   useEffect(() => {
-    if (initialMessages?.length > 0) {
-      dispatch(mergeMessages({ chatId: chatKey, messages: initialMessages }));
-      initialMessages.forEach((m) => markSeen(chatKey, m.id));
-    }
+    if (!initialMessages?.length) return;
+    if (hasMergedInitial.current) return;
+
+    dispatch(
+      mergeMessages({
+        chatId: chatKey,
+        messages: initialMessages.map((m) => ({
+          ...m,
+          // ✅ normalize REST vs WebSocket payloads
+          message: m.message ?? m.content,
+        })),
+      })
+    );
+
+    initialMessages.forEach((m) => markSeen(chatKey, m.id));
+    hasMergedInitial.current = true;
   }, [chatKey, initialMessages, dispatch, markSeen]);
+
 
   const createWebSocket = useCallback(() => {
     if (!chatKey || !accessToken) return;
+
+    // ✅ PREVENT duplicate sockets
+    if (socketRef.current) return;
 
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const backendHost =

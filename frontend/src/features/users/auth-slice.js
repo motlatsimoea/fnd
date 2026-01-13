@@ -78,7 +78,7 @@ export const refreshToken = createAsyncThunk(
       const access = refreshData?.access ?? refreshData;
       if (access) setAccessToken(access);
 
-      const { data: user } = await axiosInstance.get('/api/users/me/', {
+      const { data: user } = await axiosInstance.get('/users/me/', {
         withCredentials: true,
       });
 

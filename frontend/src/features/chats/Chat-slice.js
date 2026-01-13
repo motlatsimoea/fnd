@@ -6,7 +6,7 @@ export const fetchUserChats = createAsyncThunk(
   "chats/fetchUserChats",
   async (_, thunkAPI) => {
     try {
-      const res = await axiosInstance.get("/api/inbox/");
+      const res = await axiosInstance.get("/inbox/");
       return res.data;
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
@@ -18,7 +18,7 @@ export const fetchMessages = createAsyncThunk(
   "chats/fetchMessages",
   async ({ chatId, chatKey }, thunkAPI) => { // 🔄 CHANGED
     try {
-      const res = await axiosInstance.get(`/api/inbox/${chatId}/messages/`);
+      const res = await axiosInstance.get(`/inbox/${chatId}/messages/`);
       return { chatKey, messages: res.data }; // 🔄 CHANGED
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);

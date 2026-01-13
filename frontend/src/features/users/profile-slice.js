@@ -8,8 +8,8 @@ export const fetchProfile = createAsyncThunk(
     try {
       // If username is provided, fetch that profile; otherwise fallback to current user
       const url = username
-        ? `/api/users/profile/${username}/`
-        : "/api/users/profile/";
+        ? `/users/profile/${username}/`
+        : "/users/profile/";
       const response = await axiosInstance.get(url);
       return response.data;
     } catch (err) {
@@ -29,8 +29,8 @@ export const updateProfile = createAsyncThunk(
       });
 
       const url = username
-        ? `/api/users/profile/${username}/`
-        : "/api/users/profile/";
+        ? `/users/profile/${username}/`
+        : "/users/profile/";
 
       const response = await axiosInstance.put(url, data, {
         headers: { "Content-Type": "multipart/form-data" },
