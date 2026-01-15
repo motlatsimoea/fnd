@@ -4,6 +4,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Chat from "./chat";
 import { fetchMessages, fetchUserChats } from "../../features/chats/Chat-slice";
+import { markAllInboxAsRead } from "../../features/notifications/notice-slice";
+import axiosInstance from '../../utils/axiosInstance';
 
 const ChatPage = () => {
   const { uniqueKey } = useParams(); // 🔄 CHANGED: unique_key from URL
@@ -18,6 +20,14 @@ const ChatPage = () => {
 
   const [chatTitle, setChatTitle] = useState("");
   const [chatId, setChatId] = useState(null); // ✅ NEW: numeric ID for REST
+
+
+  useEffect(() => {
+    if (!chatId) return;
+
+    axiosInstance.post(`/notifications/inbox/mark-all-read/${chatId}/`);
+    dispatch(markAllInboxAsRead()); // ✅ update Redux immediately
+  }, [chatId, dispatch]);
 
   // Load inboxes
   useEffect(() => {

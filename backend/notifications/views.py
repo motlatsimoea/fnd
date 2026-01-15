@@ -4,6 +4,8 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Notification
 from .serializers import NotificationSerializer
 from .pagination import NotificationPagination
+from chat.models import *
+from django.shortcuts import get_object_or_404
 
 
 class NotificationBaseView(APIView):
@@ -47,9 +49,6 @@ class NotificationListView(NotificationBaseView):
     notification_types = ["like", "comment", "reply", "review"]
 
 
-class InboxNotificationView(NotificationBaseView):
-    notification_types = "message"
-
 
 class MarkNotificationReadView(APIView):
     permission_classes = [IsAuthenticated]
@@ -84,6 +83,31 @@ class MarkAllNotificationsReadView(APIView):
 class MarkAllGeneralNotificationsReadView(MarkAllNotificationsReadView):
     notification_types = ["like", "comment", "reply", "review"]
 
+   
+class MarkInboxReadView(APIView):
+    permission_classes = [IsAuthenticated]
 
-class MarkAllInboxNotificationsReadView(MarkAllNotificationsReadView):
-    notification_types = "message"
+    def post(self, request, inbox_id):
+        inbox = get_object_or_404(
+            Inbox,
+            id=inbox_id,
+            participants=request.user
+        )
+
+        # 1️⃣ Mark messages as read
+        Message.objects.filter(
+            inbox=inbox,
+            is_read=False
+        ).exclude(
+            sender=request.user
+        ).update(is_read=True)
+
+        # 2️⃣ Mark related inbox notifications as read
+        Notification.objects.filter(
+            inbox=inbox,
+            user=request.user,
+            is_read=False,
+            notification_type="message"
+        ).update(is_read=True)
+
+        return Response({"success": True})

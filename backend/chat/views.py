@@ -13,6 +13,8 @@ from django.conf import settings
 from asgiref.sync import async_to_sync
 from notifications.utils import send_message_notification
 from django.shortcuts import get_object_or_404
+from django.db.models import Count, Q
+from chat.realtime import send_inbox_update
 
 
 
@@ -23,7 +25,14 @@ class ChatListView(APIView):
 
     def get(self, request):
         # Get all chats the user is part of
-        chats = Inbox.objects.filter(participants=request.user)
+        chats = Inbox.objects.filter(participants=request.user).annotate(
+            unread_count=Count(
+                "messages",
+                filter=Q(
+                    messages__is_read=False
+                ) & ~Q(messages__sender=request.user)
+            )
+        )
         serializer = ChatRoomSerializer(chats, many=True, context={"request": request})
         return Response(serializer.data, status=200)
     
@@ -66,6 +75,9 @@ class ChatView(APIView):
 
         # Save the message
         message = Message.objects.create(inbox=inbox, sender=sender, content=message_text)
+        
+        # realtime inbox update
+        send_inbox_update(message, request)
 
         # Use helper to create notification + send over WebSocket
         send_message_notification(

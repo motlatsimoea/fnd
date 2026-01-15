@@ -31,58 +31,58 @@ const chatSlice = createSlice({
   name: "chats",
   initialState: {
     chatRooms: [],
-    messages: {}, // { chatId: [msg, msg, ...] }
+    messages: {}, // { chatKey: [msg, msg, ...] }
     loading: false,
     error: null,
   },
   reducers: {
     // Add or receive one message (optimistic or server)
     receiveNewMessage: (state, action) => {
-      const { chatId, message } = action.payload;
-      if (!state.messages[chatId]) state.messages[chatId] = [];
+      const { chatKey, message } = action.payload;
+      if (!state.messages[chatKey]) state.messages[chatKey] = [];
 
       const msgWithSending =
         message.sending === undefined ? { ...message, sending: true } : message;
 
-      if (!state.messages[chatId].some((m) => m.id === msgWithSending.id)) {
-        state.messages[chatId].push(msgWithSending);
+      if (!state.messages[chatKey].some((m) => m.id === msgWithSending.id)) {
+        state.messages[chatKey].push(msgWithSending);
       }
     },
 
     // Replace a temp message with server-confirmed message
     updateMessageId: (state, action) => {
-      const { chatId, tempId, newMessage } = action.payload;
-      if (!state.messages[chatId]) state.messages[chatId] = [];
+      const { chatKey, tempId, newMessage } = action.payload;
+      if (!state.messages[chatKey]) state.messages[chatKey] = [];
 
-      const index = state.messages[chatId].findIndex((m) => m.id === tempId);
+      const index = state.messages[chatKey].findIndex((m) => m.id === tempId);
       const messageToInsert = { ...newMessage, sending: false };
 
       if (index !== -1) {
-        state.messages[chatId][index] = messageToInsert;
+        state.messages[chatKey][index] = messageToInsert;
       } else {
-        state.messages[chatId].push(messageToInsert);
+        state.messages[chatKey].push(messageToInsert);
       }
 
       // Deduplicate & sort
-      const unique = state.messages[chatId].filter(
+      const unique = state.messages[chatKey].filter(
         (msg, idx, self) => idx === self.findIndex((m) => m.id === msg.id)
       );
-      state.messages[chatId] = unique.sort(
+      state.messages[chatKey] = unique.sort(
         (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
       );
     },
 
     // Merge bulk messages (initial load/pagination)
     mergeMessages: (state, action) => {
-      const { chatId, messages } = action.payload;
-      const existing = state.messages[chatId] || [];
+      const { chatKey, messages } = action.payload;
+      const existing = state.messages[chatKey] || [];
 
       const merged = [...existing, ...messages].filter(
         (msg, index, self) => index === self.findIndex((m) => m.id === msg.id)
       );
 
       merged.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-      state.messages[chatId] = merged;
+      state.messages[chatKey] = merged;
     },
   },
   extraReducers: (builder) => {

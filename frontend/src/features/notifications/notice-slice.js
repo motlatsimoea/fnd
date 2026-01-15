@@ -66,7 +66,10 @@ const notificationsSlice = createSlice({
   initialState,
   reducers: {
     prependNotification: (state, action) => {
+      if (action.payload.is_read) return;
       const target = action.payload.notification_type === 'message' ? 'inbox' : 'general';
+
+      if (state[target].items.some(n => n.id === action.payload.id)) return;
       state[target].items.unshift(action.payload);
       state[target].unreadCount += 1;
       state[target].totalCount += 1;

@@ -6,6 +6,7 @@ import { logout as logoutAction } from '../../features/users/auth-slice';
 import useNotificationsSocket from './NotificationSocket';
 import axiosInstance, { setAccessToken } from '../../utils/axiosInstance';
 import InboxModal from '../../components/chat/InboxModal';
+import useInboxSocket from '../../components/chat/useInboxSocket';
 import {
   FaPlusCircle, FaBell, FaStore,
   FaBook, FaUserCircle, FaSignOutAlt, FaCogs,
@@ -31,6 +32,7 @@ const Header = () => {
   const unreadCount = useSelector((state) => state.notifications.general.unreadCount || 0);
 
   useNotificationsSocket();
+  useInboxSocket();
 
   const toggleUserMenu = () => setShowUserMenu((prev) => !prev);
   const toggleNotifications = () => setShowNotifications((prev) => !prev);

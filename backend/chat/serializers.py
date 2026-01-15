@@ -59,6 +59,7 @@ class ChatRoomSerializer(serializers.ModelSerializer):
     participants = UserSerializer(many=True, read_only=True)
     last_message = serializers.SerializerMethodField()
     current_user = serializers.SerializerMethodField()
+    unread_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Inbox
@@ -67,7 +68,8 @@ class ChatRoomSerializer(serializers.ModelSerializer):
             'unique_key',
             'participants',
             'last_message',
-            'current_user'
+            'current_user',
+            'unread_count',
         ]
 
     def get_last_message(self, obj):

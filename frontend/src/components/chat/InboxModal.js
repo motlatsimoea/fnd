@@ -37,7 +37,7 @@ const InboxModal = ({ onClose }) => {
           chatRooms.map((chat) => {
             const otherUsers = chat.participants?.filter((p) => p.id !== userId) || [];
             const lastMessage = chat.last_message;
-            const isUnread = lastMessage?.read === false && lastMessage?.senderId !== userId;
+            const isUnread = chat.unread_count > 0;
 
             return (
               <li key={chat.id} className={`chat-item ${isUnread ? 'chat-unread' : ''}`}>
