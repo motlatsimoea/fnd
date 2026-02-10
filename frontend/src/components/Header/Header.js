@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { markNotificationAsRead, fetchNotifications, fetchInboxNotifications } from '../../features/notifications/notice-slice';
+import {
+  fetchNotifications,
+  fetchInboxNotifications
+} from '../../features/notifications/notice-slice';
 import { logout as logoutAction } from '../../features/users/auth-slice';
+import { selectUnreadCount } from '../../features/chats/Chat-slice';
 import useNotificationsSocket from './NotificationSocket';
 import axiosInstance, { setAccessToken } from '../../utils/axiosInstance';
 import InboxModal from '../../components/chat/InboxModal';
-import useInboxSocket from '../../components/chat/useInboxSocket';
+
 import {
   FaPlusCircle, FaBell, FaStore,
   FaBook, FaUserCircle, FaSignOutAlt, FaCogs,
@@ -16,10 +20,8 @@ import './Header.css';
 
 const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
 
-  const notificationsRef = useRef(null);
   const inboxRef = useRef(null);
   const userMenuRef = useRef(null);
 
@@ -28,14 +30,16 @@ const Header = () => {
   const location = useLocation();
 
   const userInfo = useSelector((state) => state.auth.userInfo);
-  const notifications = useSelector((state) => state.notifications.general.items || []);
-  const unreadCount = useSelector((state) => state.notifications.general.unreadCount || 0);
+
+  // 🔔 unread notification badge
+  const unreadNotifications = useSelector(
+    (state) => state.notifications.general.unreadCount || 0
+  );
+
+  // 📩 unread inbox badge
+  const unreadInboxCount = useSelector(selectUnreadCount);
 
   useNotificationsSocket();
-  useInboxSocket();
-
-  const toggleUserMenu = () => setShowUserMenu((prev) => !prev);
-  const toggleNotifications = () => setShowNotifications((prev) => !prev);
 
   const handleLogout = async () => {
     try {
@@ -43,15 +47,12 @@ const Header = () => {
       setAccessToken(null);
       dispatch(logoutAction());
 
-      try {
-        const bc = new BroadcastChannel('auth');
-        bc.postMessage({ type: 'logout' });
-        bc.close();
-      } catch {}
+      const bc = new BroadcastChannel('auth');
+      bc.postMessage({ type: 'logout' });
+      bc.close();
 
       navigate('/login');
-    } catch (err) {
-      console.error('Logout failed:', err);
+    } catch {
       setAccessToken(null);
       dispatch(logoutAction());
       navigate('/login');
@@ -67,65 +68,8 @@ const Header = () => {
 
   useEffect(() => {
     setShowUserMenu(false);
-    setShowNotifications(false);
     setShowInbox(false);
   }, [location.pathname]);
-
-  // Automatically mark notifications as read when opened
-  useEffect(() => {
-    if (showNotifications && notifications.length > 0) {
-      notifications.forEach((n) => {
-        if (!n.is_read && n.id) {
-          dispatch(markNotificationAsRead(n.id));
-        }
-      });
-    }
-  }, [showNotifications, notifications, dispatch]);
-
-  // Handle cross-tab logout
-  useEffect(() => {
-    let bc;
-    try {
-      bc = new BroadcastChannel('auth');
-      const onMessage = (ev) => {
-        if (ev?.data?.type === 'logout') {
-          setAccessToken(null);
-          dispatch(logoutAction());
-          navigate('/login');
-        }
-      };
-      bc.addEventListener('message', onMessage);
-      return () => {
-        bc.removeEventListener('message', onMessage);
-        bc.close();
-      };
-    } catch {
-      return undefined;
-    }
-  }, [dispatch, navigate]);
-
-  // ✅ Close modals when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        notificationsRef.current &&
-        !notificationsRef.current.contains(event.target)
-      ) {
-        setShowNotifications(false);
-      }
-
-      if (inboxRef.current && !inboxRef.current.contains(event.target)) {
-        setShowInbox(false);
-      }
-
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
-        setShowUserMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   return (
     <nav className="navbar">
@@ -136,97 +80,61 @@ const Header = () => {
       {userInfo ? (
         <>
           <div className="nav-links">
-            <Link to="/create-post" className="nav-item" title="Create Post"><FaPlusCircle /></Link>
+            <Link to="/create-post" className="nav-item">
+              <FaPlusCircle />
+            </Link>
 
-            {/* 🔔 Notifications */}
-            <span className="notification-wrapper" ref={notificationsRef}>
-              <button
-                className="nav-item notification-button"
-                onClick={toggleNotifications}
-                title="Notifications"
-                style={{ cursor: 'pointer' }}
-              >
-                <FaBell />
-                {unreadCount > 0 && <span className="notification-badge">{unreadCount}</span>}
-              </button>
-
-              {showNotifications && (
-                <div className="notifications-modal inbox-modal">
-                  <div className="notifications-header">
-                    <h4>Notifications</h4>
-                    <button onClick={toggleNotifications} className="close-btn">&times;</button>
-                  </div>
-
-                  <ul className="notifications-list">
-                    {notifications.length > 0 ? (
-                      notifications
-                        .slice()
-                        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-                        .map((notification) => (
-                          <li
-                            key={notification.id}
-                            className={notification.is_read ? 'read' : 'unread'}
-                          >
-                            <Link
-                              to={notification.link || '#'}
-                              className="notification-item"
-                              onClick={() => {
-                                if (!notification.is_read && notification.id) {
-                                  dispatch(markNotificationAsRead(notification.id));
-                                }
-                                toggleNotifications();
-                              }}
-                            >
-                              <div className="notification-content">
-                                <p className="notification-message">
-                                  <strong>{notification.sender_username || 'User'}</strong>:{" "}
-                                  {notification.message && notification.message.length > 40
-                                    ? notification.message.slice(0, 40) + '...'
-                                    : notification.message}
-                                </p>
-                                <span className="notification-time">
-                                  {notification.timestamp
-                                    ? new Date(notification.timestamp).toLocaleTimeString([], {
-                                        hour: '2-digit',
-                                        minute: '2-digit',
-                                      })
-                                    : ''}
-                                </span>
-                              </div>
-                            </Link>
-                          </li>
-                        ))
-                    ) : (
-                      <li className="no-notifications">No notifications</li>
-                    )}
-                  </ul>
-                </div>
+            {/* 🔔 Notifications (badge only for now) */}
+            <button className="nav-item notification-button">
+              <FaBell />
+              {unreadNotifications > 0 && (
+                <span className="notification-badge">
+                  {unreadNotifications}
+                </span>
               )}
-            </span>
-
-            <Link to="/market" className="nav-item" title="Marketplace"><FaStore /></Link>
+            </button>
 
             {/* 📩 Inbox */}
             <span className="inbox-wrapper" ref={inboxRef}>
               <button
                 className="nav-item inbox-button"
-                onClick={() => setShowInbox(true)}
-                title="Inbox"
+                onClick={() => setShowInbox((p) => !p)}
               >
                 <FaEnvelope />
+                {unreadInboxCount > 0 && (
+                  <span className="notification-badge">
+                    {unreadInboxCount}
+                  </span>
+                )}
               </button>
-              {showInbox && <InboxModal onClose={() => setShowInbox(false)} />}
+
+              {showInbox && (
+                <InboxModal onClose={() => setShowInbox(false)} />
+              )}
             </span>
 
-            <Link to="/info" className="nav-item" title="Info"><FaBook /></Link>
+            <Link to="/market" className="nav-item">
+              <FaStore />
+            </Link>
+            <Link to="/info" className="nav-item">
+              <FaBook />
+            </Link>
           </div>
 
           <div className="user-dropdown" ref={userMenuRef}>
-            <button className="user-btn" onClick={toggleUserMenu}><FaUserCircle /></button>
+            <button
+              className="user-btn"
+              onClick={() => setShowUserMenu((p) => !p)}
+            >
+              <FaUserCircle />
+            </button>
+
             {showUserMenu && (
               <div className="user-menu">
-                <Link to="/settings" className="user-item"><FaCogs /> Settings</Link>
-                <span onClick={handleLogout} className="user-item" style={{ cursor: 'pointer' }}>
+                <Link to="/settings" className="user-item">
+                  <FaCogs /> Settings
+                </Link>
+                <span onClick={handleLogout} className="user-item">
                   <FaSignOutAlt /> Logout
                 </span>
               </div>
@@ -236,12 +144,10 @@ const Header = () => {
       ) : (
         <div className="nav-links">
           <Link to="/login" className="nav-item">
-            <FaSignInAlt style={{ marginRight: '5px' }} />
-            Login
+            <FaSignInAlt /> Login
           </Link>
           <Link to="/register" className="nav-item">
-            <FaUserPlus style={{ marginRight: '5px' }} />
-            Register
+            <FaUserPlus /> Register
           </Link>
         </div>
       )}

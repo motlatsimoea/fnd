@@ -82,8 +82,11 @@ class MarkAllNotificationsReadView(APIView):
 
 class MarkAllGeneralNotificationsReadView(MarkAllNotificationsReadView):
     notification_types = ["like", "comment", "reply", "review"]
+    
+class InboxNotificationListView(NotificationBaseView):
+    notification_types = ["message"]
 
-   
+
 class MarkInboxReadView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -94,15 +97,10 @@ class MarkInboxReadView(APIView):
             participants=request.user
         )
 
-        # 1️⃣ Mark messages as read
-        Message.objects.filter(
-            inbox=inbox,
-            is_read=False
-        ).exclude(
-            sender=request.user
-        ).update(is_read=True)
+        # ✅ 1. Clear inbox unread state for this user
+        inbox.unread_by.remove(request.user)
 
-        # 2️⃣ Mark related inbox notifications as read
+        # ✅ 2. (Optional) Mark inbox notifications as read
         Notification.objects.filter(
             inbox=inbox,
             user=request.user,
@@ -110,4 +108,7 @@ class MarkInboxReadView(APIView):
             notification_type="message"
         ).update(is_read=True)
 
-        return Response({"success": True})
+        return Response(
+            {"success": True, "inbox_id": inbox.id},
+            status=200
+        )

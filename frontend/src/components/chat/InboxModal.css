@@ -95,3 +95,8 @@
   font-weight: 600;
   color: #000;
 }
+
+.chat-item.chat-unread {
+  font-weight: bold;
+  background: #f3f7ff;
+}

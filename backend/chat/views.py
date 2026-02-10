@@ -24,15 +24,21 @@ class ChatListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Get all chats the user is part of
-        chats = Inbox.objects.filter(participants=request.user).annotate(
-            unread_count=Count(
-                "messages",
-                filter=Q(
-                    messages__is_read=False
-                ) & ~Q(messages__sender=request.user)
+        user = request.user
+
+        chats = (
+            Inbox.objects
+            .filter(participants=user)
+            .annotate(
+                unread_count=Count(
+                    "unread_by",
+                    filter=Q(unread_by=user)
+                )
             )
+            .order_by("-updated_at")
+            .prefetch_related("participants")
         )
+
         serializer = ChatRoomSerializer(chats, many=True, context={"request": request})
         return Response(serializer.data, status=200)
     

@@ -34,13 +34,6 @@ export const markAllGeneralAsRead = createAsyncThunk(
   }
 );
 
-export const markAllInboxAsRead = createAsyncThunk(
-  'notifications/markAllInboxAsRead',
-  async () => {
-    await axiosInstance.post(`/notifications/inbox/mark-all-read/`);
-    return 'inbox';
-  }
-);
 
 const initialState = {
   general: {
@@ -130,10 +123,6 @@ const notificationsSlice = createSlice({
       .addCase(markAllGeneralAsRead.fulfilled, (state) => {
         state.general.items.forEach(n => { n.is_read = true; });
         state.general.unreadCount = 0;
-      })
-      .addCase(markAllInboxAsRead.fulfilled, (state) => {
-        state.inbox.items.forEach(n => { n.is_read = true; });
-        state.inbox.unreadCount = 0;
       });
   }
 });

@@ -53,7 +53,7 @@ const Chat = ({ chatKey, user, initialMessages }) => {
 
     dispatch(
       mergeMessages({
-        chatId: chatKey,
+        chatKey,
         messages: initialMessages.map((m) => ({
           ...m,
           // ✅ normalize REST vs WebSocket payloads
@@ -71,7 +71,7 @@ const Chat = ({ chatKey, user, initialMessages }) => {
     if (!chatKey || !accessToken) return;
 
     // ✅ PREVENT duplicate sockets
-    if (socketRef.current) return;
+   if (socketRef.current && socketRef.current.readyState < 2) return;
 
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const backendHost =
@@ -79,7 +79,7 @@ const Chat = ({ chatKey, user, initialMessages }) => {
         ? "localhost:8000"
         : window.location.host;
 
-    const url = `${protocol}://${backendHost}/ws/chat/${chatKey}/?token=${accessToken}`;
+    const url = `${protocol}://${backendHost}/ws/chat/${chatKey}/`;
     const ws = new WebSocket(url);
     socketRef.current = ws;
 
@@ -96,7 +96,7 @@ const Chat = ({ chatKey, user, initialMessages }) => {
       if (data.temp_id) {
         dispatch(
           updateMessageId({
-            chatId: chatKey,
+            chatKey,
             tempId: data.temp_id,
             newMessage: data,
           })
@@ -105,7 +105,7 @@ const Chat = ({ chatKey, user, initialMessages }) => {
       } else {
         if (!data.id) data.id = `temp-${Date.now()}`;
         if (markSeen(chatKey, data.id)) {
-          dispatch(receiveNewMessage({ chatId: chatKey, message: data }));
+          dispatch(receiveNewMessage({ chatKey, message: data }));
         }
       }
     };
@@ -149,7 +149,7 @@ const Chat = ({ chatKey, user, initialMessages }) => {
       sending: true,
     };
 
-    dispatch(receiveNewMessage({ chatId: chatKey, message: newMessage }));
+    dispatch(receiveNewMessage({ chatKey, message: newMessage }));
 
     const payload = { message, temp_id: tempId };
     if (wsConnected && socketRef.current?.readyState === WebSocket.OPEN) {

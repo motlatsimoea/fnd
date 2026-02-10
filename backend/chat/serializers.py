@@ -57,51 +57,51 @@ class MessageSerializer(serializers.ModelSerializer):
 
 class ChatRoomSerializer(serializers.ModelSerializer):
     participants = UserSerializer(many=True, read_only=True)
+    unread_count = serializers.IntegerField(read_only=True)
     last_message = serializers.SerializerMethodField()
     current_user = serializers.SerializerMethodField()
-    unread_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Inbox
         fields = [
-            'id',
-            'unique_key',
-            'participants',
-            'last_message',
-            'current_user',
-            'unread_count',
+            "id",
+            "unique_key",
+            "participants",
+            "last_message",
+            "current_user",
+            "updated_at",
+            "unread_count",
         ]
 
     def get_last_message(self, obj):
-        last_msg = obj.messages.order_by('-timestamp').first()
-        if not last_msg:
-            print("No last message found")
+        if not obj.last_message_text:
             return None
-        
-        sender = last_msg.sender
+
         request = self.context.get("request")
-        
-        try:
-            profile_picture = None
-            if hasattr(sender, "profile") and getattr(sender.profile, "profile_picture", None):
-                profile_picture = request.build_absolute_uri(sender.profile.profile_picture.url)
-            print(f"Sender: {sender.username}, profile picture: {profile_picture}")
-        except Exception as e:
-            print(f"Error fetching sender profile picture: {e}")
-        
+        sender = obj.last_message_sender
+
+        profile_picture = None
+        if sender and hasattr(sender, "profile") and sender.profile.profile_picture:
+            profile_picture = request.build_absolute_uri(
+                sender.profile.profile_picture.url
+            )
+
         return {
-            "id": last_msg.id,
-            "sender_id": sender.id,
-            "sender_username": sender.username,
+            "sender_id": sender.id if sender else None,
+            "sender_username": sender.username if sender else None,
             "sender_profile_picture": profile_picture,
-            "text": last_msg.get_content(),
-            "timestamp": last_msg.timestamp,
+            "text": obj.last_message_text,
+            "timestamp": obj.last_message_at,
         }
+
     def get_current_user(self, obj):
-        request = self.context.get('request')
-        return request.user.id if request and hasattr(request, 'user') else None
+        request = self.context.get("request")
+        return request.user.id if request and request.user else None
 
     def validate_participants(self, value):
         if len(value) != 2:
-            raise serializers.ValidationError("A chat room must have exactly two participants.")
+            raise serializers.ValidationError(
+                "A chat room must have exactly two participants."
+            )
         return value
+

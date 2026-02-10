@@ -1,60 +1,78 @@
 // src/pages/ChatPage.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import Chat from "./chat";
-import { fetchMessages, fetchUserChats } from "../../features/chats/Chat-slice";
-import { markAllInboxAsRead } from "../../features/notifications/notice-slice";
-import axiosInstance from '../../utils/axiosInstance';
+import {
+  fetchMessages,
+  fetchUserChats,
+  makeSelectChatByKey,
+  makeSelectMessagesByKey,
+} from "../../features/chats/Chat-slice";
+import axiosInstance from "../../utils/axiosInstance";
 
 const ChatPage = () => {
-  const { uniqueKey } = useParams(); // 🔄 CHANGED: unique_key from URL
+  const { uniqueKey } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const user = useSelector((state) => state.auth?.userInfo || null);
-  const chatRooms = useSelector((state) => state.chats.chatRooms || []);
-  const messages = useSelector(
-    (state) => state.chats.messages[uniqueKey] || [] // 🔄 CHANGED
+
+  // ✅ Memoized selectors (critical)
+  const selectChat = useMemo(
+    () => makeSelectChatByKey(uniqueKey),
+    [uniqueKey]
   );
 
-  const [chatTitle, setChatTitle] = useState("");
-  const [chatId, setChatId] = useState(null); // ✅ NEW: numeric ID for REST
+  const selectMessages = useMemo(
+    () => makeSelectMessagesByKey(uniqueKey),
+    [uniqueKey]
+  );
 
+  const chat = useSelector(selectChat);
+  const messages = useSelector(selectMessages);
+
+  const [chatTitle, setChatTitle] = useState("");
+  const [chatId, setChatId] = useState(null);
+
+  /* ---------------- MARK READ ---------------- */
 
   useEffect(() => {
     if (!chatId) return;
+    axiosInstance.post(`/notifications/inbox/${chatId}/mark-read/`);
+  }, [chatId]);
 
-    axiosInstance.post(`/notifications/inbox/mark-all-read/${chatId}/`);
-    dispatch(markAllInboxAsRead()); // ✅ update Redux immediately
-  }, [chatId, dispatch]);
+  /* ---------------- LOAD INBOXES ---------------- */
 
-  // Load inboxes
   useEffect(() => {
-    if (user && chatRooms.length === 0) {
+    if (user) {
       dispatch(fetchUserChats());
     }
-  }, [dispatch, user, chatRooms.length]);
+  }, [dispatch, user]);
 
-  // Resolve chat + fetch messages
+  /* ---------------- RESOLVE CHAT + FETCH MESSAGES ---------------- */
+
   useEffect(() => {
-    if (!uniqueKey || chatRooms.length === 0) return;
-
-    const chat = chatRooms.find((c) => c.unique_key === uniqueKey);
     if (!chat) return;
 
-    setChatId(chat.id); // ✅ NEW
-    dispatch(fetchMessages({ chatId: chat.id, chatKey: uniqueKey })); // 🔄 CHANGED
-  }, [uniqueKey, chatRooms, dispatch]);
+    setChatId(chat.id);
+    dispatch(fetchMessages({ chatId: chat.id, chatKey: uniqueKey }));
+  }, [chat, uniqueKey, dispatch]);
 
-  // Chat title
+  /* ---------------- CHAT TITLE ---------------- */
+
   useEffect(() => {
-    const chat = chatRooms.find((c) => c.unique_key === uniqueKey);
     if (!chat || !user) return;
 
-    const others = chat.participants?.filter((p) => p.id !== user.id) || [];
-    setChatTitle(others.map((u) => u.username).join(", ") || "Unknown User");
-  }, [uniqueKey, chatRooms, user]);
+    const others =
+      chat.participants?.filter((p) => p.id !== user.id) || [];
+
+    setChatTitle(
+      others.map((u) => u.username).join(", ") || "Unknown User"
+    );
+  }, [chat, user]);
+
+  /* ---------------- GUARDS ---------------- */
 
   if (!user) {
     return (
@@ -65,13 +83,15 @@ const ChatPage = () => {
     );
   }
 
-  if (!uniqueKey || !chatId) return <p>Loading chat...</p>;
+  if (!uniqueKey || !chatId) {
+    return <p>Loading chat...</p>;
+  }
 
   return (
     <div className="chat-page">
       <h2>Chat with {chatTitle}</h2>
       <Chat
-        chatKey={uniqueKey} // 🔑 WebSocket + Redux key
+        chatKey={uniqueKey}
         user={user}
         initialMessages={messages}
       />

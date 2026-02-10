@@ -29,6 +29,7 @@ import ForgotPasswordPage from './screens/PassowordReset/ForgotPasswordPage'
 import ResetPasswordPage from './screens/PassowordReset/ResetPasswordPage'
 
 import Loader from './components/Loader';
+import useInboxSocket from "./components/chat/useInboxSocket";
 
 
 const App = () => {
@@ -64,7 +65,8 @@ const App = () => {
   bootstrapAuth();
 }, [dispatch]);
   
-
+  useInboxSocket(loadingAuth);
+  
   if (loadingAuth) return <Loader />;
 
   return (

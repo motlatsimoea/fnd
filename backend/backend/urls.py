@@ -13,7 +13,7 @@ from users.views import (MyTokenObtainPairView,
 urlpatterns = [
     path('api/login/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path("api/token/refresh/", MyTokenRefreshCookieView.as_view(), name='token_refresh'),
-    path('logout/', LogoutAndBlacklistRefreshTokenForUserView.as_view()),
+    path('api/logout/', LogoutAndBlacklistRefreshTokenForUserView.as_view()),
     
     path("password-reset/", RequestPasswordResetView.as_view(), name="password-reset"),
     path("password-reset-confirm/<uidb64>/<token>/", ResetPasswordConfirmView.as_view(), name="password-reset-confirm"),

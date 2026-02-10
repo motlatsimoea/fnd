@@ -10,15 +10,21 @@ class Inbox(models.Model):
     """
     Represents a private chat between two users.
     """
-    participants = models.ManyToManyField(User, related_name="chats")
-    unique_key = models.CharField(max_length=255, unique=True)  # Unique key for two-person chats
-    created_at = models.DateTimeField(auto_now_add=True)
+    participants        = models.ManyToManyField(User, related_name="chats")
+    unique_key          = models.CharField(max_length=255, unique=True)  # Unique key for two-person chats
+    created_at          = models.DateTimeField(auto_now_add=True)
+    unread_by           = models.ManyToManyField(User, related_name="unread_inboxes",blank=True)
+    updated_at          = models.DateTimeField(auto_now=True)
+    last_message_text   = models.TextField(blank=True)
+    last_message_sender = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    last_message_at     = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Inbox {self.unique_key}"
     
     class Meta:
         verbose_name_plural = "Inboxes"
+        ordering = ["-last_message_at", "-updated_at"]
 
 
 class Message(models.Model):
@@ -29,7 +35,6 @@ class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField(blank=True, null=True)
     encrypted_content = models.TextField()
-    is_read = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)
     
     def set_content(self, content):

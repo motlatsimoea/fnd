@@ -1,9 +1,8 @@
-// src/components/chat/InboxModal.js
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserChats } from "../../features/chats/Chat-slice";
 import { Link } from "react-router-dom";
-import "./InboxModal.css"; // ✅ Import the CSS
+import "./InboxModal.css";
 
 const InboxModal = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -14,13 +13,20 @@ const InboxModal = ({ onClose }) => {
     dispatch(fetchUserChats());
   }, [dispatch]);
 
-  // Normalize error to string for rendering
+  // ✅ KEEP THIS
   const renderError = () => {
     if (!error) return null;
     if (typeof error === "string") return error;
     if (typeof error === "object") return error.detail || JSON.stringify(error);
     return String(error);
   };
+
+  // 🔽 Unread chats first, then most recently updated
+  const sortedChats = [...chatRooms].sort((a, b) => {
+    if (a.unread_count > 0 && b.unread_count === 0) return -1;
+    if (a.unread_count === 0 && b.unread_count > 0) return 1;
+    return new Date(b.updated_at) - new Date(a.updated_at);
+  });
 
   return (
     <div className="inbox-modal">
@@ -33,31 +39,42 @@ const InboxModal = ({ onClose }) => {
       {error && <p className="error">{renderError()}</p>}
 
       <ul className="chat-list">
-        {chatRooms.length > 0 ? (
-          chatRooms.map((chat) => {
-            const otherUsers = chat.participants?.filter((p) => p.id !== userId) || [];
-            const lastMessage = chat.last_message;
+        {sortedChats.length > 0 ? (
+          sortedChats.map((chat) => {
+            const otherUsers =
+              chat.participants?.filter((p) => p.id !== userId) || [];
             const isUnread = chat.unread_count > 0;
 
             return (
-              <li key={chat.id} className={`chat-item ${isUnread ? 'chat-unread' : ''}`}>
+              <li
+                key={chat.id}
+                className={`chat-item ${isUnread ? "chat-unread" : ""}`}
+              >
                 <Link to={`/chat/${chat.unique_key}`} onClick={onClose}>
                   {otherUsers.map((u) => (
                     <img
                       key={u.id}
-                      src={u.profile_picture || '/default-avatar.png'}
+                      src={u.profile_picture || "/default-avatar.png"}
                       alt={u.username}
                       className="chat-avatar"
                     />
                   ))}
+
                   <div className="chat-info">
                     <span className="chat-username">
-                      {otherUsers.map(u => u.username).join(", ")}
+                      {otherUsers.map((u) => u.username).join(", ")}
                     </span>
+
                     <span className="chat-message">
-                      {lastMessage ? lastMessage.content : 'No messages yet...'}
+                      {chat.last_message?.text || "No messages yet"}
                     </span>
                   </div>
+
+                  {isUnread && (
+                    <span className="chat-unread-badge">
+                      {chat.unread_count}
+                    </span>
+                  )}
                 </Link>
               </li>
             );

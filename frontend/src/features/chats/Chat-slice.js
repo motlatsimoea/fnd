@@ -1,7 +1,10 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, createSelector } from "@reduxjs/toolkit";
 import axiosInstance from "../../utils/axiosInstance";
 
-// === ASYNC THUNKS ===
+/* =======================
+   ASYNC THUNKS
+======================= */
+
 export const fetchUserChats = createAsyncThunk(
   "chats/fetchUserChats",
   async (_, thunkAPI) => {
@@ -16,72 +19,87 @@ export const fetchUserChats = createAsyncThunk(
 
 export const fetchMessages = createAsyncThunk(
   "chats/fetchMessages",
-  async ({ chatId, chatKey }, thunkAPI) => { // 🔄 CHANGED
+  async ({ chatId, chatKey }, thunkAPI) => {
     try {
       const res = await axiosInstance.get(`/inbox/${chatId}/messages/`);
-      return { chatKey, messages: res.data }; // 🔄 CHANGED
+      return { chatKey, messages: res.data };
     } catch (err) {
       return thunkAPI.rejectWithValue(err.response?.data || err.message);
     }
   }
 );
 
+/* =======================
+   SLICE
+======================= */
 
 const chatSlice = createSlice({
   name: "chats",
   initialState: {
     chatRooms: [],
-    messages: {}, // { chatKey: [msg, msg, ...] }
+    messages: {}, // { chatKey: [message, ...] }
     loading: false,
     error: null,
   },
   reducers: {
-    // Add or receive one message (optimistic or server)
     receiveNewMessage: (state, action) => {
       const { chatKey, message } = action.payload;
-      if (!state.messages[chatKey]) state.messages[chatKey] = [];
+      if (!state.messages[chatKey]) {
+        state.messages[chatKey] = [];
+      }
 
-      const msgWithSending =
-        message.sending === undefined ? { ...message, sending: true } : message;
+      const msg =
+        message.sending === undefined
+          ? { ...message, sending: true }
+          : message;
 
-      if (!state.messages[chatKey].some((m) => m.id === msgWithSending.id)) {
-        state.messages[chatKey].push(msgWithSending);
+      if (!state.messages[chatKey].some((m) => m.id === msg.id)) {
+        state.messages[chatKey].push(msg);
       }
     },
 
-    // Replace a temp message with server-confirmed message
     updateMessageId: (state, action) => {
       const { chatKey, tempId, newMessage } = action.payload;
-      if (!state.messages[chatKey]) state.messages[chatKey] = [];
-
-      const index = state.messages[chatKey].findIndex((m) => m.id === tempId);
-      const messageToInsert = { ...newMessage, sending: false };
-
-      if (index !== -1) {
-        state.messages[chatKey][index] = messageToInsert;
-      } else {
-        state.messages[chatKey].push(messageToInsert);
+      if (!state.messages[chatKey]) {
+        state.messages[chatKey] = [];
       }
 
-      // Deduplicate & sort
-      const unique = state.messages[chatKey].filter(
-        (msg, idx, self) => idx === self.findIndex((m) => m.id === msg.id)
+      const index = state.messages[chatKey].findIndex(
+        (m) => m.id === tempId
       );
-      state.messages[chatKey] = unique.sort(
-        (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
-      );
+
+      const confirmedMessage = { ...newMessage, sending: false };
+
+      if (index !== -1) {
+        state.messages[chatKey][index] = confirmedMessage;
+      } else {
+        state.messages[chatKey].push(confirmedMessage);
+      }
+
+      // Deduplicate + sort
+      state.messages[chatKey] = state.messages[chatKey]
+        .filter(
+          (msg, idx, self) =>
+            idx === self.findIndex((m) => m.id === msg.id)
+        )
+        .sort(
+          (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+        );
     },
 
-    // Merge bulk messages (initial load/pagination)
     mergeMessages: (state, action) => {
       const { chatKey, messages } = action.payload;
       const existing = state.messages[chatKey] || [];
 
-      const merged = [...existing, ...messages].filter(
-        (msg, index, self) => index === self.findIndex((m) => m.id === msg.id)
-      );
+      const merged = [...existing, ...messages]
+        .filter(
+          (msg, idx, self) =>
+            idx === self.findIndex((m) => m.id === msg.id)
+        )
+        .sort(
+          (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+        );
 
-      merged.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
       state.messages[chatKey] = merged;
     },
   },
@@ -104,15 +122,20 @@ const chatSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchMessages.fulfilled, (state, action) => {
-        state.loading = false;  
+        state.loading = false;
         const { chatKey, messages } = action.payload;
 
         const existing = state.messages[chatKey] || [];
-        const merged = [...existing, ...messages].filter(
-          (msg, idx, self) => idx === self.findIndex((m) => m.id === msg.id)
-        );
 
-        merged.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        const merged = [...existing, ...messages]
+          .filter(
+            (msg, idx, self) =>
+              idx === self.findIndex((m) => m.id === msg.id)
+          )
+          .sort(
+            (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+          );
+
         state.messages[chatKey] = merged;
       })
       .addCase(fetchMessages.rejected, (state, action) => {
@@ -122,6 +145,53 @@ const chatSlice = createSlice({
   },
 });
 
-export const { receiveNewMessage, mergeMessages, updateMessageId } =
-  chatSlice.actions;
+/* =======================
+   SELECTORS (MEMOIZED)
+======================= */
+
+const selectChatsState = (state) => state.chats;
+
+export const selectChatRooms = createSelector(
+  [selectChatsState],
+  (chats) => chats.chatRooms
+);
+
+export const selectMessagesMap = createSelector(
+  [selectChatsState],
+  (chats) => chats.messages
+);
+
+// Factory selectors (important!)
+export const makeSelectChatByKey = (uniqueKey) =>
+  createSelector(
+    [selectChatRooms],
+    (chatRooms) =>
+      chatRooms.find((c) => c.unique_key === uniqueKey) || null
+  );
+
+export const makeSelectMessagesByKey = (uniqueKey) =>
+  createSelector(
+    [selectMessagesMap],
+    (messages) => messages[uniqueKey] || []
+  );
+
+export const selectUnreadCount = createSelector(
+  [selectChatRooms],
+  (chatRooms) =>
+    chatRooms.reduce(
+      (total, chat) => total + (chat.unread_count || 0),
+      0
+    )
+);
+
+/* =======================
+   EXPORTS
+======================= */
+
+export const {
+  receiveNewMessage,
+  mergeMessages,
+  updateMessageId,
+} = chatSlice.actions;
+
 export default chatSlice.reducer;
