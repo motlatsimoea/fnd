@@ -1,20 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchSinglePost, toggleLikePost } from '../../features/blog/BlogList-slice';
-import { useParams, useNavigate } from 'react-router-dom';
-import CommentSection from '../../components/CommentSection/CommentSection';
-import Loader from '../../components/Loader';
-import Message from '../../components/Message';
-import ImageModal from '../../components/ImageModal';
-import ImageCarouselModal from '../../components/ImageCarouselModal';
-import { FaArrowLeft } from 'react-icons/fa';
-import './BlogPostPage.css';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchSinglePost, toggleLikePost } from "../../features/blog/BlogList-slice";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import CommentSection from "../../components/CommentSection/CommentSection";
+import Loader from "../../components/Loader";
+import Message from "../../components/Message";
+import ImageModal from "../../components/ImageModal";
+import ImageCarouselModal from "../../components/ImageCarouselModal";
+import { FaArrowLeft } from "react-icons/fa";
+import "./BlogPostPage.css";
 
 const BlogPostPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const { singlePost, loading, error } = useSelector((state) => state.BlogList);
 
   const [zoomImage, setZoomImage] = useState(null);
@@ -28,14 +27,31 @@ const BlogPostPage = () => {
   }, [dispatch, id]);
 
   const handleToggleLike = () => {
-    if (singlePost) {
-      dispatch(toggleLikePost(singlePost.id));
-    }
+    if (singlePost) dispatch(toggleLikePost(singlePost.id));
   };
 
   const openGalleryAt = (index) => {
     setGalleryStartIndex(index);
     setShowGallery(true);
+  };
+
+  // --- Highlight hashtags ---
+  const renderContentWithHashtags = (content) => {
+    if (!content) return null;
+
+    const parts = content.split(/(#\w+)/g);
+
+    return parts.map((part, idx) => {
+      if (part.startsWith("#")) {
+        const tag = part.slice(1);
+        return (
+          <Link key={idx} to={`/hashtag/${tag}`} className="clickable-hashtag">
+            {part}
+          </Link>
+        );
+      }
+      return part;
+    });
   };
 
   if (loading) return <Loader />;
@@ -44,7 +60,6 @@ const BlogPostPage = () => {
 
   return (
     <div className="blog-post-page">
-      {/* 🔙 Back Arrow Button */}
       <button className="back-arrow" onClick={() => navigate(-1)} aria-label="Go back">
         <FaArrowLeft />
       </button>
@@ -53,11 +68,11 @@ const BlogPostPage = () => {
         <div className="post-header">
           <div className="user-info">
             <img
-              src={singlePost.authorImage || 'https://via.placeholder.com/50'}
+              src={singlePost.authorImage || "https://via.placeholder.com/50"}
               alt={`${singlePost.author.username}'s profile`}
               className="user-image"
               onClick={() => singlePost.authorImage && setZoomImage(singlePost.authorImage)}
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: "pointer" }}
             />
             <div className="user-details">
               <h3 className="post-title">{singlePost.title}</h3>
@@ -68,7 +83,7 @@ const BlogPostPage = () => {
         </div>
 
         <div className="post-content">
-          <p>{singlePost.content}</p>
+          <p>{renderContentWithHashtags(singlePost.content)}</p>
 
           {singlePost.media && singlePost.media.length > 0 && (
             <div className="post-images">
@@ -78,27 +93,22 @@ const BlogPostPage = () => {
                   src={img.file}
                   alt={`Post Slide ${i + 1}`}
                   onClick={() => openGalleryAt(i)}
-                  style={{ cursor: 'pointer' }}
+                  style={{ cursor: "pointer" }}
                 />
               ))}
             </div>
           )}
 
-          <button
-            className="like-button"
-            onClick={handleToggleLike}
-          >
+          <button className="like-button" onClick={handleToggleLike}>
             <span
               role="img"
               aria-label="heart"
-              style={{ color: singlePost.liked ? 'red' : 'darkgray', fontSize: '1.2rem' }}
+              style={{ color: singlePost.liked ? "red" : "darkgray", fontSize: "1.2rem" }}
             >
               ❤️
-            </span>{' '}
+            </span>{" "}
             {singlePost.like_count || 0} Likes
           </button>
-
-          <p className="post-summary">{singlePost.summary}</p>
         </div>
       </div>
 

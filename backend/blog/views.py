@@ -1,14 +1,17 @@
 from rest_framework.views import APIView
+from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework import status
 from .models import Post, Comment, Like, Media
-from .serializers import PostSerializer, CommentSerializer
+from .serializers import *
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.utils.text import get_valid_filename
 from notifications.utils import send_notification
-
+import json
+import re
+from django.db.models import Prefetch
 
 
 
@@ -19,15 +22,33 @@ class PostView(APIView):
         return [IsAuthenticated()]
 
     def get(self, request):
-        posts = Post.objects.all().order_by('-created_at')
-        serializer = PostSerializer(posts, many=True, context={'request': request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        hashtag_name = request.query_params.get("hashtag")
 
+        posts = Post.objects.select_related("author").prefetch_related(
+                    "hashtags",
+                    "media",
+                    "likes",
+                    Prefetch("comments", queryset=Comment.objects.select_related("author"))
+                ).order_by("-created_at")
+
+        if hashtag_name:
+            posts = posts.filter(
+                hashtags__name__iexact=hashtag_name.lower()
+            ).distinct()
+
+        serializer = PostSerializer(
+            posts,
+            many=True,
+            context={"request": request}
+        )
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request):
         title = request.data.get('title')
         content = request.data.get('content')
-        tags = request.data.get('tags', '')
+        hashtag_names = request.data.getlist('hashtag_names')
+        
         media_files = request.FILES.getlist('media_files') or []
 
         # Validate required fields
@@ -53,9 +74,19 @@ class PostView(APIView):
                 post = Post.objects.create(
                     title=title,
                     content=content,
-                    tags=tags,
                     author=request.user
                 )
+                
+                for tag in hashtag_names:
+                    tag = tag.lower().strip()
+                    if not tag:
+                        continue
+
+                    hashtag, created = Hashtag.objects.get_or_create(name=tag)
+                    hashtag.usage_count += 1
+                    hashtag.save()
+
+                    post.hashtags.add(hashtag)
 
                 for media_file in media_files:
                     media_file.name = get_valid_filename(media_file.name)
@@ -83,6 +114,22 @@ class PostView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         
         return Response({'detail': 'Invalid update data', 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+class HashtagListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        query = request.GET.get("q", "").lower()
+
+        hashtags = Hashtag.objects.filter(
+            name__istartswith=query
+        ).order_by('-usage_count')[:10]
+
+        serializer = HashtagSerializer(hashtags, many=True)
+        return Response(serializer.data)
+
 
 
 class PostDetailView(APIView):

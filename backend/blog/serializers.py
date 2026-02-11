@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.utils.timesince import timesince
-from .models import Post, Media, Like, Comment
+from .models import Post, Media, Like, Comment, Hashtag
 #from users.serializers import UserSerializer
 from users.models import CustomUser
 
@@ -10,6 +10,11 @@ class PublicUserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ['id', 'username', 'email']
 
+
+class HashtagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Hashtag
+        fields = ['id', 'name', 'usage_count']
 
 
 class MediaSerializer(serializers.ModelSerializer):
@@ -79,6 +84,8 @@ class CommentSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     author = PublicUserSerializer(read_only=True)
     media = MediaSerializer(many=True, read_only=True)
+    hashtags = HashtagSerializer(many=True, read_only=True)
+    hashtag_names = serializers.ListField(child=serializers.CharField(),write_only=True,required=False)
     like_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
     comments = CommentSerializer(many=True, read_only=True)
@@ -89,10 +96,21 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = [
-            'id', 'title', 'content', 'author', 'tags',
-            'created_at', 'updated_at', 'time_since_posted',
-            'media_count', 'media',
-            'like_count', 'is_liked', 'comments', 'authorImage'
+            'id',
+            'title',
+            'content',
+            'author',
+            'hashtags',
+            'hashtag_names',
+            'created_at',
+            'updated_at',
+            'time_since_posted',
+            'media_count',
+            'media',
+            'like_count',
+            'is_liked',
+            'comments',
+            'authorImage',
         ]
 
     def get_like_count(self, obj):
@@ -100,7 +118,9 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_is_liked(self, obj):
         request = self.context.get('request')
-        return obj.likes.filter(user=request.user).exists() if request and request.user.is_authenticated else False
+        if not request or not request.user.is_authenticated:
+            return False
+        return obj.likes.filter(user=request.user).exists()
 
     def get_time_since_posted(self, obj):
         return timesince(obj.created_at) + " ago"
@@ -108,17 +128,15 @@ class PostSerializer(serializers.ModelSerializer):
     def get_media_count(self, obj):
         return obj.media.count()
 
-
     def get_authorImage(self, obj):
         request = self.context.get('request')
-
         try:
             profile = obj.author.profile
-            if profile and profile.profile_picture:
+            if profile.profile_picture:
                 return request.build_absolute_uri(profile.profile_picture.url)
         except Exception:
             pass
-
         return None
+
 
 

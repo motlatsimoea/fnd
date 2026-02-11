@@ -152,6 +152,17 @@
   background: #219150;
   transform: scale(1.05);
 }
+.clickable-hashtag {
+  color: #1da1f2;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.clickable-hashtag:hover {
+  text-decoration: underline;
+}
+
 
 @media (max-width: 768px) {
   .back-arrow {

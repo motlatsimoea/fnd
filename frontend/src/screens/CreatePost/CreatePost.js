@@ -1,48 +1,108 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { createPost } from '../../features/blog/BlogList-slice';
 import Loader from '../../components/Loader';
 import Message from '../../components/Message';
+
+import { FaImage, FaSmile } from 'react-icons/fa';
+import EmojiPicker from 'emoji-picker-react';
+
 import './CreatePost.css';
+
+const hashtagRegex = /#(\w+)/g;
 
 const CreatePost = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+  const [cursorPos, setCursorPos] = useState(0);
+  const [suggestions, setSuggestions] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleFileUpload = (e) => {
-    setFiles(Array.from(e.target.files));
+  /* ---------------- Hashtag highlight ---------------- */
+
+  const highlightedContent = content.replace(
+    hashtagRegex,
+    '<span class="hashtag">#$1</span>'
+  ).replace(/\n/g, '<br />');
+
+  /* ---------------- Detect active hashtag ---------------- */
+
+  useEffect(() => {
+    const textUpToCursor = content.slice(0, cursorPos);
+    const match = textUpToCursor.match(/#(\w*)$/);
+
+    if (match && match[1].length > 0) {
+      fetch(`/api/hashtags/?q=${match[1]}`)
+        .then(res => res.json())
+        .then(data => setSuggestions(data))
+        .catch(() => setSuggestions([]));
+    } else {
+      setSuggestions([]);
+    }
+  }, [content, cursorPos]);
+
+  const insertHashtag = (tag) => {
+    const before = content.slice(0, cursorPos).replace(/#\w*$/, '');
+    const after = content.slice(cursorPos);
+    const newText = `${before}#${tag} ${after}`;
+
+    setContent(newText);
+    setSuggestions([]);
+
+    setTimeout(() => {
+      textareaRef.current.focus();
+    }, 0);
   };
+
+  /* ---------------- Media logic ---------------- */
+
+  const handleFileUpload = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setFiles((prev) => [...prev, ...selectedFiles].slice(0, 4));
+  };
+
+  const removeFile = (index) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleEmojiClick = (emojiData) => {
+    setContent((prev) => prev + emojiData.emoji);
+  };
+
+  /* ---------------- Submit ---------------- */
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
+
+    const tags = Array.from(
+      new Set(content.match(hashtagRegex)?.map(t => t.slice(1)) || [])
+    );
 
     const formData = new FormData();
     formData.append('title', title);
     formData.append('content', content);
+    tags.forEach(tag => {
+                    formData.append('hashtag_names', tag);
+                  });
     files.forEach((file) => formData.append('media_files', file));
 
     try {
       await dispatch(createPost(formData)).unwrap();
-
-      toast.success('Post created successfully!');
-
-      setTitle('');
-      setContent('');
-      setFiles([]);
-
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
+      toast.success('Post created!');
+      navigate('/');
     } catch (err) {
       setError(err || 'Something went wrong.');
     } finally {
@@ -50,76 +110,100 @@ const CreatePost = () => {
     }
   };
 
-  const renderFilePreviews = () =>
-    files.map((file, index) => {
-      const fileType = file.type;
-      const key = `${file.name}-${index}`;
-
-      if (fileType.startsWith('image/')) {
-        return (
-          <img
-            key={key}
-            src={URL.createObjectURL(file)}
-            alt="Preview"
-            className="file-preview"
-          />
-        );
-      } else if (fileType.startsWith('video/')) {
-        return (
-          <video key={key} controls className="file-preview">
-            <source src={URL.createObjectURL(file)} type={fileType} />
-            Your browser does not support the video tag.
-          </video>
-        );
-      } else {
-        return <p key={key} className="file-name">File Selected: {file.name}</p>;
-      }
-    });
-
   return (
-    <div className="create-post-page">
-      <h1>Create a New Post</h1>
+    <div className="create-post-wrapper">
+      <form className="post-card" onSubmit={handleSubmit}>
+        <h2>Create a new post</h2>
 
-      {error && <Message variant="danger">{error}</Message>}
-      {loading && <Loader />}
+        {error && <Message variant="danger">{error}</Message>}
+        {loading && <Loader />}
 
-      <form className="create-post-form" onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="title">Title</label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter post title"
-            required
+        <input
+          className="post-title"
+          placeholder="Post title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+
+        {/* Editor */}
+        <div className="editor-wrapper">
+          <div
+            className="highlight-layer"
+            dangerouslySetInnerHTML={{ __html: highlightedContent }}
           />
-        </div>
-        <div className="form-group">
-          <label htmlFor="content">Content</label>
           <textarea
-            id="content"
+            ref={textareaRef}
+            className="post-content"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Write your post content here..."
-            rows="8"
+            onSelect={(e) => setCursorPos(e.target.selectionStart)}
+            placeholder="What's on your mind?"
+            rows="5"
             required
-          ></textarea>
-        </div>
-        <div className="form-group">
-          <label htmlFor="file">Upload Images or Videos (max 4)</label>
-          <input
-            type="file"
-            id="file"
-            multiple
-            accept="image/*,video/*"
-            onChange={handleFileUpload}
           />
-          <div className="file-previews">{renderFilePreviews()}</div>
         </div>
-        <button type="submit" className="submit-button">
-          Post
-        </button>
+
+        {/* Hashtag suggestions */}
+        {suggestions.length > 0 && (
+          <ul className="hashtag-suggestions">
+            {suggestions.map(tag => (
+              <li key={tag.id} onClick={() => insertHashtag(tag.name)}>
+                #{tag.name}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Media previews */}
+        {files.length > 0 && (
+          <div className="media-previews">
+            {files.map((file, i) => (
+              <div key={i} className="media-preview-item">
+                {file.type.startsWith('image/') && (
+                  <img src={URL.createObjectURL(file)} alt="" />
+                )}
+                {file.type.startsWith('video/') && (
+                  <video src={URL.createObjectURL(file)} controls />
+                )}
+                <button
+                  type="button"
+                  className="remove-media-btn"
+                  onClick={() => removeFile(i)}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="post-toolbar">
+          <div className="toolbar-left">
+            <button type="button" onClick={() => fileInputRef.current.click()}>
+              <FaImage />
+            </button>
+            <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
+              <FaSmile />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              multiple
+              accept="image/*,video/*"
+              onChange={handleFileUpload}
+            />
+          </div>
+
+          <button type="submit" className="post-btn">Post</button>
+        </div>
+
+        {showEmojiPicker && (
+          <div className="emoji-picker">
+            <EmojiPicker onEmojiClick={handleEmojiClick} />
+          </div>
+        )}
       </form>
     </div>
   );

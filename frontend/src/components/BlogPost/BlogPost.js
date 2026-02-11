@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { toggleLikePost } from "../../features/blog/BlogList-slice";
 import ImageCarouselModal from "../../components/ImageCarouselModal";
 import "./BlogPost.css";
@@ -11,25 +11,40 @@ const BlogPost = ({
   author,
   date,
   authorImage,
-  images = [],        // array of { file } or strings
+  images = [],
   text,
   likes,
   liked = false,
-  like_count = 0,
 }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
   const [showGallery, setShowGallery] = useState(false);
   const [startIndex, setStartIndex] = useState(0);
 
   const handleTitleClick = () => navigate(`/blog/${id}`);
   const handleUserClick = () => navigate(`/profile/${author}`);
   const handleToggleLike = () => dispatch(toggleLikePost(id));
-
   const openGalleryAt = (idx) => {
     setStartIndex(idx);
     setShowGallery(true);
+  };
+
+  // --- Render clickable hashtags ---
+  const renderTextWithHashtags = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(#\w+)/g);
+
+    return parts.map((part, idx) => {
+      if (part.startsWith("#")) {
+        const tag = part.slice(1);
+        return (
+          <Link key={idx} to={`/hashtag/${tag}`} className="clickable-hashtag">
+            {part}
+          </Link>
+        );
+      }
+      return part;
+    });
   };
 
   return (
@@ -40,11 +55,7 @@ const BlogPost = ({
 
       <div className="blog-author">
         <div onClick={handleUserClick} className="author-link" style={{ cursor: "pointer" }}>
-          <img
-            src={authorImage || "https://via.placeholder.com/50"}
-            alt="Author's avatar"
-            className="author-img"
-          />
+          <img src={authorImage || "https://via.placeholder.com/50"} alt="Author's avatar" className="author-img" />
         </div>
         <div className="author-info">
           <span onClick={handleUserClick} className="author-name" style={{ cursor: "pointer" }}>
@@ -54,11 +65,12 @@ const BlogPost = ({
         </div>
       </div>
 
-      <p className="blog-text">{text}</p>
+      <p className="blog-text">{renderTextWithHashtags(text)}</p>
+
       {images?.length > 0 && (
         <div className="blog-images">
           {images.map((img, idx) => {
-            const src = img?.file || img; // supports {file} or plain url
+            const src = img?.file || img;
             return (
               <img
                 key={idx}
@@ -72,10 +84,7 @@ const BlogPost = ({
         </div>
       )}
 
-      <button
-        className="like-button"
-        onClick={handleToggleLike}
-      >
+      <button className="like-button" onClick={handleToggleLike}>
         <span role="img" aria-label="heart" style={{ color: liked ? "red" : "darkgray" }}>
           ❤️
         </span>{" "}
@@ -84,7 +93,7 @@ const BlogPost = ({
 
       {showGallery && (
         <ImageCarouselModal
-          images={images}              // can pass array of {file} or urls
+          images={images}
           initialIndex={startIndex}
           onClose={() => setShowGallery(false)}
         />

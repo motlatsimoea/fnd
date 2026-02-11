@@ -18,6 +18,7 @@ import AddProductForm from './screens/ProductForm/ProductForm';
 import InfoPage from './screens/InfoPage/InfoPage';
 import ArticlePage from './screens/InfoPage/ArticlePage';
 import RegistrationPage from './screens/RegistrationPage/RegistrationPage';
+import HashtagPage from './components/Hashtag/HashtagPage';
 
 import InboxPage from './screens/InboxPage/InboxPage';
 import ChatPage from './components/chat/ChatPage';
@@ -88,6 +89,7 @@ const App = () => {
         <Route path="/" element={<HomeScreen />} />
         <Route path="/create-post" element={<CreatePost />} />
         <Route path="/blog/:id" element={<BlogPostPage />} />
+        <Route path="/hashtag/:name" element={<HashtagPage />} />
 
         {/* Market Place Routes */}
         <Route path="/market" element={<MarketPage />} />

@@ -142,3 +142,13 @@
 .like-button:hover {
   background-color: #2d7d46;
 }
+.clickable-hashtag {
+  color: #1da1f2;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.clickable-hashtag:hover {
+  text-decoration: underline;
+}

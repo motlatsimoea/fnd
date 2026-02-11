@@ -1,4 +1,5 @@
 // features/users/auth-slice.js
+import axios from 'axios';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance, { setAccessToken } from '../../utils/axiosInstance';
 import { jwtDecode } from 'jwt-decode';
@@ -11,13 +12,18 @@ const initialState = {
   resetStatus: null,
 };
 
-// --- LOGIN ---
+/* =====================================================
+   LOGIN
+===================================================== */
+
 export const login = createAsyncThunk(
   'auth/login',
   async ({ username, password }, { rejectWithValue }) => {
     try {
-      const config = { headers: { 'Content-Type': 'application/json' } };
-      const { data } = await axiosInstance.post('/login/', { username, password }, config);
+      const { data } = await axios.post('/api/login/', {
+        username,
+        password,
+      });
 
       if (data?.access) setAccessToken(data.access);
 
@@ -26,12 +32,17 @@ export const login = createAsyncThunk(
         user: data?.user ?? null,
       };
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(
+        error.response?.data?.detail || 'Invalid username or password'
+      );
     }
   }
 );
 
-// --- REQUEST PASSWORD RESET (no token required) ---
+/* =====================================================
+   PASSWORD RESET
+===================================================== */
+
 export const requestPasswordReset = createAsyncThunk(
   'auth/requestPasswordReset',
   async (email, { rejectWithValue }) => {
@@ -46,7 +57,6 @@ export const requestPasswordReset = createAsyncThunk(
   }
 );
 
-// --- CONFIRM PASSWORD RESET (no token required) ---
 export const resetPasswordConfirm = createAsyncThunk(
   'auth/resetPasswordConfirm',
   async ({ uid, token, password }, { rejectWithValue }) => {
@@ -64,18 +74,29 @@ export const resetPasswordConfirm = createAsyncThunk(
   }
 );
 
-// --- REFRESH TOKEN ---
+/* =====================================================
+   REFRESH TOKEN (SAFE VERSION)
+===================================================== */
+
 export const refreshToken = createAsyncThunk(
   'auth/refreshToken',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
+    const state = getState();
+
+    // 🚨 IMPORTANT: Do NOT refresh if user is logged out
+    if (!state.auth.userInfo) {
+      return rejectWithValue('No active session');
+    }
+
     try {
-      const { data: refreshData } = await axiosInstance.post(
+      const { data } = await axiosInstance.post(
         '/token/refresh/',
         {},
         { withCredentials: true }
       );
 
-      const access = refreshData?.access ?? refreshData;
+      const access = data?.access ?? data;
+
       if (access) setAccessToken(access);
 
       const { data: user } = await axiosInstance.get('/users/me/', {
@@ -84,7 +105,6 @@ export const refreshToken = createAsyncThunk(
 
       return { access, user };
     } catch (error) {
-      console.error('Refresh token failed:', error.response?.data || error.message);
       return rejectWithValue(
         error.response?.data?.detail ||
           error.message ||
@@ -94,16 +114,21 @@ export const refreshToken = createAsyncThunk(
   }
 );
 
-// --- REFRESH TIMER ---
+/* =====================================================
+   REFRESH TIMER (SAFE VERSION)
+===================================================== */
+
 let refreshTimeout = null;
+
 export const startTokenRefreshTimer = (dispatch, accessToken) => {
-  if (!accessToken) return;
+  // 🚨 Don't start timer if no session
+  if (!accessToken || !sessionStorage.getItem('hasSession')) return;
 
   try {
     const { exp } = jwtDecode(accessToken);
     const expiryTime = exp * 1000;
     const now = Date.now();
-    const timeout = expiryTime - now - 30000;
+    const timeout = expiryTime - now - 30000; // refresh 30s early
 
     if (timeout <= 0) {
       dispatch(refreshToken());
@@ -113,11 +138,13 @@ export const startTokenRefreshTimer = (dispatch, accessToken) => {
     refreshTimeout = setTimeout(async () => {
       try {
         const result = await dispatch(refreshToken()).unwrap();
-        const newAccess = result?.access ?? result;
-        startTokenRefreshTimer(dispatch, newAccess);
+
+        const newAccess = result?.access;
+        if (newAccess) {
+          startTokenRefreshTimer(dispatch, newAccess);
+        }
       } catch {
         stopTokenRefreshTimer();
-        console.error('Auto refresh failed.');
       }
     }, timeout);
   } catch (err) {
@@ -132,7 +159,10 @@ export const stopTokenRefreshTimer = () => {
   }
 };
 
-// --- SLICE ---
+/* =====================================================
+   SLICE
+===================================================== */
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -142,7 +172,8 @@ const authSlice = createSlice({
       state.access = null;
       state.loading = false;
       state.error = null;
-      stopTokenRefreshTimer();
+
+      stopTokenRefreshTimer();          // ✅ stop timer
       sessionStorage.removeItem('hasSession');
     },
     setUser: (state, action) => {
@@ -154,7 +185,8 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // --- LOGIN ---
+
+      /* LOGIN */
       .addCase(login.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -164,15 +196,16 @@ const authSlice = createSlice({
         state.userInfo = action.payload?.user || null;
         state.access = action.payload?.access || null;
         state.error = null;
+
         sessionStorage.setItem('hasSession', 'true');
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error =
-          action.payload?.detail || action.payload || 'Login failed';
+          action.payload || 'Invalid username or password';
       })
 
-      // --- PASSWORD RESET ---
+      /* PASSWORD RESET */
       .addCase(requestPasswordReset.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -187,7 +220,7 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
 
-      // --- RESET CONFIRM ---
+      /* RESET CONFIRM */
       .addCase(resetPasswordConfirm.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -201,17 +234,22 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
 
-      // --- REFRESH ---
+      /* REFRESH */
       .addCase(refreshToken.fulfilled, (state, action) => {
         const { access, user } = action.payload || {};
+
         if (user) state.userInfo = user;
         if (access) state.access = access;
+
         state.error = null;
       })
       .addCase(refreshToken.rejected, (state, action) => {
         state.userInfo = null;
         state.access = null;
         state.error = action.payload;
+
+        stopTokenRefreshTimer();   // ✅ STOP timer on failure
+        sessionStorage.removeItem('hasSession');
       });
   },
 });
