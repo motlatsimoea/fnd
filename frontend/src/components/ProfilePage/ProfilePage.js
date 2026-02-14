@@ -22,7 +22,7 @@ const ProfilePage = () => {
   const tabList = [
     { key: "posts", label: "Posts" },
     { key: "products", label: "Products" },
-    { key: "liked", label: "Liked Posts" },
+    { key: "liked", label: "Liked" },
   ];
 
   useEffect(() => {

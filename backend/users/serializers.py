@@ -5,6 +5,7 @@ from django.db import models
 from .models import Profile, Sector, CustomUser 
 from blog.serializers import PostSerializer
 from market.serializers import ProductSerializer
+from blog.serializers import Post
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -14,21 +15,27 @@ class ProfileSerializer(serializers.ModelSerializer):
     sectors = serializers.SerializerMethodField()
     posts = PostSerializer(many=True, read_only=True, source="user.posts")
     products = ProductSerializer(many=True, read_only=True, source="user.products")
+    liked_posts = serializers.SerializerMethodField()  # <-- new field
 
     class Meta:
         model = Profile
         fields = [
-             'user_id', 'username', 'email',
+            'user_id', 'username', 'email',
             'first_name', 'last_name', 'location',
             'phone_number', 'bio', 'profile_picture', 'background_picture',
             'sectors',
-            'posts', 'products'
+            'posts', 'products', 'liked_posts'  # include it here
         ]
-        
+
     def get_sectors(self, obj):
         """Return user's sector names"""
         return [sector.name for sector in obj.user.sectors.all()]
-        
+
+    def get_liked_posts(self, obj):
+        """Return posts this user has liked"""
+        liked_qs = Post.objects.filter(likes__user=obj.user).distinct()
+        return PostSerializer(liked_qs, many=True, context=self.context).data
+
     def update(self, instance, validated_data):
         # Handle nested user fields (username, email)
         user_data = validated_data.pop("user", {})
@@ -38,6 +45,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         # Update profile fields
         return super().update(instance, validated_data)
+
     
     
 

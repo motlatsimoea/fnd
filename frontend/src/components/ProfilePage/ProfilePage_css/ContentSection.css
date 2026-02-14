@@ -1,9 +1,108 @@
 .content-section {
-  background: white;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  margin-top: 20px;
+  background: #ffffff;
+  padding: 30px;
+  margin-top: 0; /* reduced from 20px */
   width: 100%;
   box-sizing: border-box;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* ============================= */
+/* GRID */
+/* ============================= */
+
+.card-grid {
+  display: grid;
+  gap: 22px;
+}
+
+/* 2 columns on tablet and desktop */
+@media (min-width: 768px) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ============================= */
+/* CARD */
+/* ============================= */
+
+.content-card {
+  display: block;
+  text-decoration: none;
+  background: #f8f9fa;
+  border-radius: 14px;
+  padding: 18px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.content-card::before {
+  content: "";
+  display: block;
+  height: 4px;
+  width: 40px;
+  background: #28a745;
+  border-radius: 3px;
+  margin-bottom: 10px;
+}
+
+.content-card:hover {
+  transform: translateY(-4px);
+  border: 1px solid #28a745;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(40, 167, 69, 0.15);
+}
+
+/* ============================= */
+/* PRODUCT IMAGE */
+/* ============================= */
+
+.product-image {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+/* ============================= */
+/* TYPOGRAPHY */
+/* ============================= */
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f1f1f;
+  margin-bottom: 6px;
+}
+
+.card-preview {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.5;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  line-clamp: 3;           /* Standard */
+  -webkit-line-clamp: 3;   /* WebKit support */
+}
+
+.card-price {
+  font-size: 15px;
+  font-weight: 600;
+  color: #28a745;
+}
+
+/* ============================= */
+/* EMPTY STATE */
+/* ============================= */
+
+.empty-state {
+  text-align: center;
+  padding: 50px 0;
+  color: #888;
+  font-size: 15px;
 }

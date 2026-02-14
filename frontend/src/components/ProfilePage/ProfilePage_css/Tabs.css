@@ -1,28 +1,35 @@
 .tabs-container {
   display: flex;
-  justify-content: center;
-  gap: 20px; /* slightly larger gap */
-  margin: 30px 0; /* more space around tabs */
+  justify-content: space-between; /* make tabs span full width */
+  margin: 0; /* no space above/below */
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .tab {
+  flex: 1; /* all tabs equal width */
+  text-align: center;
   background-color: #f0f0f0;
-  padding: 16px 32px; /* bigger size */
-  font-size: 18px; /* larger text */
+  padding: 14px 0;
+  font-size: 16px;
   border: none;
-  border-radius: 8px; /* slightly more rounded */
+  border-radius: 12px 12px 0 0; /* round top corners only */
   cursor: pointer;
   font-weight: 600;
   transition: background-color 0.2s, color 0.2s, transform 0.1s;
 }
 
+.tab + .tab {
+  border-left: 1px solid #ddd; /* subtle separator between tabs */
+}
+
 .tab.active {
   background-color: #28a745;
   color: white;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* slightly stronger shadow */
 }
 
 .tab:hover {
   background-color: #ddd;
-  transform: translateY(-2px); /* more noticeable hover lift */
+  transform: translateY(-1px);
 }
