@@ -130,13 +130,14 @@ class PostSerializer(serializers.ModelSerializer):
 
     def get_authorImage(self, obj):
         request = self.context.get('request')
-        try:
-            profile = obj.author.profile
-            if profile.profile_picture:
-                return request.build_absolute_uri(profile.profile_picture.url)
-        except Exception:
-            pass
+        profile = getattr(obj.author, 'profile', None)
+
+        if profile:
+            return request.build_absolute_uri(profile.profile_picture.url)
+
         return None
+
+
 
 
 

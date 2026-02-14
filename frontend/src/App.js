@@ -8,103 +8,96 @@ import { startTokenRefreshTimer, refreshToken } from './features/users/auth-slic
 import { setAccessToken } from './utils/axiosInstance';
 
 import Header from './components/Header/Header';
+import Loader from './components/Loader';
+
+// Public screens
 import HomeScreen from './screens/HomeScreen';
 import BlogPostPage from './screens/BlogPostPage/BlogPostPage';
-import CreatePost from './screens/CreatePost/CreatePost';
 import MarketPage from './screens/MarketPage/MarketPage';
 import ProductPage from './screens/ProductPage/ProductPage';
-import EditProduct from './screens/ProductPage/EditProduct';
-import AddProductForm from './screens/ProductForm/ProductForm';
 import InfoPage from './screens/InfoPage/InfoPage';
 import ArticlePage from './screens/InfoPage/ArticlePage';
 import RegistrationPage from './screens/RegistrationPage/RegistrationPage';
-import HashtagPage from './components/Hashtag/HashtagPage';
+import LoginPage from './screens/LoginPage/LoginPage';
+import ForgotPasswordPage from './screens/PassowordReset/ForgotPasswordPage';
+import ResetPasswordPage from './screens/PassowordReset/ResetPasswordPage';
 
+// Protected screens
+import CreatePost from './screens/CreatePost/CreatePost';
+import EditProduct from './screens/ProductPage/EditProduct';
+import AddProductForm from './screens/ProductForm/ProductForm';
+import HashtagPage from './components/Hashtag/HashtagPage';
+import ProfilePage from './components/ProfilePage/ProfilePage';
 import InboxPage from './screens/InboxPage/InboxPage';
 import ChatPage from './components/chat/ChatPage';
 import Chat from './components/chat/chat';
 
-import LoginPage from './screens/LoginPage/LoginPage';
-import ProfilePage from './components/ProfilePage/ProfilePage';
-import ForgotPasswordPage from './screens/PassowordReset/ForgotPasswordPage'
-import ResetPasswordPage from './screens/PassowordReset/ResetPasswordPage'
-
-import Loader from './components/Loader';
+// Utils & hooks
+import ProtectedRoute from './components/ProtectedRoute';
 import useInboxSocket from "./components/chat/useInboxSocket";
-
 
 const App = () => {
   const dispatch = useDispatch();
   const [loadingAuth, setLoadingAuth] = useState(true);
 
+  // Bootstrap auth on app load
   useEffect(() => {
-  const bootstrapAuth = async () => {
-    try {
-      const hasSession = sessionStorage.getItem('hasSession') === 'true';
+    const bootstrapAuth = async () => {
+      try {
+        const hasSession = sessionStorage.getItem('hasSession') === 'true';
+        if (!hasSession) {
+          setLoadingAuth(false);
+          return;
+        }
 
-      if (!hasSession) {
+        const result = await dispatch(refreshToken()).unwrap();
+        const access = result?.access ?? result;
+        setAccessToken(access);
+
+        startTokenRefreshTimer(dispatch, access);
+      } catch (err) {
+        console.error("Bootstrap auth failed:", err);
+      } finally {
         setLoadingAuth(false);
-        return;
       }
+    };
 
-      // Refresh token and automatically populate userInfo
-      const result = await dispatch(refreshToken()).unwrap();
-      console.log("refresh result:", result); // { access, user }
+    bootstrapAuth();
+  }, [dispatch]);
 
-      const access = result?.access ?? result;
-      setAccessToken(access);
-
-      // Start auto-refresh timer
-      startTokenRefreshTimer(dispatch, access);
-    } catch (err) {
-      console.error("Bootstrap auth failed:", err);
-    } finally {
-      setLoadingAuth(false);
-    }
-  };
-
-  bootstrapAuth();
-}, [dispatch]);
-  
+  // Connect inbox socket after auth is ready
   useInboxSocket(loadingAuth);
-  
+
   if (loadingAuth) return <Loader />;
 
   return (
     <Router>
       <Header />
+
       <Routes>
-        {/* Registration Page Route */}
+        {/* Public Routes */}
+        <Route path="/" element={<HomeScreen />} />
         <Route path="/register" element={<RegistrationPage />} />
-        <Route path="/profile/:username" element={<ProfilePage />} />
-
-        {/* Login Page Route */}
         <Route path="/login" element={<LoginPage />} />
-
-        {/* Reset Password Routes */}
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
-
-        {/* Blog Routes */}
-        <Route path="/" element={<HomeScreen />} />
-        <Route path="/create-post" element={<CreatePost />} />
-        <Route path="/blog/:id" element={<BlogPostPage />} />
-        <Route path="/hashtag/:name" element={<HashtagPage />} />
-
-        {/* Market Place Routes */}
         <Route path="/market" element={<MarketPage />} />
         <Route path="/product/:id" element={<ProductPage />} />
-        <Route path="/edit-product/:id" element={<EditProduct />} />
-        <Route path="/add-product" element={<AddProductForm />} />
-
-        {/* Information Page Routes */}
         <Route path="/info" element={<InfoPage />} />
         <Route path="/article/:id" element={<ArticlePage />} />
 
-        {/* Inbox Page Routes */}
-        <Route path="/inbox" element={<InboxPage />} />
-        <Route path="/chat/:uniqueKey" element={<ChatPage />} />
-        <Route path="/chat_test/:chat_id" element={<Chat />} />
+        {/* Protected Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/create-post" element={<CreatePost />} />
+          <Route path="/blog/:id" element={<BlogPostPage />} />
+          <Route path="/hashtag/:name" element={<HashtagPage />} />
+          <Route path="/profile/:username" element={<ProfilePage />} />
+          <Route path="/edit-product/:id" element={<EditProduct />} />
+          <Route path="/add-product" element={<AddProductForm />} />
+          <Route path="/inbox" element={<InboxPage />} />
+          <Route path="/chat/:uniqueKey" element={<ChatPage />} />
+          <Route path="/chat_test/:chat_id" element={<Chat />} />
+        </Route>
       </Routes>
 
       <ToastContainer position="top-right" autoClose={3000} />

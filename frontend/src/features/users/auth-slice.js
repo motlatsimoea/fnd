@@ -83,10 +83,6 @@ export const refreshToken = createAsyncThunk(
   async (_, { rejectWithValue, getState }) => {
     const state = getState();
 
-    // 🚨 IMPORTANT: Do NOT refresh if user is logged out
-    if (!state.auth.userInfo) {
-      return rejectWithValue('No active session');
-    }
 
     try {
       const { data } = await axiosInstance.post(

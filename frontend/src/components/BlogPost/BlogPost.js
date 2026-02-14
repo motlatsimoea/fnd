@@ -55,7 +55,7 @@ const BlogPost = ({
 
       <div className="blog-author">
         <div onClick={handleUserClick} className="author-link" style={{ cursor: "pointer" }}>
-          <img src={authorImage || "https://via.placeholder.com/50"} alt="Author's avatar" className="author-img" />
+          <img src={authorImage} alt="Author's avatar" className="author-img" />
         </div>
         <div className="author-info">
           <span onClick={handleUserClick} className="author-name" style={{ cursor: "pointer" }}>
