@@ -1,37 +1,38 @@
-/* Main Blog Post Page */
+/* ---------- Page Container ---------- */
 .blog-post-page {
-  width: 80%;
-  margin: 0 auto;
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 20px;
 }
 
-.blog-post {
-  margin-bottom: 40px;
-  width: 50%;
+/* ---------- Card Style ---------- */
+.blog-post-card {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 25px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease;
 }
 
-/* Post header */
+.blog-post-card:hover {
+  transform: translateY(-2px);
+}
+
+/* ---------- Header ---------- */
 .post-header {
   display: flex;
   align-items: center;
+  gap: 15px;
   margin-bottom: 20px;
 }
 
-.user-info {
-  display: flex;
-  align-items: center;
-}
-
 .user-image {
+  width: 55px;
+  height: 55px;
   border-radius: 50%;
-  margin-right: 15px;
-  width: 50px;
-  height: 50px;
   object-fit: cover;
-  cursor: pointer; /* indicate clickable */
+  cursor: pointer;
   transition: transform 0.2s ease;
 }
 
@@ -39,123 +40,130 @@
   transform: scale(1.1);
 }
 
-.user-details .post-title {
-  font-size: 24px;
-  font-weight: bold;
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.post-title {
   margin: 0;
+  font-size: 22px;
+  font-weight: 600;
 }
 
-.user-name, .post-date {
+.user-name {
   font-size: 14px;
-  color: #555;
+  color: #666;
+  margin: 2px 0;
 }
 
-/* Post content */
-.post-content {
-  margin-top: 20px;
+.post-date {
+  font-size: 13px;
+  color: #999;
 }
 
+/* ---------- Content ---------- */
 .post-content p {
   font-size: 16px;
-  line-height: 1.6;
+  line-height: 1.7;
   color: #333;
 }
 
-/* Images inside post */
+/* ---------- Images ---------- */
 .post-images {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  justify-content: center;
+  gap: 12px;
   margin-top: 15px;
 }
 
 .post-images img {
   width: 100%;
-  height: 200px;
-  border-radius: 8px;
+  height: 220px;
   object-fit: cover;
-  cursor: pointer; /* clickable */
+  border-radius: 10px;
+  cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .post-images img:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  transform: scale(1.03);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 }
 
-/* Like button */
+/* ---------- Like Button ---------- */
 .like-button {
-  background-color: #2d7d46;
-  color: white;
-  padding: 10px 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
   border: none;
-  border-radius: 5px;
   cursor: pointer;
   font-size: 16px;
-  margin-top: 20px;
-  transition: background-color 0.2s ease;
+  color: #777;
+  margin-top: 18px;
+  padding: 6px 0;
+  transition: transform 0.15s ease, color 0.2s ease;
 }
 
 .like-button:hover {
-  background-color: #2d7d46;
+  transform: scale(1.05);
 }
 
-/* Post summary */
-.post-summary {
-  margin-top: 20px;
-  font-size: 16px;
-  color: #555;
+.like-icon {
+  font-size: 1.6rem;
+  transition: transform 0.2s ease, color 0.2s ease;
+  color: #bbb;
 }
 
-/* Optional: modal styling (can be overridden by ImageCarouselModal) */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
+.like-count {
+  font-weight: 500;
+  font-size: 15px;
 }
 
-.modal-content img {
-  max-width: 90vw;
-  max-height: 90vh;
-  border-radius: 8px;
+/* Liked State */
+.like-button.liked {
+  color: #27ae60;
 }
 
-/* --- Back Arrow Button (fixed position below header) --- */
+.like-button.liked .like-icon {
+  color: #27ae60;
+  animation: pop 0.25s ease;
+}
+
+/* Click effect */
+.like-button:active .like-icon {
+  transform: scale(0.9);
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1.2); }
+}
+
+/* ---------- Back Arrow ---------- */
 .back-arrow {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   background: #27ae60;
-  color: #fff;
+  color: white;
   border: none;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  font-size: 18px;
   cursor: pointer;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-  transition: background 0.3s ease, transform 0.2s ease;
-  margin-bottom: 20px; /* space below arrow */
-  margin-top: 10px; /* keeps it below logo area */
+  margin-bottom: 20px;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .back-arrow:hover {
   background: #219150;
   transform: scale(1.05);
 }
+
+/* ---------- Hashtags ---------- */
 .clickable-hashtag {
-  color: #279b4c;
+  color: #27ae60;
   font-weight: 500;
-  cursor: pointer;
   text-decoration: none;
 }
 
@@ -163,20 +171,17 @@
   text-decoration: underline;
 }
 
-
+/* ---------- Responsive ---------- */
 @media (max-width: 768px) {
-  .back-arrow {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
-    margin-top: 8px;
-  }
-}
-
-
-@media (max-width: 600px) {
   .post-images {
     grid-template-columns: 1fr;
   }
-}
 
+  .blog-post-card {
+    padding: 18px;
+  }
+
+  .post-title {
+    font-size: 18px;
+  }
+}

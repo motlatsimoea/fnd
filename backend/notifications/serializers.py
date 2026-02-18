@@ -6,7 +6,7 @@ class NotificationSerializer(serializers.ModelSerializer):
     notification_id = serializers.IntegerField(source="id", read_only=True)
 
     sender_username = serializers.CharField(source="sender.username", read_only=True)
-    post_id = serializers.IntegerField(source="post.id", read_only=True, allow_null=True)
+    post_id = serializers.UUIDField(source="post.id", read_only=True, allow_null=True)
     inbox_id = serializers.IntegerField(source="inbox.id", read_only=True, allow_null=True)
 
     # <-- use IntegerField unless your Comment PK is a UUID

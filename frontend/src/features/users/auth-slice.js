@@ -47,7 +47,7 @@ export const requestPasswordReset = createAsyncThunk(
   'auth/requestPasswordReset',
   async (email, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.post('/password-reset/', { email });
+      const { data } = await axiosInstance.post('password-reset/', { email });
       return data.detail;
     } catch (error) {
       return rejectWithValue(
@@ -80,8 +80,7 @@ export const resetPasswordConfirm = createAsyncThunk(
 
 export const refreshToken = createAsyncThunk(
   'auth/refreshToken',
-  async (_, { rejectWithValue, getState }) => {
-    const state = getState();
+  async (_, { rejectWithValue }) => {
 
 
     try {
@@ -178,6 +177,9 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    clearResetStatus: (state) => {
+      state.resetStatus = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -250,5 +252,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, setUser, clearError } = authSlice.actions;
+export const { logout, setUser, clearError, clearResetStatus } = authSlice.actions;
 export default authSlice.reducer;

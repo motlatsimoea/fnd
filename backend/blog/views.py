@@ -160,45 +160,50 @@ class LikeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, post_id):
-        # Get Post by Id
         post = get_object_or_404(Post, id=post_id)
 
-        # Check if the user has already liked the post
-        like, created = Like.objects.get_or_create(post=post, user=request.user)
+        like, created = Like.objects.get_or_create(
+            post=post,
+            user=request.user
+        )
 
+        # If already liked → unlike
         if not created:
-            # User already liked, so unlike
             like.delete()
-            like_count = post.likes.count()
             return Response(
                 {
                     "message": "Post unliked successfully.",
+                    "postId": post.id,
                     "liked": False,
-                    "like_count": like_count
+                    "like_count": post.likes.count(),
                 },
                 status=status.HTTP_200_OK,
             )
 
-        # Send notification if user is not the post author
+        # Send notification (if not own post)
         if request.user != post.author:
-            message = f"{request.user.username} liked your post."
-            send_notification(
-                user=post.author,
-                sender=request.user,
-                notification_type="like",
-                message=message,
-                post=post
-            )
+            try:
+                message = f"{request.user.username} liked your post."
+                send_notification(
+                    user=post.author,
+                    sender=request.user,
+                    notification_type="like",
+                    message=message,
+                    post=post,
+                )
+            except Exception as e:
+                print("Notification error:", e)
 
-        like_count = post.likes.count()
         return Response(
             {
                 "message": "Post liked successfully.",
+                "postId": post.id,
                 "liked": True,
-                "like_count": like_count
+                "like_count": post.likes.count(),
             },
             status=status.HTTP_201_CREATED,
         )
+
 
 
 

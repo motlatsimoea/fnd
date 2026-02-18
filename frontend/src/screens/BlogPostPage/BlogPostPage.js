@@ -7,7 +7,7 @@ import Loader from "../../components/Loader";
 import Message from "../../components/Message";
 import ImageModal from "../../components/ImageModal";
 import ImageCarouselModal from "../../components/ImageCarouselModal";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaHeart } from "react-icons/fa";
 import "./BlogPostPage.css";
 
 const BlogPostPage = () => {
@@ -35,10 +35,8 @@ const BlogPostPage = () => {
     setShowGallery(true);
   };
 
-  // --- Highlight hashtags ---
   const renderContentWithHashtags = (content) => {
     if (!content) return null;
-
     const parts = content.split(/(#\w+)/g);
 
     return parts.map((part, idx) => {
@@ -60,54 +58,51 @@ const BlogPostPage = () => {
 
   return (
     <div className="blog-post-page">
-      <button className="back-arrow" onClick={() => navigate(-1)} aria-label="Go back">
+      <button className="back-arrow" onClick={() => navigate(-1)}>
         <FaArrowLeft />
       </button>
 
-      <div className="blog-post">
+      <div className="blog-post-card">
         <div className="post-header">
-          <div className="user-info">
-            <img
-              src={singlePost.authorImage || "https://via.placeholder.com/50"}
-              alt={`${singlePost.author.username}'s profile`}
-              className="user-image"
-              onClick={() => singlePost.authorImage && setZoomImage(singlePost.authorImage)}
-              style={{ cursor: "pointer" }}
-            />
-            <div className="user-details">
-              <h3 className="post-title">{singlePost.title}</h3>
-              <p className="user-name">{singlePost.author.username}</p>
-              <p className="post-date">{singlePost.time_since_posted}</p>
-            </div>
+          <img
+            src={singlePost.authorImage || "https://via.placeholder.com/50"}
+            alt={`${singlePost.author.username}`}
+            className="user-image"
+            onClick={() => singlePost.authorImage && setZoomImage(singlePost.authorImage)}
+          />
+
+          <div className="user-details">
+            <h2 className="post-title">{singlePost.title}</h2>
+            <p className="user-name">@{singlePost.author.username}</p>
+            <p className="post-date">{singlePost.time_since_posted}</p>
           </div>
         </div>
 
         <div className="post-content">
           <p>{renderContentWithHashtags(singlePost.content)}</p>
 
-          {singlePost.media && singlePost.media.length > 0 && (
+          {singlePost.media?.length > 0 && (
             <div className="post-images">
               {singlePost.media.map((img, i) => (
                 <img
                   key={i}
                   src={img.file}
-                  alt={`Post Slide ${i + 1}`}
+                  alt={`Slide ${i}`}
                   onClick={() => openGalleryAt(i)}
-                  style={{ cursor: "pointer" }}
                 />
               ))}
             </div>
           )}
 
-          <button className="like-button" onClick={handleToggleLike}>
-            <span
-              role="img"
-              aria-label="heart"
-              style={{ color: singlePost.liked ? "red" : "darkgray", fontSize: "1.2rem" }}
-            >
-              ❤️
-            </span>{" "}
-            {singlePost.like_count || 0} Likes
+          {/* --- Like Button --- */}
+          <button
+            className={`like-button ${singlePost.liked ? "liked" : ""}`}
+            onClick={handleToggleLike}
+          >
+            <FaHeart className="like-icon" />
+            <span className="like-count">
+              {singlePost.like_count || 0}
+            </span>
           </button>
         </div>
       </div>
@@ -115,6 +110,7 @@ const BlogPostPage = () => {
       <CommentSection postId={id} />
 
       {zoomImage && <ImageModal imageUrl={zoomImage} onClose={() => setZoomImage(null)} />}
+
       {showGallery && (
         <ImageCarouselModal
           images={singlePost.media}

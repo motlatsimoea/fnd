@@ -28,7 +28,7 @@ const HomeScreen = () => {
           posts.map((post) => (
             <BlogPost
               key={post.id}
-              id={post.id}
+              id={`${post.id}`}
               title={post.title}
               author={post.author.username}
               date={post.time_since_posted}
@@ -36,7 +36,7 @@ const HomeScreen = () => {
               images={post.media}
               text={post.content}
               likes={post.like_count}
-              liked={post.liked_by_user}
+              liked={post.liked}
             />
           ))
         )}

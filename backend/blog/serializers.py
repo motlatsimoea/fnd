@@ -82,10 +82,13 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
+    id = serializers.CharField(read_only=True)  # ✅ force string
     author = PublicUserSerializer(read_only=True)
     media = MediaSerializer(many=True, read_only=True)
     hashtags = HashtagSerializer(many=True, read_only=True)
-    hashtag_names = serializers.ListField(child=serializers.CharField(),write_only=True,required=False)
+    hashtag_names = serializers.ListField(
+        child=serializers.CharField(), write_only=True, required=False
+    )
     like_count = serializers.SerializerMethodField()
     is_liked = serializers.SerializerMethodField()
     comments = CommentSerializer(many=True, read_only=True)
@@ -112,7 +115,6 @@ class PostSerializer(serializers.ModelSerializer):
             'comments',
             'authorImage',
         ]
-
     def get_like_count(self, obj):
         return obj.likes.count()
 

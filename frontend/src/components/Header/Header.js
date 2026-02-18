@@ -10,6 +10,8 @@ import { selectUnreadCount } from '../../features/chats/Chat-slice';
 import useNotificationsSocket from './NotificationSocket';
 import axiosInstance, { setAccessToken } from '../../utils/axiosInstance';
 import InboxModal from '../../components/chat/InboxModal';
+import NotificationsModal from '../../components/NotificationsModal/NotificationsModal';
+
 
 import {
   FaPlusCircle, FaBell, FaStore,
@@ -30,6 +32,7 @@ const Header = () => {
   const location = useLocation();
 
   const userInfo = useSelector((state) => state.auth.userInfo);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // 🔔 unread notification badge
   const unreadNotifications = useSelector(
@@ -85,14 +88,21 @@ const Header = () => {
             </Link>
 
             {/* 🔔 Notifications (badge only for now) */}
-            <button className="nav-item notification-button">
-              <FaBell />
-              {unreadNotifications > 0 && (
-                <span className="notification-badge">
-                  {unreadNotifications}
-                </span>
+            <span className="notification-wrapper">
+              <button
+                className="nav-item notification-button"
+                onClick={() => setShowNotifications(p => !p)}
+              >
+                <FaBell />
+                {unreadNotifications > 0 && (
+                  <span className="notification-badge">{unreadNotifications}</span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <NotificationsModal onClose={() => setShowNotifications(false)} />
               )}
-            </button>
+            </span>
 
             {/* 📩 Inbox */}
             <span className="inbox-wrapper" ref={inboxRef}>

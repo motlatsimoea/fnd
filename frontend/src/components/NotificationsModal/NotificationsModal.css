@@ -1,0 +1,83 @@
+.notifications-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 60px;
+  z-index: 2000;
+}
+
+.notifications-modal-content {
+  background: #fff;
+  border-radius: 8px;
+  width: 400px;
+  max-height: 70vh;
+  overflow-y: auto;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  position: relative;
+}
+
+.notifications-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid #ddd;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.notifications-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.notification-item {
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
+  font-family: 'Inter', sans-serif;
+}
+
+.notification-item.unread {
+  background-color: #f0fdf4; /* light green for unread */
+}
+
+.notification-item.read {
+  background-color: #fff;
+}
+
+.notification-link {
+  text-decoration: none;
+  color: #333;
+}
+
+.notification-link:hover {
+  text-decoration: underline;
+}
+
+.username-link {
+  font-weight: 600;
+  color: #2d7d46;
+}
+
+.username-link:hover {
+  text-decoration: underline;
+}
+
+.timestamp {
+  display: block;
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 2px;
+}

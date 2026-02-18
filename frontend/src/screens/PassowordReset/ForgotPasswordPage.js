@@ -1,7 +1,7 @@
 // ForgotPasswordPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { requestPasswordReset } from "../../features/users/auth-slice";
+import { requestPasswordReset, clearResetStatus } from "../../features/users/auth-slice";
 import Message from "../../components/Message";
 import "./ForgotPasswordPage.css";
 
@@ -14,6 +14,11 @@ const ForgotPasswordPage = () => {
     e.preventDefault();
     dispatch(requestPasswordReset(email));
   };
+
+  useEffect(() => {
+    dispatch(clearResetStatus());
+  }, [dispatch]);
+
 
   return (
     <div className="forgot-password-page">

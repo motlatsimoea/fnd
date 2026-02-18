@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { toggleLikePost } from "../../features/blog/BlogList-slice";
 import ImageCarouselModal from "../../components/ImageCarouselModal";
+import { FaHeart } from "react-icons/fa";
 import "./BlogPost.css";
 
 const BlogPost = ({
@@ -24,12 +25,12 @@ const BlogPost = ({
   const handleTitleClick = () => navigate(`/blog/${id}`);
   const handleUserClick = () => navigate(`/profile/${author}`);
   const handleToggleLike = () => dispatch(toggleLikePost(id));
+
   const openGalleryAt = (idx) => {
     setStartIndex(idx);
     setShowGallery(true);
   };
 
-  // --- Render clickable hashtags ---
   const renderTextWithHashtags = (text) => {
     if (!text) return null;
     const parts = text.split(/(#\w+)/g);
@@ -48,18 +49,19 @@ const BlogPost = ({
   };
 
   return (
-    <div className="blog-post">
-      <div onClick={handleTitleClick} className="blog-title-link" style={{ cursor: "pointer" }}>
+    <div className="blog-post-card">
+      <div onClick={handleTitleClick} className="blog-title-link">
         <h2 className="blog-title">{title}</h2>
       </div>
 
       <div className="blog-author">
-        <div onClick={handleUserClick} className="author-link" style={{ cursor: "pointer" }}>
-          <img src={authorImage} alt="Author's avatar" className="author-img" />
+        <div onClick={handleUserClick} className="author-link">
+          <img src={authorImage} alt="Author avatar" className="author-img" />
         </div>
+
         <div className="author-info">
-          <span onClick={handleUserClick} className="author-name" style={{ cursor: "pointer" }}>
-            {author}
+          <span onClick={handleUserClick} className="author-name">
+            @{author}
           </span>
           <span className="blog-date">{date}</span>
         </div>
@@ -77,18 +79,19 @@ const BlogPost = ({
                 src={src}
                 alt={`Blog ${idx + 1}`}
                 onClick={() => openGalleryAt(idx)}
-                style={{ cursor: "pointer" }}
               />
             );
           })}
         </div>
       )}
 
-      <button className="like-button" onClick={handleToggleLike}>
-        <span role="img" aria-label="heart" style={{ color: liked ? "red" : "darkgray" }}>
-          ❤️
-        </span>{" "}
-        {likes || 0} Likes
+      {/* --- Modern Like Button --- */}
+      <button
+        className={`like-button ${liked ? "liked" : ""}`}
+        onClick={handleToggleLike}
+      >
+        <FaHeart className="like-icon" />
+        <span className="like-count">{likes || 0}</span>
       </button>
 
       {showGallery && (

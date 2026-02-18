@@ -93,7 +93,10 @@ const blogSlice = createSlice({
       })
       .addCase(fetchBlogPosts.fulfilled, (state, action) => {
         state.loading = false;
-        state.posts = action.payload;
+        state.posts = action.payload.map(post => ({
+          ...post,
+          liked: post.is_liked,   // normalize
+        }));
       })
       .addCase(fetchBlogPosts.rejected, (state, action) => {
         state.loading = false;
@@ -108,7 +111,10 @@ const blogSlice = createSlice({
       })
       .addCase(fetchSinglePost.fulfilled, (state, action) => {
         state.loading = false;
-        state.singlePost = action.payload;
+        state.singlePost = {
+          ...action.payload,
+          liked: action.payload.is_liked, // normalize
+        };
       })
       .addCase(fetchSinglePost.rejected, (state, action) => {
         state.loading = false;
@@ -142,22 +148,40 @@ const blogSlice = createSlice({
       })
 
       // Toggle like/unlike
+      .addCase(toggleLikePost.pending, (state, action) => {
+          const postId = action.meta.arg;
+
+          // Update single post immediately
+          if (state.singlePost?.id === postId) {
+            state.singlePost.liked = !state.singlePost.liked;
+            state.singlePost.like_count += state.singlePost.liked ? 1 : -1;
+          }
+
+          // Update feed immediately
+          const post = state.posts.find((p) => p.id === postId);
+          if (post) {
+            post.liked = !post.liked;
+            post.like_count += post.liked ? 1 : -1;
+          }
+        })
+
       .addCase(toggleLikePost.fulfilled, (state, action) => {
         const { postId, liked, like_count } = action.payload;
 
-        // Update singlePost if currently viewing it
-        if (state.singlePost && state.singlePost.id === postId) {
+        // Update single post page
+        if (state.singlePost?.id === postId) {
           state.singlePost.liked = liked;
           state.singlePost.like_count = like_count;
         }
 
-        // Update posts list for HomeScreen
-        const postIndex = state.posts.findIndex((p) => p.id === postId);
-        if (postIndex !== -1) {
-          state.posts[postIndex].liked = liked;
-          state.posts[postIndex].like_count = like_count;
+        // Update post in feed
+        const post = state.posts.find((p) => p.id === postId);
+        if (post) {
+          post.liked = liked;
+          post.like_count = like_count;
         }
-      });
+      })
+
   },
 });
 
