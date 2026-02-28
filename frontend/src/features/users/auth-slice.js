@@ -75,6 +75,39 @@ export const resetPasswordConfirm = createAsyncThunk(
 );
 
 /* =====================================================
+   ACCOUNT DEACTIVATION AND DELETION
+===================================================== */
+export const deactivateAccount = createAsyncThunk(
+  'auth/deactivateAccount',
+  async (password, { rejectWithValue }) => {
+    try {
+      await axiosInstance.delete('/deactivate-account/', {
+        data: { password },
+      });
+      return;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail);
+    }
+  }
+);
+
+
+export const deleteAccount = createAsyncThunk(
+  'auth/deleteAccount',
+  async (password, { rejectWithValue }) => {
+    try {
+      await axiosInstance.delete('/delete-account/', {
+        data: { password },
+      });
+      return;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.detail);
+    }
+  }
+);
+
+
+/* =====================================================
    REFRESH TOKEN (SAFE VERSION)
 ===================================================== */
 
@@ -230,6 +263,16 @@ const authSlice = createSlice({
       .addCase(resetPasswordConfirm.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      /* DELETE AND DEACTIVATE ACCOUNT */
+      .addCase(deactivateAccount.fulfilled, (state) => {
+        state.userInfo = null;
+        state.access = null;
+      })
+      .addCase(deleteAccount.fulfilled, (state) => {
+        state.userInfo = null;
+        state.access = null;
       })
 
       /* REFRESH */

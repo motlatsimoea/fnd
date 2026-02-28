@@ -12,17 +12,26 @@ import axiosInstance, { setAccessToken } from '../../utils/axiosInstance';
 import InboxModal from '../../components/chat/InboxModal';
 import NotificationsModal from '../../components/NotificationsModal/NotificationsModal';
 
-
 import {
-  FaPlusCircle, FaBell, FaStore,
-  FaBook, FaUserCircle, FaSignOutAlt, FaCogs,
-  FaEnvelope, FaSignInAlt, FaUserPlus
+  FaPlusCircle,
+  FaBell,
+  FaStore,
+  FaBook,
+  FaUserCircle,
+  FaSignOutAlt,
+  FaCogs,
+  FaEnvelope,
+  FaSignInAlt,
+  FaUserPlus,
+  FaInfoCircle
 } from 'react-icons/fa';
+
 import './Header.css';
 
 const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showInbox, setShowInbox] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const inboxRef = useRef(null);
   const userMenuRef = useRef(null);
@@ -32,7 +41,6 @@ const Header = () => {
   const location = useLocation();
 
   const userInfo = useSelector((state) => state.auth.userInfo);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   // 🔔 unread notification badge
   const unreadNotifications = useSelector(
@@ -72,6 +80,7 @@ const Header = () => {
   useEffect(() => {
     setShowUserMenu(false);
     setShowInbox(false);
+    setShowNotifications(false);
   }, [location.pathname]);
 
   return (
@@ -87,20 +96,29 @@ const Header = () => {
               <FaPlusCircle />
             </Link>
 
-            {/* 🔔 Notifications (badge only for now) */}
+            {/* About */}
+            <Link to="/about" className="nav-item">
+              <FaInfoCircle />
+            </Link>
+
+            {/* 🔔 Notifications */}
             <span className="notification-wrapper">
               <button
                 className="nav-item notification-button"
-                onClick={() => setShowNotifications(p => !p)}
+                onClick={() => setShowNotifications((p) => !p)}
               >
                 <FaBell />
                 {unreadNotifications > 0 && (
-                  <span className="notification-badge">{unreadNotifications}</span>
+                  <span className="notification-badge">
+                    {unreadNotifications}
+                  </span>
                 )}
               </button>
 
               {showNotifications && (
-                <NotificationsModal onClose={() => setShowNotifications(false)} />
+                <NotificationsModal
+                  onClose={() => setShowNotifications(false)}
+                />
               )}
             </span>
 
@@ -126,6 +144,7 @@ const Header = () => {
             <Link to="/market" className="nav-item">
               <FaStore />
             </Link>
+
             <Link to="/info" className="nav-item">
               <FaBook />
             </Link>
@@ -153,9 +172,15 @@ const Header = () => {
         </>
       ) : (
         <div className="nav-links">
+          {/* About visible when logged out */}
+          <Link to="/about" className="nav-item">
+            <FaInfoCircle />
+          </Link>
+
           <Link to="/login" className="nav-item">
             <FaSignInAlt /> Login
           </Link>
+
           <Link to="/register" className="nav-item">
             <FaUserPlus /> Register
           </Link>

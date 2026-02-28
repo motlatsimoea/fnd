@@ -13,7 +13,6 @@ const InboxModal = ({ onClose }) => {
     dispatch(fetchUserChats());
   }, [dispatch]);
 
-  // ✅ KEEP THIS
   const renderError = () => {
     if (!error) return null;
     if (typeof error === "string") return error;
@@ -21,7 +20,6 @@ const InboxModal = ({ onClose }) => {
     return String(error);
   };
 
-  // 🔽 Unread chats first, then most recently updated
   const sortedChats = [...chatRooms].sort((a, b) => {
     if (a.unread_count > 0 && b.unread_count === 0) return -1;
     if (a.unread_count === 0 && b.unread_count > 0) return 1;
@@ -31,12 +29,14 @@ const InboxModal = ({ onClose }) => {
   return (
     <div className="inbox-modal">
       <div className="modal-header">
-        <h4>Messages</h4>
-        <button onClick={onClose} className="close-btn">&times;</button>
+        <h3>Messages</h3>
+        <button onClick={onClose} className="close-btn">
+          ✕
+        </button>
       </div>
 
-      {loading && <p>Loading chats...</p>}
-      {error && <p className="error">{renderError()}</p>}
+      {loading && <p className="modal-state">Loading chats...</p>}
+      {error && <p className="modal-error">{renderError()}</p>}
 
       <ul className="chat-list">
         {sortedChats.length > 0 ? (
@@ -51,36 +51,40 @@ const InboxModal = ({ onClose }) => {
                 className={`chat-item ${isUnread ? "chat-unread" : ""}`}
               >
                 <Link to={`/chat/${chat.unique_key}`} onClick={onClose}>
-                  {otherUsers.map((u) => (
-                    <img
-                      key={u.id}
-                      src={u.profile_picture || "/default-avatar.png"}
-                      alt={u.username}
-                      className="chat-avatar"
-                    />
-                  ))}
+                  <div className="avatar-wrapper">
+                    {otherUsers.map((u) => (
+                      <img
+                        key={u.id}
+                        src={u.profile_picture || "/default-avatar.png"}
+                        alt={u.username}
+                        className="chat-avatar"
+                      />
+                    ))}
+                  </div>
 
                   <div className="chat-info">
-                    <span className="chat-username">
-                      {otherUsers.map((u) => u.username).join(", ")}
-                    </span>
+                    <div className="chat-top">
+                      <span className="chat-username">
+                        {otherUsers.map((u) => u.username).join(", ")}
+                      </span>
+
+                      {isUnread && (
+                        <span className="chat-unread-badge">
+                          {chat.unread_count}
+                        </span>
+                      )}
+                    </div>
 
                     <span className="chat-message">
                       {chat.last_message?.text || "No messages yet"}
                     </span>
                   </div>
-
-                  {isUnread && (
-                    <span className="chat-unread-badge">
-                      {chat.unread_count}
-                    </span>
-                  )}
                 </Link>
               </li>
             );
           })
         ) : (
-          !loading && <li>No chats yet.</li>
+          !loading && <li className="modal-state">No chats yet.</li>
         )}
       </ul>
     </div>

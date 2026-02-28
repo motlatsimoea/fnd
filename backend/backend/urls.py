@@ -8,7 +8,9 @@ from users.views import (MyTokenObtainPairView,
                          LogoutAndBlacklistRefreshTokenForUserView, 
                          MyTokenRefreshCookieView,
                          RequestPasswordResetView,
-                         ResetPasswordConfirmView)
+                         ResetPasswordConfirmView,
+                         DeactivateAccountView, 
+                         DeleteAccountView)
 
 urlpatterns = [
     path('api/login/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -17,6 +19,9 @@ urlpatterns = [
     
     path("api/password-reset/", RequestPasswordResetView.as_view(), name="password-reset"),
     path("password-reset-confirm/<uidb64>/<token>/", ResetPasswordConfirmView.as_view(), name="password-reset-confirm"),
+    
+    path("api/deactivate-account/", DeactivateAccountView.as_view()),
+    path("api/delete-account/", DeleteAccountView.as_view()),
     
     path("admin/", admin.site.urls),
     path("api/users/", include("users.urls")),

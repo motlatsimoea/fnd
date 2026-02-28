@@ -8,6 +8,7 @@ import {
   fetchUserChats,
   makeSelectChatByKey,
   makeSelectMessagesByKey,
+  markChatAsRead
 } from "../../features/chats/Chat-slice";
 import axiosInstance from "../../utils/axiosInstance";
 
@@ -71,6 +72,15 @@ const ChatPage = () => {
       others.map((u) => u.username).join(", ") || "Unknown User"
     );
   }, [chat, user]);
+
+
+  /* ---------------- REMOVE HIGHLIGHT FROM READ ---------------- */
+
+  useEffect(() => {
+    if (uniqueKey) {
+      dispatch(markChatAsRead({ chatKey: uniqueKey }));
+    }
+  }, [uniqueKey, dispatch]);
 
   /* ---------------- GUARDS ---------------- */
 

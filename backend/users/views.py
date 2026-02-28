@@ -5,12 +5,14 @@ from django.conf import settings
 from django.http import HttpResponseRedirect
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
+from django.utils import timezone
+from datetime import timedelta
 from django.core.mail import send_mail
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import Profile, CustomUser
-from .serializers import ProfileSerializer, UserSerializer
+from .serializers import ProfileSerializer, UserSerializer, MyTokenObtainPairSerializer
 from .utils import generate_user_token, send_activation_email
 from django.urls import reverse
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -18,7 +20,6 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
-from .serializers import MyTokenObtainPairSerializer, UserSerializer
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
@@ -243,6 +244,68 @@ class ActivateAccountView(APIView):
         
         
 
+class DeactivateAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        password = request.data.get("password")
+
+        if not password or not user.check_password(password):
+            return Response(
+                {"detail": "Incorrect password."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.is_active = False
+        user.deactivated_at = timezone.now()
+        user.save()
+
+        response = Response(
+            {"detail": "Account deactivated. You have 30 days to log back in."},
+            status=status.HTTP_200_OK
+        )
+
+        # Clear auth cookies
+        response.delete_cookie("refresh_token")
+        response.delete_cookie("access_token")
+
+        return response
+    
+
+
+class DeleteAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        user = request.user
+        password = request.data.get("password")
+
+        if not password:
+            return Response(
+                {"detail": "Password is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not user.check_password(password):
+            return Response(
+                {"detail": "Incorrect password."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.delete()
+
+        response = Response(
+            {"detail": "Account permanently deleted."},
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+        response.delete_cookie("refresh_token")
+        response.delete_cookie("access_token")
+
+        return response
+    
+    
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]

@@ -9,6 +9,7 @@ import { setAccessToken } from './utils/axiosInstance';
 
 import Header from './components/Header/Header';
 import Loader from './components/Loader';
+import Footer from './components/Footer/Footer';
 
 // Public screens
 import HomeScreen from './screens/HomeScreen';
@@ -31,6 +32,11 @@ import ProfilePage from './components/ProfilePage/ProfilePage';
 import InboxPage from './screens/InboxPage/InboxPage';
 import ChatPage from './components/chat/ChatPage';
 import Chat from './components/chat/chat';
+
+import PrivacyPolicy from './screens/legal/PrivacyPolicy';
+import TermsOfService from './screens/legal/TermsOfService';
+import SettingsPage from './screens/SettingsPage/SettingsPage';
+import AboutPage from './screens/AboutPage/AboutPage';
 
 // Utils & hooks
 import ProtectedRoute from './components/ProtectedRoute';
@@ -77,18 +83,23 @@ const App = () => {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomeScreen />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route path="/register" element={<RegistrationPage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
-        <Route path="/market" element={<MarketPage />} />
-        <Route path="/product/:id" element={<ProductPage />} />
         <Route path="/info" element={<InfoPage />} />
+        <Route path="/market" element={<MarketPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+        <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
+        <Route path="/product/:id" element={<ProductPage />} />
         <Route path="/article/:id" element={<ArticlePage />} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/create-post" element={<CreatePost />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/blog/:id" element={<BlogPostPage />} />
           <Route path="/hashtag/:name" element={<HashtagPage />} />
           <Route path="/profile/:username" element={<ProfilePage />} />
@@ -101,6 +112,8 @@ const App = () => {
       </Routes>
 
       <ToastContainer position="top-right" autoClose={3000} />
+      
+      <Footer />
     </Router>
   );
 };

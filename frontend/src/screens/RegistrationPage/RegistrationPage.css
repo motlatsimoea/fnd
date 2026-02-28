@@ -130,3 +130,17 @@
 .login-link a:hover {
   text-decoration: underline;
 }
+.terms-agreement {
+  margin-top: 15px;
+  font-size: 0.9rem;
+}
+
+.terms-agreement a {
+  color: #219150;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.terms-agreement a:hover {
+  text-decoration: underline;
+}

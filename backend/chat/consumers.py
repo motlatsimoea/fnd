@@ -13,6 +13,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.unique_key = self.scope["url_route"]["kwargs"]["unique_key"]
         self.room_group_name = f"chat_{self.unique_key}"
         self.user = self.scope["user"]
+        print("=== CHAT CONNECT START ===")
+        print("User:", self.scope["user"])
+        print("Unique key:", self.unique_key)
+        print("Query string:", self.scope["query_string"])
 
         print(f"[CONNECT] Attempting WS | key={self.unique_key} | user={self.user}")
 
@@ -99,13 +103,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 print("[RECEIVE] ⚠️ No valid recipient for notification")
                 
                 
-            await self.channel_layer.group_send(
-                f"inbox_{recipient.id}",
-                {
-                    "type": "inbox_message",
-                    "inbox_id": self.chat.id,
-                }
-            )
+            if recipient:
+                await self.channel_layer.group_send(
+                    f"inbox_{recipient.id}",
+                    {
+                        "type": "inbox_message",
+                        "inbox_id": self.chat.id,
+                    }
+                )
 
             # 📢 Broadcast message to chat room
             await self.channel_layer.group_send(
@@ -144,8 +149,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             unique_key=unique_key,
             participants=user
         ).exists()
-        print(f"[CHECK CHAT] key={unique_key} user={user} exists={exists}")
-        return exits
+    
 
     @database_sync_to_async
     def get_inbox(self, unique_key):

@@ -1,6 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUserChats } from "../../features/chats/Chat-slice";
+import {
+  receiveNewMessage,
+  incrementUnreadCount,
+  fetchUserChats,
+} from "../../features/chats/Chat-slice";
 
 const useInboxSocket = (loadingAuth) => {
   const dispatch = useDispatch();
@@ -8,39 +12,15 @@ const useInboxSocket = (loadingAuth) => {
   const socketRef = useRef(null);
 
   useEffect(() => {
-    console.log("[InboxSocket] effect fired", {
-      loadingAuth,
-      hasAccessToken: !!accessToken,
-      existingSocket: !!socketRef.current,
-    });
+    if (loadingAuth || !accessToken) return;
 
-    // ❌ Don’t connect until auth is ready
-    if (loadingAuth) {
-      console.log("[InboxSocket] ⏳ waiting for auth bootstrap");
-      return;
-    }
+    const wsProtocol =
+      window.location.protocol === "https:" ? "wss" : "ws";
 
-    if (!accessToken) {
-      console.log("[InboxSocket] ❌ no access token, not connecting");
-      return;
-    }
+    const socket = new WebSocket(
+      `${wsProtocol}://localhost:8000/ws/inbox/?token=${accessToken}`
+    );
 
-    // ❌ Prevent duplicate sockets
-    if (socketRef.current) {
-      console.log("[InboxSocket] ⚠️ socket already exists");
-      return;
-    }
-
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const backendHost =
-      process.env.NODE_ENV === "development"
-        ? "localhost:8000"
-        : window.location.host;
-
-    const wsUrl = `${protocol}://${backendHost}/ws/inbox/?token=${accessToken}`;
-    console.log("[InboxSocket] 🔌 connecting to", wsUrl);
-
-    const socket = new WebSocket(wsUrl);
     socketRef.current = socket;
 
     socket.onopen = () => {
@@ -48,34 +28,50 @@ const useInboxSocket = (loadingAuth) => {
     };
 
     socket.onmessage = (event) => {
-      console.log("[InboxSocket] 📩 message received:", event.data);
-
       const data = JSON.parse(event.data);
+      console.log("[InboxSocket] 📩 message received:", data);
 
-      if (data.event === "inbox_message") {
-        console.log("[InboxSocket] 🔔 inbox_message event → refetch chats");
+      if (data.type === "new_message") {
+        const { chat_key, message } = data;
+
+        // 1️⃣ Store message in Redux
+        dispatch(
+          receiveNewMessage({
+            chatKey: chat_key,
+            message,
+          })
+        );
+
+        // 2️⃣ Update unread counter immediately
+        dispatch(
+          incrementUnreadCount({
+            chatKey: chat_key,
+          })
+        );
+
+        // 3️⃣ Optional safety: refetch chat rooms
         dispatch(fetchUserChats());
       }
     };
 
-    socket.onerror = (e) => {
-      console.error("[InboxSocket] ❌ socket error", e);
+    socket.onerror = (err) => {
+      console.error("[InboxSocket] ❌ error", err);
     };
 
-    socket.onclose = (e) => {
-      console.log("[InboxSocket] 🔌 socket closed", {
-        code: e.code,
-        reason: e.reason,
-      });
-      socketRef.current = null;
+    socket.onclose = (event) => {
+      console.log(
+        "[InboxSocket] 🔌 closed",
+        event.code,
+        event.reason
+      );
     };
 
     return () => {
-      console.log("[InboxSocket] 🧹 cleanup – closing socket");
       socket.close();
-      socketRef.current = null;
     };
-  }, [dispatch, accessToken, loadingAuth]);
+  }, [accessToken, loadingAuth, dispatch]);
+
+  return socketRef;
 };
 
 export default useInboxSocket;

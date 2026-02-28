@@ -87,6 +87,30 @@ const chatSlice = createSlice({
         );
     },
 
+    markChatAsRead: (state, action) => {
+      const { chatKey } = action.payload;
+
+      const chat = state.chatRooms.find(
+        (c) => c.unique_key === chatKey
+      );
+
+      if (chat) {
+        chat.unread_count = 0;
+      }
+    },
+
+    incrementUnreadCount: (state, action) => {
+      const { chatKey } = action.payload;
+
+      const chat = state.chatRooms.find(
+        (c) => c.unique_key === chatKey
+      );
+
+      if (chat) {
+        chat.unread_count = (chat.unread_count || 0) + 1;
+      }
+    },
+
     mergeMessages: (state, action) => {
       const { chatKey, messages } = action.payload;
       const existing = state.messages[chatKey] || [];
@@ -192,6 +216,8 @@ export const {
   receiveNewMessage,
   mergeMessages,
   updateMessageId,
+  incrementUnreadCount,
+  markChatAsRead
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

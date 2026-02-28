@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 import os
+from django.utils import timezone
+from datetime import timedelta
 
 def profile_picture_upload_to(instance, filename):
     """
@@ -53,9 +55,10 @@ class CustomUser(AbstractUser):
     Custom user model for the application.
     Adds additional fields like 'sectors' for normal users.
     """
-    email = models.EmailField(unique=True)
-    sectors = models.ManyToManyField(Sector, blank=True)
-
+    email               = models.EmailField(unique=True)
+    sectors             = models.ManyToManyField(Sector, blank=True)
+    deactivated_at      = models.DateTimeField(null=True, blank=True)
+    terms_accepted_at   = models.DateTimeField(null=True, blank=True)
     # Replace the default User manager with the custom one
     objects = CustomUserManager()
 

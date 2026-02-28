@@ -68,22 +68,34 @@ const Chat = ({ chatKey, user, initialMessages }) => {
 
 
   const createWebSocket = useCallback(() => {
-    if (!chatKey || !accessToken) return;
+    if (!chatKey || !accessToken) {
+      console.log("[ChatWS] Attempting connection", {
+      chatKey,
+      accessToken: !!accessToken,
+    });
+       return;
+    } 
+     
 
     // ✅ PREVENT duplicate sockets
-   if (socketRef.current && socketRef.current.readyState < 2) return;
+   if (socketRef.current && socketRef.current.readyState < 2) {
+      console.log("[ChatWS] ⚠️ Socket already active");
+       return;
+   }
 
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const backendHost =
       process.env.NODE_ENV === "development"
         ? "localhost:8000"
         : window.location.host;
-
-    const url = `${protocol}://${backendHost}/ws/chat/${chatKey}/`;
-    const ws = new WebSocket(url);
+    
+    const wsUrl = `${protocol}://${backendHost}/ws/chat/${chatKey}/?token=${accessToken}`;
+    console.log("[ChatWS] URL:", wsUrl);
+    const ws = new WebSocket(wsUrl);
     socketRef.current = ws;
 
     ws.onopen = () => {
+      console.log("[ChatWS] ✅ Connected");
       reconnectAttempts.current = 0;
       setWsConnected(true);
       flushQueueFor(ws, chatKey);
@@ -110,13 +122,20 @@ const Chat = ({ chatKey, user, initialMessages }) => {
       }
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      console.log("[ChatWS] ❌ Closed", {
+        code: event.code,
+        reason: event.reason,
+        wasClean: event.wasClean,
+      });
+
       setWsConnected(false);
       socketRef.current = null;
 
       if (reconnectAttempts.current < maxReconnectAttempts) {
         const delay = Math.min(1000 * 2 ** reconnectAttempts.current, 30000);
         reconnectAttempts.current += 1;
+        console.log("[ChatWS] 🔁 Reconnecting in", delay, "ms");
         setTimeout(createWebSocket, delay);
       }
     };
