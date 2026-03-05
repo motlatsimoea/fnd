@@ -4,118 +4,256 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework import status
 from .models import Post, Comment, Like, Media
+from notifications.models import Notification
 from .serializers import *
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.utils.text import get_valid_filename
 from notifications.utils import send_notification
-import json
-import re
 from django.db.models import Prefetch
+from django.contrib.auth import get_user_model
+import re, json
+from .utils import extract_text
 
+User = get_user_model()
+mention_regex = r'(?<!\w)@(\w+)'
+hashtag_regex = r'#(\w+)'
 
 
 class PostView(APIView):
+
     def get_permissions(self):
         if self.request.method == 'GET':
             return [AllowAny()]
         return [IsAuthenticated()]
 
+    # =========================
+    # GET POSTS
+    # =========================
     def get(self, request):
         hashtag_name = request.query_params.get("hashtag")
 
         posts = Post.objects.select_related("author").prefetch_related(
-                    "hashtags",
-                    "media",
-                    "likes",
-                    Prefetch("comments", queryset=Comment.objects.select_related("author"))
-                ).order_by("-created_at")
+            "hashtags",
+            "media",
+            "likes",
+            Prefetch("comments", queryset=Comment.objects.select_related("author"))
+        ).order_by("-created_at")
 
         if hashtag_name:
             posts = posts.filter(
                 hashtags__name__iexact=hashtag_name.lower()
             ).distinct()
 
-        serializer = PostSerializer(
-            posts,
-            many=True,
-            context={"request": request}
-        )
-
+        serializer = PostSerializer(posts, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
+
+    # =========================
+    # CREATE POST
+    # =========================
     def post(self, request):
-        title = request.data.get('title')
-        content = request.data.get('content')
-        hashtag_names = request.data.getlist('hashtag_names')
-        
-        media_files = request.FILES.getlist('media_files') or []
+        title = request.data.get("title")
+        content = request.data.get("content")
+        media_files = request.FILES.getlist("media_files") or []
 
-        # Validate required fields
         if not title or not content:
-            return Response({'detail': 'Title and content are required.'}, status=400)
+            return Response(
+                {"detail": "Title and content are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        # File validation
-        ALLOWED_TYPES = ['image/jpeg', 'image/png', 'video/mp4']
+        ALLOWED_TYPES = ["image/jpeg", "image/png", "video/mp4"]
         MAX_FILE_SIZE_MB = 5
         MAX_MEDIA_COUNT = 4
 
         if len(media_files) > MAX_MEDIA_COUNT:
-            return Response({'detail': f'Maximum of {MAX_MEDIA_COUNT} files allowed.'}, status=400)
+            return Response(
+                {"detail": f"Maximum of {MAX_MEDIA_COUNT} files allowed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         for media_file in media_files:
             if media_file.content_type not in ALLOWED_TYPES:
-                return Response({'detail': f'Unsupported file type: {media_file.content_type}'}, status=400)
+                return Response(
+                    {"detail": f"Unsupported file type: {media_file.content_type}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             if media_file.size > MAX_FILE_SIZE_MB * 1024 * 1024:
-                return Response({'detail': f'{media_file.name} exceeds max file size of {MAX_FILE_SIZE_MB}MB.'}, status=400)
+                return Response(
+                    {"detail": f"{media_file.name} exceeds max file size of {MAX_FILE_SIZE_MB}MB."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         try:
             with transaction.atomic():
+
                 post = Post.objects.create(
                     title=title,
                     content=content,
-                    author=request.user
+                    author=request.user,
                 )
-                
+
+                # -------- Parse Lexical JSON --------
+                try:
+                    parsed = json.loads(content)
+                except Exception:
+                    parsed = {}
+
+                plain_text = extract_text(parsed.get("root", {}))
+
+                # =====================================
+                # HASHTAGS (Backend Controlled)
+                # =====================================
+                hashtag_names = set(re.findall(hashtag_regex, plain_text))
+
                 for tag in hashtag_names:
                     tag = tag.lower().strip()
                     if not tag:
                         continue
 
-                    hashtag, created = Hashtag.objects.get_or_create(name=tag)
+                    hashtag, _ = Hashtag.objects.get_or_create(name=tag)
                     hashtag.usage_count += 1
                     hashtag.save()
-
                     post.hashtags.add(hashtag)
 
+                # -------- MEDIA --------
                 for media_file in media_files:
                     media_file.name = get_valid_filename(media_file.name)
                     Media.objects.create(post=post, file=media_file)
 
-                serialized_post = PostSerializer(post, context={'request': request})
-                return Response(serialized_post.data, status=201)
+                # =====================================
+                # MENTIONS
+                # =====================================
+                mentioned_usernames = set(re.findall(mention_regex, plain_text))
+
+                for username in mentioned_usernames:
+                    try:
+                        mentioned_user = User.objects.get(username=username)
+
+                        if mentioned_user != request.user:
+                            send_notification(
+                                user=mentioned_user,
+                                sender=request.user,
+                                notification_type="mention",
+                                post=post,
+                                message=f"{request.user.username} mentioned you in a post.",
+                            )
+
+                    except User.DoesNotExist:
+                        continue
+
+                serialized_post = PostSerializer(post, context={"request": request})
+                return Response(serialized_post.data, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            return Response({'detail': 'An error occurred while saving the post.', 'error': str(e)}, status=500)
-        
-        
+            return Response(
+                {"detail": "An error occurred while saving the post.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+    # =========================
+    # UPDATE POST
+    # =========================
     def put(self, request, post_id):
-        if not request.user or not request.user.is_authenticated:
-            return Response({'detail': 'Authentication required.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if not request.user.is_authenticated:
+            return Response(
+                {"detail": "Authentication required."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
 
         try:
             post = Post.objects.get(id=post_id, author=request.user)
         except Post.DoesNotExist:
-            return Response({'detail': 'Post not found or you are not the author.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Post not found or you are not the author."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        serializer = PostSerializer(post, data=request.data, partial=True, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
+        serializer = PostSerializer(
+            post,
+            data=request.data,
+            partial=True,
+            context={"request": request},
+        )
+
+        if not serializer.is_valid():
+            return Response(
+                {"detail": "Invalid update data", "errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            with transaction.atomic():
+
+                serializer.save()
+
+                content = request.data.get("content", post.content)
+
+                try:
+                    parsed = json.loads(content)
+                except Exception:
+                    parsed = {}
+
+                plain_text = extract_text(parsed.get("root", {}))
+
+                # =====================================
+                # UPDATE HASHTAGS (Backend Driven)
+                # =====================================
+                new_hashtags = set(re.findall(hashtag_regex, plain_text))
+
+                post.hashtags.clear()
+
+                for tag in new_hashtags:
+                    tag = tag.lower().strip()
+                    if not tag:
+                        continue
+
+                    hashtag, _ = Hashtag.objects.get_or_create(name=tag)
+                    hashtag.usage_count += 1
+                    hashtag.save()
+                    post.hashtags.add(hashtag)
+
+                # =====================================
+                # UPDATE MENTIONS
+                # =====================================
+                new_mentions = set(re.findall(mention_regex, plain_text))
+
+                old_mentions = set(
+                    Notification.objects.filter(
+                        post=post,
+                        notification_type="mention",
+                    ).values_list("user__username", flat=True)
+                )
+
+                mentions_to_notify = new_mentions - old_mentions
+
+                for username in mentions_to_notify:
+                    try:
+                        mentioned_user = User.objects.get(username=username)
+
+                        if mentioned_user != request.user:
+                            send_notification(
+                                user=mentioned_user,
+                                sender=request.user,
+                                notification_type="mention",
+                                post=post,
+                                message=f"{request.user.username} mentioned you in a post.",
+                            )
+
+                    except User.DoesNotExist:
+                        continue
+
             return Response(serializer.data, status=status.HTTP_200_OK)
-        
-        return Response({'detail': 'Invalid update data', 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
 
+        except Exception as e:
+            return Response(
+                {"detail": "An error occurred while updating the post.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+            
 
 class HashtagListView(APIView):
     permission_classes = [AllowAny]
@@ -129,7 +267,8 @@ class HashtagListView(APIView):
 
         serializer = HashtagSerializer(hashtags, many=True)
         return Response(serializer.data)
-
+    
+    
 
 
 class PostDetailView(APIView):

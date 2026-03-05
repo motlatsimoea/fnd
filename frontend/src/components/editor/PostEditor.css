@@ -32,3 +32,26 @@
   color: #27ae60 !important;
   font-weight: 600;
 }
+.post-editor-mention {
+  font-weight: bold;
+  color: #219150;
+  cursor: pointer;
+}
+
+.mention-dropdown {
+  position: absolute;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 6px;
+  z-index: 1000;
+}
+
+.mention-item {
+  padding: 6px;
+  cursor: pointer;
+}
+
+.mention-item:hover {
+  background: #f0f0f0;
+}

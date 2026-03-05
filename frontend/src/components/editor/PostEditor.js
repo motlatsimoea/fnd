@@ -10,7 +10,6 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import {
-  $getRoot,
   $getSelection,
   $isRangeSelection,
   TextNode,
@@ -18,6 +17,8 @@ import {
 } from "lexical";
 
 import { HashtagNode, registerLexicalHashtag } from "@lexical/hashtag";
+import MentionPlugin from "./MentionPlugin";
+import { MentionNode } from "./MentionNode";
 
 import "./PostEditor.css";
 
@@ -45,7 +46,6 @@ function EditorRefPlugin({ editorRef }) {
         }
       });
 
-      // Keep focus in editor
       editor.focus();
     },
   }));
@@ -58,10 +58,9 @@ function MyOnChangePlugin({ onChange }) {
   return (
     <OnChangePlugin
       onChange={(editorState) => {
-        editorState.read(() => {
-          const root = $getRoot();
-          onChange(root.getTextContent());
-        });
+        // 🔥 STORE FULL JSON STATE
+        const json = editorState.toJSON();
+        onChange(JSON.stringify(json));
       }}
     />
   );
@@ -76,7 +75,12 @@ const theme = {
 const editorConfig = {
   namespace: "PostEditor",
   theme,
-  nodes: [HashtagNode, TextNode, ParagraphNode],
+  nodes: [
+    HashtagNode,
+    MentionNode,
+    TextNode,
+    ParagraphNode,
+  ],
   onError(error) {
     console.error(error);
   },
@@ -98,6 +102,7 @@ const PostEditor = forwardRef(({ onChange }, ref) => {
 
         <HistoryPlugin />
         <HashtagPluginWrapper />
+        <MentionPlugin /> {/* 🔥 NEW */}
         <MyOnChangePlugin onChange={onChange} />
         <EditorRefPlugin editorRef={ref} />
       </div>

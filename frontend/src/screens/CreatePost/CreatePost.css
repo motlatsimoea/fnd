@@ -154,6 +154,10 @@
   box-shadow: none;
 }
 
+.post-card.dragging {
+  border: 2px dashed #219150;
+  background-color: #f0fff6;
+}
 /* Responsive */
 @media (max-width: 600px) {
   .post-card {

@@ -46,6 +46,8 @@ def send_notification(user, sender, notification_type, message=None, post=None, 
     elif notification_type == "message" and not message:
         # fallback if no message provided
         message = f"You have a new message from {sender.username}."
+    elif notification_type == "mention":
+        message = f"{sender.username} mentioned you in a post."
 
     notification = Notification.objects.create(
         user=user,

@@ -344,6 +344,24 @@ class ProfileView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    
+
+class UserSearchView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        query = request.GET.get("q", "").strip()
+        if query:
+            users = User.objects.filter(
+                username__istartswith=query
+            )[:10]
+        else:
+            users = User.objects.all()[:10]
+        return Response([
+            {"username": u.username}
+            for u in users
+        ])
+    
  
  
     

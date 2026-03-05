@@ -31,23 +31,63 @@ const BlogPost = ({
     setShowGallery(true);
   };
 
-  const renderTextWithHashtags = (text) => {
+  const renderTextWithTagsAndMentions = (text) => {
     if (!text) return null;
-    const parts = text.split(/(#\w+)/g);
+
+    let plainText = text;
+
+    // Try parsing Lexical JSON
+    try {
+      const parsed = JSON.parse(text);
+
+      const extractText = (node) => {
+        if (!node) return "";
+        if (node.text !== undefined) return node.text;
+        if (node.children) {
+          return node.children.map(extractText).join("");
+        }
+        return "";
+      };
+
+      plainText = extractText(parsed.root);
+    } catch {
+      // If parsing fails, assume it's already plain text
+    }
+
+    const parts = plainText.split(/(#\w+|@\w+)/g);
 
     return parts.map((part, idx) => {
+      // Hashtag
       if (part.startsWith("#")) {
         const tag = part.slice(1);
         return (
-          <Link key={idx} to={`/hashtag/${tag}`} className="clickable-hashtag">
+          <Link
+            key={idx}
+            to={`/hashtag/${tag}`}
+            className="clickable-hashtag"
+          >
             {part}
           </Link>
         );
       }
+
+      // Mention
+      if (part.startsWith("@")) {
+        const username = part.slice(1);
+        return (
+          <Link
+            key={idx}
+            to={`/profile/${username}`}
+            className="clickable-mention"
+          >
+            {part}
+          </Link>
+        );
+      }
+
       return part;
     });
   };
-
   return (
     <div className="blog-post-card">
       <div onClick={handleTitleClick} className="blog-title-link">
@@ -67,7 +107,7 @@ const BlogPost = ({
         </div>
       </div>
 
-      <p className="blog-text">{renderTextWithHashtags(text)}</p>
+      <p className="blog-text">{renderTextWithTagsAndMentions(text)}</p>
 
       {images?.length > 0 && (
         <div className="blog-images">

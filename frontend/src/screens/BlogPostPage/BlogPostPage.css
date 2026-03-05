@@ -171,6 +171,17 @@
   text-decoration: underline;
 }
 
+.clickable-mention {
+  color: #27ae60;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.clickable-mention:hover {
+  text-decoration: underline;
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 768px) {
   .post-images {

@@ -11,18 +11,28 @@ from django.shortcuts import get_object_or_404
 class NotificationBaseView(APIView):
     permission_classes = [IsAuthenticated]
     notification_types = None  
-    
+
     def get_queryset(self):
-            qs = Notification.objects.filter(user=self.request.user)
-            if self.notification_types:
-                qs = qs.filter(
-                    notification_type__in=(
-                        self.notification_types
-                        if isinstance(self.notification_types, list)
-                        else [self.notification_types]
-                    )
+        qs = Notification.objects.filter(user=self.request.user)
+
+        if self.notification_types:
+            qs = qs.filter(
+                notification_type__in=(
+                    self.notification_types
+                    if isinstance(self.notification_types, list)
+                    else [self.notification_types]
                 )
-            return qs.order_by("-timestamp")
+            )
+
+        # ✅ optimization for profile pictures
+        return qs.select_related(
+            "sender",
+            "sender__profile",
+            "post",
+            "comment",
+            "inbox",
+            "review"
+        ).order_by("-timestamp")
 
     def get(self, request):
         notifications = self.get_queryset()
@@ -33,20 +43,24 @@ class NotificationBaseView(APIView):
 
         unread_count = self.get_queryset().filter(is_read=False).count()
 
-        # paginate results
         paginator = NotificationPagination()
         page = paginator.paginate_queryset(notifications, request)
-        serializer = NotificationSerializer(page, many=True)
 
-        # Correct usage: pass serializer.data (list) into get_paginated_response
+        # ✅ PASS REQUEST CONTEXT
+        serializer = NotificationSerializer(
+            page,
+            many=True,
+            context={"request": request}
+        )
+
         paginated_response = paginator.get_paginated_response(serializer.data)
-        # attach unread_count at top level
-        paginated_response.data['unread_count'] = unread_count
+
+        paginated_response.data["unread_count"] = unread_count
+
         return paginated_response
 
-
 class NotificationListView(NotificationBaseView):
-    notification_types = ["like", "comment", "reply", "review"]
+    notification_types = ["like", "comment", "reply", "review", "mention"]
 
 
 

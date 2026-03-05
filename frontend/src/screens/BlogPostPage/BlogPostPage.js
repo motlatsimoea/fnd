@@ -35,21 +35,74 @@ const BlogPostPage = () => {
     setShowGallery(true);
   };
 
-  const renderContentWithHashtags = (content) => {
+  const renderContentWithTagsAndMentions = (content) => {
     if (!content) return null;
-    const parts = content.split(/(#\w+)/g);
 
-    return parts.map((part, idx) => {
-      if (part.startsWith("#")) {
-        const tag = part.slice(1);
+    let parsed;
+
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      return content; // fallback if already plain text
+    }
+
+    const renderNode = (node, keyPrefix = "") => {
+      // Text node
+      if (node.text !== undefined) {
+        const parts = node.text.split(/(#\w+|@\w+)/g);
+
+        return parts.map((part, idx) => {
+          const key = `${keyPrefix}-${idx}`;
+
+          // Hashtag
+          if (part.startsWith("#")) {
+            const tag = part.slice(1);
+            return (
+              <Link
+                key={key}
+                to={`/hashtag/${tag}`}
+                className="clickable-hashtag"
+              >
+                {part}
+              </Link>
+            );
+          }
+
+          // Mention
+          if (part.startsWith("@")) {
+            const username = part.slice(1);
+            return (
+              <Link
+                key={key}
+                to={`/profile/${username}`}
+                className="clickable-mention"
+              >
+                {part}
+              </Link>
+            );
+          }
+
+          return part;
+        });
+      }
+
+      // Paragraph node
+      if (node.children) {
         return (
-          <Link key={idx} to={`/hashtag/${tag}`} className="clickable-hashtag">
-            {part}
-          </Link>
+          <p key={keyPrefix}>
+            {node.children.map((child, index) =>
+              renderNode(child, `${keyPrefix}-${index}`)
+            )}
+          </p>
         );
       }
-      return part;
-    });
+
+      return null;
+    };
+
+    return parsed.root?.children?.map((node, index) =>
+      renderNode(node, `node-${index}`)
+    );
   };
 
   if (loading) return <Loader />;
@@ -79,7 +132,7 @@ const BlogPostPage = () => {
         </div>
 
         <div className="post-content">
-          <p>{renderContentWithHashtags(singlePost.content)}</p>
+          {renderContentWithTagsAndMentions(singlePost.content)}
 
           {singlePost.media?.length > 0 && (
             <div className="post-images">
