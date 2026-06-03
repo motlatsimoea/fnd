@@ -254,6 +254,94 @@
 }
 
 /* ============================
+   Delete Comment Modal
+============================ */
+
+.comment-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.comment-modal-card {
+  width: 90%;
+  max-width: 420px;
+  background: white;
+  padding: 22px;
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: commentModalPop 0.2s ease;
+}
+
+.comment-modal-card h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.comment-modal-card p {
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.comment-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.comment-modal-cancel,
+.comment-modal-delete {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.comment-modal-cancel {
+  background: #f1f3f5;
+  color: #333;
+}
+
+.comment-modal-cancel:hover {
+  background: #e9ecef;
+}
+
+.comment-modal-delete {
+  background: #dc2626;
+  color: white;
+}
+
+.comment-modal-delete:hover {
+  background: #b91c1c;
+}
+
+.comment-modal-delete:disabled,
+.comment-modal-cancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes commentModalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ============================
    Responsive Adjustments
 ============================ */
 @media (max-width: 640px) {

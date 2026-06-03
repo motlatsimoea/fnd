@@ -72,6 +72,24 @@
   margin-bottom: 10px;
 }
 
+.deactivate-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+}
+
+.deactivate-modal {
+  width: 400px;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  animation: fadeIn 0.25s ease;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-15px); }
   to { opacity: 1; transform: translateY(0); }

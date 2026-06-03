@@ -9,10 +9,12 @@ import productReducer from './features/products/Product-slice'
 import reviewReducer from './features/products/review-slice'
 import notificationReducer from './features/notifications/notice-slice'
 import chatReducer from './features/chats/Chat-slice'
+import followingFeedReducer from "./features/feed/FollowingFeedSlice";
 
 const reducer = combineReducers({
   auth: authReducer,
   BlogList: blogReducer,
+  followingFeed: followingFeedReducer,
   comments: commentReducer,
   register: registerReducer,
   profile: profileReducer,

@@ -14,11 +14,13 @@ class Notification(models.Model):
         ('message', 'Message'),
         ('review', 'Review'),
         ('mention', 'Mention'),
+        ('review_reply', 'Review Reply'),
+        ('follow', 'Follow'),
     ]
 
     user                = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
     sender              = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_notifications")
-    notification_type   = models.CharField(max_length=10, choices=NOTIFICATION_TYPES)
+    notification_type   = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
 
     post                = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True)
     comment             = models.ForeignKey(Comment, on_delete=models.CASCADE, null=True, blank=True)

@@ -1,32 +1,57 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { createComment, updateComment } from '../../features/blog/Comment-slice';
-import Loader from '../Loader';
-import './CommentSection.css';
+import React, { useState, useEffect, useRef } from "react";
+import { useDispatch } from "react-redux";
+import { createComment, updateComment } from "../../features/blog/Comment-slice";
+import Loader from "../Loader";
+import PostEditor from "../editor/PostEditor";
+import "./CommentSection.css";
 
-const CommentForm = ({ postId, parentId = null, initialText = '', onCancel, isEditing = false }) => {
-  const [text, setText] = useState(initialText);
-  const [loading, setLoading] = useState(false);
+const CommentForm = ({
+  postId,
+  parentId = null,
+  initialText = "",
+  onCancel,
+  isEditing = false,
+}) => {
   const dispatch = useDispatch();
+  const editorRef = useRef(null);
+
+  const [content, setContent] = useState(initialText);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setText(initialText);
+    setContent(initialText);
   }, [initialText]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!text.trim()) return;
+    if (!content) return;
+
     setLoading(true);
+
     try {
       if (isEditing) {
-        await dispatch(updateComment({ postId, commentId: parentId, text })).unwrap();
+        await dispatch(
+          updateComment({
+            postId,
+            commentId: parentId,
+            text: content,
+          })
+        ).unwrap();
+
         onCancel?.();
       } else {
-        await dispatch(createComment({ postId, text, parent: parentId })).unwrap();
-        setText('');
+        await dispatch(
+          createComment({
+            postId,
+            text: content,
+            parent: parentId,
+          })
+        ).unwrap();
+
+        setContent("");
       }
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -34,23 +59,27 @@ const CommentForm = ({ postId, parentId = null, initialText = '', onCancel, isEd
 
   return (
     <form onSubmit={handleSubmit} className="comment-form">
-      <textarea
-        className="comment-textarea"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder={isEditing ? 'Edit your comment...' : 'Write a comment...'}
-        disabled={loading}
-      />
+      <PostEditor ref={editorRef} onChange={setContent} />
 
       <div className="form-actions">
-        <button type="submit" disabled={loading || !text.trim()} className="btn-submit">
-          {isEditing ? '💬 Update' : '📝 Post'}
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-submit"
+        >
+          {isEditing ? "💬 Update" : "📝 Post"}
         </button>
+
         {onCancel && (
-          <button type="button" onClick={onCancel} disabled={loading} className="btn-cancel">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="btn-cancel"
+          >
             ❌ Cancel
           </button>
         )}
+
         {loading && <Loader />}
       </div>
     </form>

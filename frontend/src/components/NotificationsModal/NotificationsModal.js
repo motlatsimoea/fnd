@@ -3,7 +3,7 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { markNotificationAsRead } from '../../features/notifications/notice-slice';
-import { FaHeart, FaCommentDots, FaReply, FaAt } from "react-icons/fa";
+import { FaHeart, FaCommentDots, FaReply, FaAt, FaUserPlus, FaStar } from "react-icons/fa";
 import './NotificationsModal.css';
 
 const getNotificationIcon = (type) => {
@@ -14,8 +14,14 @@ const getNotificationIcon = (type) => {
       return <FaCommentDots className="notification-icon comment" />;
     case "reply":
       return <FaReply className="notification-icon reply" />;
+    case "review":
+      return <FaStar className="notification-icon review" />;
+    case "review_reply":
+      return <FaReply className="notification-icon review-reply" />;
     case "mention":
       return <FaAt className="notification-icon mention" />;
+    case "follow":
+      return <FaUserPlus className="notification-icon follow" />;
     default:
       return null;
   }
@@ -26,13 +32,9 @@ const NotificationsModal = ({ onClose }) => {
   const notifications = useSelector(state => state.notifications.general.items);
 
   const handleClick = (notification) => {
-    console.log('Notification:', notification);
-    console.log("notifications length:", notifications.length);
-
     if (!notification.is_read) {
       dispatch(markNotificationAsRead(notification.id));
     }
-
     onClose?.();
   };
 
@@ -68,44 +70,71 @@ const NotificationsModal = ({ onClose }) => {
                   )}
                 </div>
 
-                {/* Notification body */}
+                {/* Body */}
                 <div className="notification-body">
 
-                  {n.post_id ? (
+                  {/* ✅ FOLLOW NOTIFICATION FIX */}
+                  {n.notification_type === "follow" ? (
                     <>
-
                       {/* Username */}
                       <Link
                         to={`/profile/${n.sender_username}`}
                         className="username-link"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClick(n);
+                        }}
                       >
                         {n.sender_username}
                       </Link>{" "}
 
-                      {/* Notification text */}
+                      {/* Text */}
+                      <Link
+                        to={`/profile/${n.sender_username}`}
+                        className="notification-link"
+                        onClick={() => handleClick(n)}
+                      >
+                        <span className="notification-text">
+                          {getNotificationIcon(n.notification_type)}
+                          {" started following you"}
+                        </span>
+                      </Link>
+                    </>
+                  ) : n.post_id ? (
+                    <>
+                      {/* Username */}
+                      <Link
+                        to={`/profile/${n.sender_username}`}
+                        className="username-link"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleClick(n);
+                        }}
+                      >
+                        {n.sender_username}
+                      </Link>{" "}
+
+                      {/* Post-related */}
                       <Link
                         to={`/blog/${n.post_id}`}
                         className="notification-link"
                         onClick={() => handleClick(n)}
                       >
-
                         <span className="notification-text">
-
                           {getNotificationIcon(n.notification_type)}
 
                           {n.notification_type === "like" && " liked your post"}
                           {n.notification_type === "comment" && " commented on your post"}
                           {n.notification_type === "reply" && " replied to your comment"}
                           {n.notification_type === "mention" && " mentioned you in a post"}
-
                         </span>
-
                       </Link>
-
                     </>
                   ) : (
-                    <span>{n.message}</span>
+                    <span className="notification-text">
+                      {getNotificationIcon(n.notification_type)}
+                      {n.message}
+                    </span>
                   )}
 
                   <span className="timestamp">

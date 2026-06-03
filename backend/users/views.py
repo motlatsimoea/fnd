@@ -2,26 +2,23 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.conf import settings
-from django.http import HttpResponseRedirect
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.utils import timezone
-from datetime import timedelta
 from django.core.mail import send_mail
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Profile, CustomUser
+from .models import Profile, CustomUser, OTP
 from .serializers import ProfileSerializer, UserSerializer, MyTokenObtainPairSerializer
-from .utils import generate_user_token, send_activation_email
-from django.urls import reverse
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from users.services.otp_service import send_otp
 
 User = get_user_model()
 
@@ -183,73 +180,117 @@ class ResetPasswordConfirmView(APIView):
 
     
 class RegisterView(APIView):
-    
     permission_classes = [AllowAny]
+
     def post(self, request):
         serializer = UserSerializer(data=request.data)
+
         if serializer.is_valid():
             user = serializer.save()
             user.is_active = False
             user.save()
 
-            token = generate_user_token(user)
-            activation_url = request.build_absolute_uri(
-                reverse('activate-account', args=[token])
-            )
-
-            send_activation_email(user, activation_url)
+            try:
+                channel = send_otp(user)
+            except Exception as e:
+                user.delete()
+                return Response(
+                    {"detail": str(e)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
             return Response(
-                {'message': 'User registered. Check your email to activate the account.'},
-                status=status.HTTP_201_CREATED
+                {
+                    "message": f"OTP sent via {channel}. Please verify your account.",
+                    "user_id": user.id,
+                },
+                status=status.HTTP_201_CREATED,
             )
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
  
     
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def check_email_exists(request):
+def check_user_exists(request):
     email = request.data.get('email')
-    if not email:
-        return Response({'detail': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
-    exists = User.objects.filter(email=email).exists()
-    return Response({'exists': exists}, status=status.HTTP_200_OK)
+    phone = request.data.get('phone_number')
+
+    if email:
+        exists = CustomUser.objects.filter(email=email).exists()
+        return Response({'exists': exists})
+
+    if phone:
+        exists = CustomUser.objects.filter(phone_number=phone).exists()
+        return Response({'exists': exists})
+
+    return Response(
+        {'detail': 'Email or phone number required'},
+        status=400
+    )
 
 
-
-class ActivateAccountView(APIView):
+class VerifyOTPView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, token):
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        code = request.data.get("code")
+
+        if not user_id or not code:
+            return Response(
+                {"error": "user_id and code are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
-            access_token = AccessToken(token)
-            user_id = access_token.get('user_id')
+            otp = OTP.objects.filter(
+                user_id=user_id,
+                code=code,
+                is_used=False
+            ).latest("created_at")
 
-            if not user_id:
-                return Response({'error': 'Invalid token structure.'}, status=status.HTTP_400_BAD_REQUEST)
+            if otp.is_expired():
+                return Response({"error": "OTP expired"}, status=400)
 
-            user = CustomUser.objects.get(id=user_id)
-            if not user.is_active:
-                user.is_active = True
-                user.save()
-                # Redirect to frontend login page
-                return HttpResponseRedirect(redirect_to='http://localhost:3000/login')
-            return HttpResponseRedirect(redirect_to='http://localhost:3000/login?already_active=true')
+            # Mark OTP as used
+            otp.is_used = True
+            otp.save()
 
-        except TokenError:
-            return HttpResponseRedirect(redirect_to='http://localhost:3000/login?error=token_invalid')
-        except CustomUser.DoesNotExist:
-            return HttpResponseRedirect(redirect_to='http://localhost:3000/login?error=user_not_found')
+            user = otp.user
+            user.is_active = True
+
+            if user.phone_number:
+                user.is_phone_verified = True
+            if user.email:
+                user.is_email_verified = True
+
+            user.save()
+
+            return Response(
+                {"message": "Account verified successfully"},
+                status=status.HTTP_200_OK
+            )
+
+        except OTP.DoesNotExist:
+            return Response({"error": "Invalid OTP"}, status=400)
         
-        
+
 
 class DeactivateAccountView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        user = request.user
         password = request.data.get("password")
+        user = request.user
+        
+        print("REQUEST DATA:", request.data)
+        print("PASSWORD RECEIVED:", password)
+        print("USER:", user)
+        print("HAS USABLE PASSWORD:", user.has_usable_password())
+        print("PASSWORD CHECK:", user.check_password(password))
+        
 
         if not password or not user.check_password(password):
             return Response(

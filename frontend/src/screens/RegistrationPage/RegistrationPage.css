@@ -1,146 +1,164 @@
-/* --- Base Layout --- */
+/* ===== Page Layout ===== */
 .registration-page {
-  max-width: 500px;
-  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #e8f5e9, #f1f8f4);
   padding: 20px;
+}
+
+/* ===== Card Container ===== */
+.registration-card {
+  width: 100%;
+  max-width: 500px;
+  background: #ffffff;
+  padding: 30px 25px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== Header ===== */
+.registration-card h1 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: #2e7d32;
   text-align: center;
-  font-family: Arial, sans-serif;
 }
 
-/* --- Header --- */
-.registration-page h1 {
-  font-size: 2rem;
-  margin-bottom: 25px;
-  color: #2e7d32; /* same green tone used across your site */
-}
-
-/* --- Form Layout --- */
+/* ===== Form ===== */
 .registration-form {
   display: flex;
   flex-direction: column;
-  gap: 12px; /* cleaner spacing between inputs */
+  gap: 14px;
 }
 
-/* --- Labels (now bold) --- */
+/* ===== Labels ===== */
 .registration-form label {
-  margin-top: 10px;
-  text-align: left;
-  font-weight: bold;           /* ✅ Make labels bold */
+  font-weight: 600;
   color: #333;
-}
-
-/* --- Inputs --- */
-.registration-form input {
-  padding: 10px;
-  margin-top: 5px;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  outline: none;
-  transition: border-color 0.3s ease;
-}
-
-.registration-form input:focus {
-  border-color: #2e7d32;       /* ✅ green highlight */
-  box-shadow: 0 0 5px rgba(46, 125, 50, 0.4);
-}
-
-/* --- Farming Sectors --- */
-.farming-sectors {
-  margin-top: 20px;
   text-align: left;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr); /* still 2 columns */
-  gap: 8px 20px;              /* ✅ improved spacing: 8px row, 20px col */
-  background-color: #f9f9f9;
-  padding: 10px 15px;
+}
+
+/* ===== Inputs ===== */
+.registration-form input,
+.registration-form select {
+  padding: 11px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.registration-form input:focus,
+.registration-form select:focus {
+  border-color: #2e7d32;
+  box-shadow: 0 0 6px rgba(46, 125, 50, 0.3);
+  outline: none;
+}
+
+/* ===== Contact Toggle Buttons ===== */
+.contact-toggle {
+  display: flex;
+  gap: 10px;
+}
+
+.contact-toggle button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background: #e0e0e0;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.contact-toggle button.active {
+  background: #2e7d32;
+  color: white;
+}
+
+/* ===== Phone Input Fix ===== */
+.react-tel-input .form-control {
+  width: 100% !important;
+  height: 44px !important;
+  border-radius: 6px !important;
+}
+
+/* ===== Farming Sectors ===== */
+.farming-sectors {
+  margin-top: 15px;
+  background: #f9f9f9;
+  padding: 15px;
   border-radius: 8px;
   border: 1px solid #ddd;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
 }
 
 .farming-sectors legend {
-  font-size: 1.1rem;
+  grid-column: 1 / -1;
   font-weight: bold;
-  margin-bottom: 10px;
-  grid-column: span 2;
   color: #2e7d32;
+  margin-bottom: 8px;
 }
 
 .farming-sectors label {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-weight: 500;
-  color: #444;
-}
-
-/* --- Password Strength --- */
-.strength {
+  gap: 6px;
   font-size: 0.9rem;
-  margin-top: 3px;
-  text-align: left;
-  font-weight: bold;         /* ✅ make bold */
 }
 
-.strength.weak {
-  color: red;
-}
-.strength.moderate {
-  color: orange;
-}
-.strength.strong {
-  color: green;
+/* ===== Password Strength ===== */
+.strength {
+  font-size: 0.85rem;
+  font-weight: bold;
 }
 
-/* --- Register Button --- */
+.strength.weak { color: red; }
+.strength.moderate { color: orange; }
+.strength.strong { color: green; }
+
+/* ===== Button ===== */
 .registration-form button {
-  margin-top: 25px;          /* ✅ space between last input and button */
+  margin-top: 20px;
   padding: 12px;
-  background-color: #2e7d32; /* ✅ same green used globally */
+  background: #2e7d32;
   color: white;
-  font-size: 1.05rem;
   font-weight: bold;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition: 0.2s;
 }
 
 .registration-form button:hover {
-  background-color: #2ecc71;
-  transform: translateY(-1px);
+  background: #43a047;
 }
 
 .registration-form button:disabled {
-  background-color: #a5d6a7;
+  background: #a5d6a7;
   cursor: not-allowed;
 }
 
-/* --- Login Link --- */
-.login-link {
-  margin-top: 20px;
+/* ===== Errors ===== */
+.error {
+  color: red;
+  font-size: 0.8rem;
+  text-align: left;
 }
 
-.login-link a {
-  color: #2e7d32;
-  font-weight: bold;
-  text-decoration: none;
-}
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  .registration-card {
+    padding: 20px 15px;
+  }
 
-.login-link a:hover {
-  text-decoration: underline;
-}
-.terms-agreement {
-  margin-top: 15px;
-  font-size: 0.9rem;
-}
-
-.terms-agreement a {
-  color: #219150;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.terms-agreement a:hover {
-  text-decoration: underline;
+  .registration-card h1 {
+    font-size: 1.5rem;
+  }
 }

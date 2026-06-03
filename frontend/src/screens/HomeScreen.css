@@ -1,0 +1,21 @@
+.feed-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 20px;
+}
+
+.feed-tabs button {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #6b7280;
+}
+
+.feed-tabs button.active {
+  color: #22c55e;
+  border-bottom: 3px solid #22c55e;
+}

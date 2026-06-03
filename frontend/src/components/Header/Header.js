@@ -83,6 +83,47 @@ const Header = () => {
     setShowNotifications(false);
   }, [location.pathname]);
 
+  useEffect(() => {
+  const handleClickOutside = (event) => {
+    // User menu
+    if (
+      userMenuRef.current &&
+      !userMenuRef.current.contains(event.target)
+    ) {
+      setShowUserMenu(false);
+    }
+
+    // Inbox
+    if (
+      inboxRef.current &&
+      !inboxRef.current.contains(event.target)
+    ) {
+      setShowInbox(false);
+    }
+
+    // Notifications
+    const notificationWrapper = document.querySelector(
+      ".notification-wrapper"
+    );
+
+    if (
+      notificationWrapper &&
+      !notificationWrapper.contains(event.target)
+    ) {
+      setShowNotifications(false);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+
+  return () => {
+    document.removeEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+  };
+}, []);
+
   return (
     <nav className="navbar">
       <Link to="/" className="nav-item">
@@ -153,7 +194,11 @@ const Header = () => {
           <div className="user-dropdown" ref={userMenuRef}>
             <button
               className="user-btn"
-              onClick={() => setShowUserMenu((p) => !p)}
+              onClick={() => {
+                setShowUserMenu((p) => !p);
+                setShowInbox(false);
+                setShowNotifications(false);
+              }}
             >
               <FaUserCircle />
             </button>

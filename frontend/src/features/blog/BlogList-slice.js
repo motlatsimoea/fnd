@@ -43,6 +43,21 @@ export const createPost = createAsyncThunk(
   }
 );
 
+// Edit Post
+export const updatePost = createAsyncThunk(
+  'blogs/updatePost',
+  async ({ postId, formData }, thunkAPI) => {
+    try {
+      const response = await axiosInstance.put(`/posts/${postId}/`, formData);
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.detail || 'Failed to update post'
+      );
+    }
+  }
+);
+
 // Delete a post
 export const deletePost = createAsyncThunk(
   'blogs/deletePost',
@@ -130,6 +145,35 @@ const blogSlice = createSlice({
         state.posts.unshift(action.payload);
       })
       .addCase(createPost.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || action.error.message;
+      })
+      // Update post
+      .addCase(updatePost.pending, (state) => {
+        state.loading = true;
+      })
+
+      .addCase(updatePost.fulfilled, (state, action) => {
+        state.loading = false;
+
+        const updatedPost = {
+          ...action.payload,
+          liked: action.payload.is_liked,
+        };
+
+        // Update single post
+        if (state.singlePost?.id === updatedPost.id) {
+          state.singlePost = updatedPost;
+        }
+
+        // Update in feed
+        const index = state.posts.findIndex(p => p.id === updatedPost.id);
+        if (index !== -1) {
+          state.posts[index] = updatedPost;
+        }
+      })
+
+      .addCase(updatePost.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || action.error.message;
       })

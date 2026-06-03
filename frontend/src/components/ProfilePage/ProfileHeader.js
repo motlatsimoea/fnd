@@ -2,14 +2,23 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProfileEditModal from "./ProfileEditModal";
 import ImageModal from "../ImageModal";
+import FollowersModal from "./FollowersModal";
 import "./ProfilePage_css/ProfileHeader.css";
 import axiosInstance from "../../utils/axiosInstance";
 
-
 const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
+
   const navigate = useNavigate();
+
   const [isEditing, setIsEditing] = useState(false);
   const [zoomedImage, setZoomedImage] = useState(null);
+
+  const [showFollowers, setShowFollowers] = useState(false);
+  const [showFollowing, setShowFollowing] = useState(false);
+
+  const [isFollowing, setIsFollowing] = useState(user?.is_following);
+  const [followersCount, setFollowersCount] = useState(user?.followers_count);
+  const [followingCount] = useState(user?.following_count);
 
   if (!user || !currentUser) return null;
 
@@ -24,6 +33,9 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
     profile_picture,
     background_picture,
     sectors,
+    followers,
+    following,
+    posts
   } = user;
 
   const displayName =
@@ -32,24 +44,42 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
       : username;
 
   const isOwnProfile = currentUser.username === username;
-  console.log("Profile user object:", user);
-  console.log("Profile user id:", user_id);
+
+  const handleFollowToggle = async () => {
+    try {
+
+      const res = await axiosInstance.post(`/follow/${username}/`);
+
+      if (res.data.status === "followed") {
+        setIsFollowing(true);
+        setFollowersCount(prev => prev + 1);
+      } else if (res.data.status === "unfollowed") {
+        setIsFollowing(false);
+        setFollowersCount(prev => prev - 1);
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleMessageClick = async () => {
-  try {
-    const res = await axiosInstance.post("/inbox/get-or-create/", {
-      user2: user_id,   // the user being messaged
-    });
-   
+    try {
 
-    navigate(`/chat/${res.data.unique_key}`);
-  } catch (err) {
-    console.error(err);
-  }
-};
+      const res = await axiosInstance.post("/inbox/get-or-create/", {
+        user2: user_id
+      });
+
+      navigate(`/chat/${res.data.unique_key}`);
+
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleEditClick = () => setIsEditing(true);
   const handleCloseModal = () => setIsEditing(false);
+
   const handleSaveModal = (formData) => {
     onSaveProfile(formData);
     setIsEditing(false);
@@ -57,40 +87,39 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
 
   return (
     <div className="profile-header">
-      {/* Background banner */}
+
+      {/* Banner */}
       <div
         className="background-image"
         style={{
           backgroundImage: `url(${background_picture || "/default_background.jpeg"})`,
-          cursor: "pointer",
+          cursor: "pointer"
         }}
         onClick={() =>
           setZoomedImage(background_picture || "/default_background.jpeg")
         }
-        title="Click to zoom"
       />
 
-      {/* Profile content */}
       <div className="profile-section">
-        {/* Top-right edit button */}
+
         {isOwnProfile && (
           <button className="edit-button" onClick={handleEditClick}>
             Edit Profile
           </button>
         )}
 
-        {/* Left side: profile picture, name, message button */}
+        {/* LEFT SIDE */}
+
         <div className="profile-left">
+
           <div
             className="profile-picture"
             style={{
-              backgroundImage: `url(${profile_picture || "/default_profile.png"})`,
-              cursor: "pointer",
+              backgroundImage: `url(${profile_picture || "/default_profile.png"})`
             }}
             onClick={() =>
               setZoomedImage(profile_picture || "/default_profile.png")
             }
-            title="Click to zoom"
           />
 
           <div className="name-block">
@@ -98,13 +127,60 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
             <p className="username-tag">@{username}</p>
           </div>
 
-          <button className="message-button" onClick={handleMessageClick}>
-            Message
-          </button>
+          {/* FOLLOW / MESSAGE BUTTONS */}
+
+          {!isOwnProfile && (
+
+            <div className="profile-buttons">
+
+              <button
+                  className={`follow-btn ${isFollowing ? "following" : ""}`}
+                  onClick={handleFollowToggle}
+                >
+                  {isFollowing ? "Following" : "Follow"}
+              </button>
+
+              <button className="message-button" onClick={handleMessageClick}>
+                Message
+              </button>
+
+            </div>
+
+          )}
+
+          {/* SOCIAL COUNTS */}
+
+          <div className="profile-stats">
+
+            <div className="stat">
+              <strong>{posts?.length || 0}</strong>
+              <span>Posts</span>
+            </div>
+
+            <div
+              className="stat clickable"
+              onClick={() => setShowFollowers(true)}
+            >
+              <strong>{followersCount}</strong>
+              <span>Followers</span>
+            </div>
+
+            <div
+              className="stat clickable"
+              onClick={() => setShowFollowing(true)}
+            >
+              <strong>{followingCount}</strong>
+              <span>Following</span>
+            </div>
+
+          </div>
+
         </div>
 
-        {/* Right side info */}
+        {/* RIGHT SIDE */}
+
         <div className="profile-right">
+
           {bio && <p className="bio">{bio}</p>}
 
           {sectors && sectors.length > 0 && (
@@ -117,10 +193,11 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
 
           {phone_number && <p>📞 {phone_number}</p>}
           {location && <p>📍 {location}</p>}
+
         </div>
+
       </div>
 
-      {/* Edit Profile Modal */}
       {isEditing && (
         <ProfileEditModal
           user={user}
@@ -129,10 +206,32 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
         />
       )}
 
-      {/* Image Zoom Modal */}
       {zoomedImage && (
-        <ImageModal imageUrl={zoomedImage} onClose={() => setZoomedImage(null)} />
+        <ImageModal
+          imageUrl={zoomedImage}
+          onClose={() => setZoomedImage(null)}
+        />
       )}
+
+      {/* FOLLOWERS MODAL */}
+
+      {showFollowers && (
+        <FollowersModal
+          users={followers}
+          title="Followers"
+          currentUser={currentUser} 
+          onClose={() => setShowFollowers(false)}
+        />
+      )}
+
+      {showFollowing && (
+        <FollowersModal
+          users={following}
+          title="Following"
+          onClose={() => setShowFollowing(false)}
+        />
+      )}
+
     </div>
   );
 };

@@ -20,7 +20,7 @@ class ProfileInline(admin.StackedInline):
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
     inlines = [ProfileInline]  # Add Profile inline
-    list_display = ('username', 'email', 'is_staff', 'is_active', 'get_sectors')
+    list_display = ('username', 'email', 'phone_number', 'is_staff', 'is_active', 'get_sectors')
     list_filter = ('is_staff', 'is_active')
     fieldsets = (
         (None, {'fields': ('username', 'email', 'password', 'sectors')}),

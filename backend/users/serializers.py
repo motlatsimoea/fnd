@@ -5,27 +5,66 @@ from blog.serializers import PostSerializer
 from market.serializers import ProductSerializer
 from blog.serializers import Post
 from django.utils import timezone
+from follows.models import Follow
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
+
+class FollowUserSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.ImageField(source="profile.profile_picture")
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "profile_picture"
+        ]
 
 class ProfileSerializer(serializers.ModelSerializer):
-    user_id = serializers.IntegerField(source="user.id", read_only=True)
-    username = serializers.CharField(source="user.username", required=False)
-    email = serializers.EmailField(source="user.email", required=False)
-    sectors = serializers.SerializerMethodField()
-    posts = PostSerializer(many=True, read_only=True, source="user.posts")
-    products = ProductSerializer(many=True, read_only=True, source="user.products")
-    liked_posts = serializers.SerializerMethodField()  # <-- new field
+
+    user_id         = serializers.IntegerField(source="user.id", read_only=True)
+    username        = serializers.CharField(source="user.username", required=False)
+    email           = serializers.EmailField(source="user.email", required=False)
+
+    sectors         = serializers.SerializerMethodField()
+
+    posts           = PostSerializer(many=True, read_only=True, source="user.posts")
+    products        = ProductSerializer(many=True, read_only=True, source="user.products")
+
+    liked_posts     = serializers.SerializerMethodField()
+
+    followers       = serializers.SerializerMethodField()
+    following       = serializers.SerializerMethodField()
+
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+
+    is_following    = serializers.SerializerMethodField()
 
     class Meta:
         model = Profile
         fields = [
-            'user_id', 'username', 'email',
-            'first_name', 'last_name', 'location',
-            'phone_number', 'bio', 'profile_picture', 'background_picture',
-            'sectors',
-            'posts', 'products', 'liked_posts'  # include it here
-        ]
+            "user_id", "username", "email",
+            "first_name", "last_name", "location",
+            "phone_number", "bio",
+            "profile_picture", "background_picture",
+            "sectors",
 
+            "posts",
+            "products",
+            "liked_posts",
+
+            "followers",
+            "following",
+
+            "followers_count",
+            "following_count",
+
+            "is_following",
+        ]
+        
+        
     def get_sectors(self, obj):
         """Return user's sector names"""
         return [sector.name for sector in obj.user.sectors.all()]
@@ -34,6 +73,33 @@ class ProfileSerializer(serializers.ModelSerializer):
         """Return posts this user has liked"""
         liked_qs = Post.objects.filter(likes__user=obj.user).distinct()
         return PostSerializer(liked_qs, many=True, context=self.context).data
+    
+    
+    def get_followers(self, obj):
+        followers = User.objects.filter(following__following=obj.user)
+        return FollowUserSerializer(followers, many=True, context=self.context).data
+    
+    def get_following(self, obj):
+        following = User.objects.filter(followers__follower=obj.user)
+        return FollowUserSerializer(following, many=True, context=self.context).data
+    
+    
+    def get_followers_count(self, obj):
+        return obj.user.followers.count()
+
+    def get_following_count(self, obj):
+        return obj.user.following.count()
+    
+    def get_is_following(self, obj):
+        request = self.context.get("request")
+
+        if request and request.user.is_authenticated:
+            return Follow.objects.filter(
+                follower=request.user,
+                following=obj.user
+            ).exists()
+
+        return False
 
     def update(self, instance, validated_data):
         # Handle nested user fields (username, email)
@@ -56,55 +122,71 @@ class SectorSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    #profile = ProfileSerializer(read_only=True)
+    
+    email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
+    phone_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    
     agreed_to_terms = serializers.BooleanField(write_only=True)
+
     sectors = serializers.ListField(
         child=serializers.CharField(max_length=100),
-        write_only=True  
+        write_only=True
     )
+
     sectors_display = serializers.SerializerMethodField()
 
     class Meta:
         model = CustomUser
-        fields = ['id', 'username', 'email', 'password', 'sectors', 'sectors_display', 'agreed_to_terms']
+        fields = [
+            'id',
+            'username',
+            'email',
+            'phone_number',  
+            'password',
+            'sectors',
+            'sectors_display',
+            'agreed_to_terms'
+        ]
         extra_kwargs = {
             'password': {'write_only': True},
         }
-        
+
     def validate(self, data):
         if not data.get('agreed_to_terms'):
+            raise serializers.ValidationError({
+                "agreed_to_terms": "You must agree to the Terms and Privacy Policy."
+            })
+
+        # ✅ Require email OR phone
+        if not data.get('email') and not data.get('phone_number'):
             raise serializers.ValidationError(
-                {"agreed_to_terms": "You must agree to the Terms and Privacy Policy."}
+                "Provide either email or phone number."
             )
+
         return data
-    
-    
+
     def validate_email(self, value):
-        if CustomUser.objects.filter(email=value).exists():
+        if value and CustomUser.objects.filter(email=value).exists():
             raise serializers.ValidationError("Email already exists.")
         return value
-    
-    
-    from django.utils import timezone
+
+    def validate_phone_number(self, value):
+        if value and CustomUser.objects.filter(phone_number=value).exists():
+            raise serializers.ValidationError("Phone number already exists.")
+        return value
 
     def create(self, validated_data):
-        sectors_data    = validated_data.pop('sectors', [])
-        password        = validated_data.pop('password')
-        agreed          = validated_data.pop('agreed_to_terms', False)
+        sectors_data = validated_data.pop('sectors', [])
+        password = validated_data.pop('password')
+        validated_data.pop('agreed_to_terms')
 
-        if not agreed:
-            raise serializers.ValidationError(
-                {"agreed_to_terms": "You must agree to the Terms and Privacy Policy."}
-            )
-
-        user            = CustomUser.objects.create(**validated_data)
+        user = CustomUser.objects.create(**validated_data)
         user.set_password(password)
 
-        # ✅ Store timestamp of agreement
         user.terms_accepted_at = timezone.now()
+        user.is_active = False
         user.save()
 
-        # Associate sectors with the user
         sectors = Sector.objects.filter(name__in=sectors_data)
         user.sectors.set(sectors)
 
@@ -139,34 +221,87 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     default_error_messages = {
         "no_active_account": "Invalid username or password"
     }
-    
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
 
-        # Add custom claims
-        token['username'] = user.username
-        token['email'] = user.email 
-        token['is_staff'] = user.is_staff  
+        token["username"] = user.username
+        token["email"] = user.email
+        token["is_staff"] = user.is_staff
+
         return token
 
     def validate(self, attrs):
-        data = super().validate(attrs)
-        
-        # 🔥 Reactivate if within 30 days
-        if not self.user.is_active and self.user.deactivated_at:
-            if not self.user.is_deactivation_expired():
-                self.user.is_active = True
-                self.user.deactivated_at = None
-                self.user.save()
+        print("=== LOGIN ATTEMPT ===")
+
+        username = attrs.get("username")
+        password = attrs.get("password")
+
+        print("USERNAME:", username)
+        print("PASSWORD PROVIDED:", bool(password))
+
+        try:
+            user = User.objects.get(username=username)
+
+            print("USER FOUND:", user.username)
+            print("ACTIVE:", user.is_active)
+            print("DEACTIVATED_AT:", user.deactivated_at)
+
+        except User.DoesNotExist:
+            print("USER NOT FOUND")
+            raise serializers.ValidationError("Invalid username or password")
+
+        password_ok = user.check_password(password)
+
+        print("PASSWORD CHECK:", password_ok)
+
+        if not password_ok:
+            raise serializers.ValidationError("Invalid username or password")
+
+        print("PASSED PASSWORD CHECK")
+
+        if user.deactivated_at:
+            print("ACCOUNT IS DEACTIVATED")
+
+            expired = user.is_deactivation_expired()
+
+            print("DEACTIVATION EXPIRED:", expired)
+
+            if not expired:
+                print("REACTIVATING ACCOUNT")
+
+                user.is_active = True
+                user.deactivated_at = None
+                user.save(update_fields=["is_active", "deactivated_at"])
+
+                print("ACCOUNT REACTIVATED")
             else:
-                raise serializers.ValidationError("Account has been permanently deleted.")
+                print("ACCOUNT EXPIRED")
+                raise serializers.ValidationError(
+                    "Account has been permanently deleted."
+                )
 
-        refresh = self.get_token(self.user)
-        data['refresh'] = str(refresh)                
-        data['access'] = str(refresh.access_token)
+        print("ACTIVE STATUS AFTER CHECK:", user.is_active)
 
-        data['user'] = UserSerializerWithToken(self.user).data 
+        if not user.is_active:
+            print("ACCOUNT STILL INACTIVE")
+            raise serializers.ValidationError("Account is not active.")
+
+        print("CREATING TOKENS")
+
+        refresh = self.get_token(user)
+
+        print("TOKENS CREATED")
+
+        data = {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+            "user": UserSerializerWithToken(user).data,
+        }
+
+        print("LOGIN SUCCESS")
+
         return data
 
 

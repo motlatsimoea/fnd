@@ -220,3 +220,6 @@
 .notification-body {
   flex: 1;
 }
+.notification-icon.follow {
+  color: #219150;
+}

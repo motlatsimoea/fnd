@@ -60,7 +60,7 @@ class NotificationBaseView(APIView):
         return paginated_response
 
 class NotificationListView(NotificationBaseView):
-    notification_types = ["like", "comment", "reply", "review", "mention"]
+    notification_types = ["like", "comment", "reply", "review", "review_reply", "mention", "follow"]
 
 
 

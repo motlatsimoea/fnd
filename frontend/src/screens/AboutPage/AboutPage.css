@@ -1,0 +1,166 @@
+/* ==========================
+   About Page
+========================== */
+
+.about-container {
+  min-height: calc(100vh - 70px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 20px;
+  background: linear-gradient(
+    135deg,
+    #eefbf2 0%,
+    #f8fffa 50%,
+    #eefbf2 100%
+  );
+}
+
+.about-card {
+  max-width: 900px;
+  width: 100%;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 50px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+/* ==========================
+   Hero Section
+========================== */
+
+.about-card h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #2d7d46;
+  margin-bottom: 20px;
+  letter-spacing: -1px;
+}
+
+.about-card h1::after {
+  content: "";
+  display: block;
+  width: 80px;
+  height: 4px;
+  background: #2ecc71;
+  margin: 16px auto 0;
+  border-radius: 999px;
+}
+
+/* ==========================
+   Paragraphs
+========================== */
+
+.about-card p {
+  font-size: 1.05rem;
+  line-height: 1.9;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+/* ==========================
+   Features Section
+========================== */
+
+.about-features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin: 40px 0;
+}
+
+.feature-card {
+  background: #f8faf9;
+  border: 1px solid #edf2ee;
+  border-radius: 16px;
+  padding: 25px;
+  transition: all 0.25s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(46, 204, 113, 0.12);
+}
+
+.feature-icon {
+  font-size: 2rem;
+  margin-bottom: 12px;
+}
+
+.feature-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d7d46;
+  margin-bottom: 8px;
+}
+
+.feature-text {
+  font-size: 0.92rem;
+  color: #666;
+  line-height: 1.6;
+}
+
+/* ==========================
+   CTA Section
+========================== */
+
+.about-cta {
+  margin-top: 40px;
+  padding: 30px;
+  border-radius: 18px;
+  background: linear-gradient(
+    135deg,
+    #2ecc71,
+    #27ae60
+  );
+  color: white;
+}
+
+.about-cta h3 {
+  margin: 0 0 15px;
+  font-size: 1.4rem;
+}
+
+.about-cta p {
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 20px;
+}
+
+.register-link {
+  display: inline-block;
+  padding: 12px 28px;
+  background: white;
+  color: #27ae60;
+  text-decoration: none;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.register-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.3);
+}
+
+/* ==========================
+   Responsive
+========================== */
+
+@media (max-width: 768px) {
+  .about-card {
+    padding: 30px;
+  }
+
+  .about-card h1 {
+    font-size: 2.2rem;
+  }
+
+  .about-features {
+    grid-template-columns: 1fr;
+  }
+
+  .about-card p {
+    font-size: 1rem;
+  }
+}

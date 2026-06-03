@@ -178,3 +178,85 @@ textarea {
   color: #e74c3c;
   margin-top: 8px;
 }
+
+/* ---------- Review Delete Modal ---------- */
+.review-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.review-modal-card {
+  background: white;
+  width: 90%;
+  max-width: 420px;
+  padding: 22px;
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: reviewModalPop 0.2s ease;
+}
+
+.review-modal-card h3 {
+  margin-top: 0;
+}
+
+.review-modal-card p {
+  color: #666;
+  font-size: 14px;
+  margin: 10px 0 20px;
+}
+
+.review-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.review-modal-cancel,
+.review-modal-delete {
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+
+.review-modal-cancel {
+  background: #f1f3f5;
+}
+
+.review-modal-cancel:hover {
+  background: #e9ecef;
+}
+
+.review-modal-delete {
+  background: #e03131;
+  color: white;
+}
+
+.review-modal-delete:hover {
+  background: #c92a2a;
+}
+
+.review-modal-cancel:disabled,
+.review-modal-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@keyframes reviewModalPop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

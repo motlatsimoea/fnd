@@ -32,22 +32,38 @@ def _send_websocket_notification(user, payload):
 
 
 def send_notification(user, sender, notification_type, message=None, post=None, comment=None, review=None):
-    """Handles non-inbox notification creation and dispatch."""
+
     if notification_type == "like":
         message = f"{sender.username} liked your post."
+
     elif notification_type == "comment":
         message = f"{sender.username} commented on your post."
+
     elif notification_type == "reply":
         message = f"{sender.username} replied to your comment."
+
     elif notification_type == "review":
         message = f"{sender.username} left a review on your product."
+
     elif notification_type == "review_reply":
         message = f"{sender.username} replied to your review."
-    elif notification_type == "message" and not message:
-        # fallback if no message provided
-        message = f"You have a new message from {sender.username}."
+        
+
     elif notification_type == "mention":
-        message = f"{sender.username} mentioned you in a post."
+        if comment:
+            message = f"{sender.username} mentioned you in a comment."
+
+        elif post:
+            message = f"{sender.username} mentioned you in a post."
+
+        else:
+            message = f"{sender.username} mentioned you."
+
+    elif notification_type == "follow":
+        message = f"{sender.username} started following you."
+
+    elif notification_type == "message" and not message:
+        message = f"You have a new message from {sender.username}."
 
     notification = Notification.objects.create(
         user=user,

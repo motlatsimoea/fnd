@@ -3,12 +3,14 @@ import React, {
   useImperativeHandle,
   forwardRef,
 } from "react";
+
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+
 import {
   $getSelection,
   $isRangeSelection,
@@ -53,12 +55,36 @@ function EditorRefPlugin({ editorRef }) {
   return null;
 }
 
+/* ---------- FIXED: Proper Hydration ---------- */
+function InitialContentPlugin({ initialContent }) {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    if (!initialContent) return;
+
+    try {
+      const parsed =
+        typeof initialContent === "string"
+          ? JSON.parse(initialContent)
+          : initialContent;
+
+      const editorState = editor.parseEditorState(parsed);
+
+      editor.setEditorState(editorState); // ✅ correct way (NO editor.update)
+
+    } catch (err) {
+      console.error("Failed to load initial content:", err);
+    }
+  }, [initialContent, editor]);
+
+  return null;
+}
+
 /* ---------- OnChange Plugin ---------- */
 function MyOnChangePlugin({ onChange }) {
   return (
     <OnChangePlugin
       onChange={(editorState) => {
-        // 🔥 STORE FULL JSON STATE
         const json = editorState.toJSON();
         onChange(JSON.stringify(json));
       }}
@@ -87,10 +113,11 @@ const editorConfig = {
 };
 
 /* ---------- Main Component ---------- */
-const PostEditor = forwardRef(({ onChange }, ref) => {
+const PostEditor = forwardRef(({ onChange, initialContent }, ref) => {
   return (
     <LexicalComposer initialConfig={editorConfig}>
       <div className="post-editor-container">
+
         <RichTextPlugin
           contentEditable={<ContentEditable className="post-editor-input" />}
           placeholder={
@@ -102,9 +129,13 @@ const PostEditor = forwardRef(({ onChange }, ref) => {
 
         <HistoryPlugin />
         <HashtagPluginWrapper />
-        <MentionPlugin /> {/* 🔥 NEW */}
+        <MentionPlugin />
         <MyOnChangePlugin onChange={onChange} />
         <EditorRefPlugin editorRef={ref} />
+
+        {/* ✅ FIXED HYDRATION */}
+        <InitialContentPlugin initialContent={initialContent} />
+
       </div>
     </LexicalComposer>
   );

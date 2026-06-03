@@ -1,31 +1,86 @@
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import BlogPost from '../components/BlogPost/BlogPost';
-import Loader from '../components/Loader';
-import Message from '../components/Message';
-import { fetchBlogPosts } from '../features/blog/BlogList-slice';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+import BlogPost from "../components/BlogPost/BlogPost";
+import Loader from "../components/Loader";
+import Message from "../components/Message";
+
+import { fetchBlogPosts } from "../features/blog/BlogList-slice";
+import { fetchFollowingFeed } from "../features/feed/FollowingFeedSlice";
+import './HomeScreen.css'
 
 const HomeScreen = () => {
+
   const dispatch = useDispatch();
 
-  const blogList = useSelector((state) => state.BlogList);
-  const { loading, error, posts } = blogList;
+  const [activeTab, setActiveTab] = useState("all");
+
+  const { loading, error, posts } = useSelector((state) => state.BlogList);
+
+  const followingFeed = useSelector((state) => state.followingFeed);
+
+  const { loading: followingLoading, posts: followingPosts } = followingFeed;
+
+  const auth = useSelector((state) => state.auth);
+  const isLoggedIn = !!auth.userInfo;
+
 
   useEffect(() => {
     dispatch(fetchBlogPosts());
   }, [dispatch]);
 
+  useEffect(() => {
+    if (activeTab === "following" && isLoggedIn) {
+      dispatch(fetchFollowingFeed());
+    }
+  }, [activeTab, dispatch, isLoggedIn]);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      dispatch(fetchFollowingFeed());
+    }
+  }, [dispatch, isLoggedIn]);
+
+  const displayPosts =
+    activeTab === "following" ? followingPosts : posts;
+
+  const displayLoading =
+    activeTab === "following" ? followingLoading : loading;
+
   return (
     <div>
-      <main style={{ padding: '20px' }}>
-        {loading ? (
+
+      {/* Feed Tabs */}
+      <div className="feed-tabs">
+
+        <button
+          className={activeTab === "all" ? "active" : ""}
+          onClick={() => setActiveTab("all")}
+        >
+          All Posts
+        </button>
+
+        {isLoggedIn && (
+          <button
+            className={activeTab === "following" ? "active" : ""}
+            onClick={() => setActiveTab("following")}
+          >
+            Following
+          </button>
+        )}
+
+      </div>
+
+      <main style={{ padding: "20px" }}>
+
+        {displayLoading ? (
           <Loader />
         ) : error ? (
           <Message variant="danger">{error}</Message>
-        ) : posts.length === 0 ? (
-          <Message variant="info">No blog posts available...</Message>
+        ) : displayPosts.length === 0 ? (
+          <Message variant="info">No posts available...</Message>
         ) : (
-          posts.map((post) => (
+          displayPosts.map((post) => (
             <BlogPost
               key={post.id}
               id={`${post.id}`}
@@ -40,6 +95,7 @@ const HomeScreen = () => {
             />
           ))
         )}
+
       </main>
     </div>
   );

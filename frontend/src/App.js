@@ -19,12 +19,14 @@ import ProductPage from './screens/ProductPage/ProductPage';
 import InfoPage from './screens/InfoPage/InfoPage';
 import ArticlePage from './screens/InfoPage/ArticlePage';
 import RegistrationPage from './screens/RegistrationPage/RegistrationPage';
+import VerifyOtpPage from './screens/RegistrationPage/VerifyOtpPage';
 import LoginPage from './screens/LoginPage/LoginPage';
 import ForgotPasswordPage from './screens/PassowordReset/ForgotPasswordPage';
 import ResetPasswordPage from './screens/PassowordReset/ResetPasswordPage';
 
 // Protected screens
 import CreatePost from './screens/CreatePost/CreatePost';
+import EditPost from './screens/CreatePost/EditPost';
 import EditProduct from './screens/ProductPage/EditProduct';
 import AddProductForm from './screens/ProductForm/ProductForm';
 import HashtagPage from './components/Hashtag/HashtagPage';
@@ -85,6 +87,7 @@ const App = () => {
         <Route path="/" element={<HomeScreen />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="/register" element={<RegistrationPage />} />
+        <Route path="/verify-otp" element={<VerifyOtpPage />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/login" element={<LoginPage />} />
@@ -101,6 +104,7 @@ const App = () => {
           <Route path="/create-post" element={<CreatePost />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/blog/:id" element={<BlogPostPage />} />
+          <Route path="/edit-post/:id" element={<EditPost />} />
           <Route path="/hashtag/:name" element={<HashtagPage />} />
           <Route path="/profile/:username" element={<ProfilePage />} />
           <Route path="/edit-product/:id" element={<EditProduct />} />

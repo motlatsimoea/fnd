@@ -10,6 +10,7 @@ const initialState = {
   loading: false,
   error: null,
   resetStatus: null,
+  otpVerified: false,
 };
 
 /* =====================================================
@@ -77,16 +78,25 @@ export const resetPasswordConfirm = createAsyncThunk(
 /* =====================================================
    ACCOUNT DEACTIVATION AND DELETION
 ===================================================== */
+
 export const deactivateAccount = createAsyncThunk(
   'auth/deactivateAccount',
   async (password, { rejectWithValue }) => {
     try {
-      await axiosInstance.delete('/deactivate-account/', {
-        data: { password },
-      });
-      return;
+      const { data } = await axiosInstance.post(
+        '/deactivate-account/',
+        {
+          password,
+        }
+      );
+
+      return data;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.detail);
+      return rejectWithValue(
+        error.response?.data?.detail ||
+        error.response?.data?.error ||
+        'Account deactivation failed'
+      );
     }
   }
 );
@@ -106,6 +116,27 @@ export const deleteAccount = createAsyncThunk(
   }
 );
 
+/* =====================================================
+   OTP VERIFICATION
+===================================================== */
+
+export const verifyOTP = createAsyncThunk(
+  'auth/verifyOTP',
+  async ({ user_id, code }, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.post('/api/users/verify-otp/', {
+        user_id,
+        code,
+      });
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.error || 'OTP verification failed'
+      );
+    }
+  }
+);
 
 /* =====================================================
    REFRESH TOKEN (SAFE VERSION)
@@ -114,8 +145,6 @@ export const deleteAccount = createAsyncThunk(
 export const refreshToken = createAsyncThunk(
   'auth/refreshToken',
   async (_, { rejectWithValue }) => {
-
-
     try {
       const { data } = await axiosInstance.post(
         '/token/refresh/',
@@ -149,14 +178,13 @@ export const refreshToken = createAsyncThunk(
 let refreshTimeout = null;
 
 export const startTokenRefreshTimer = (dispatch, accessToken) => {
-  // 🚨 Don't start timer if no session
   if (!accessToken || !sessionStorage.getItem('hasSession')) return;
 
   try {
     const { exp } = jwtDecode(accessToken);
     const expiryTime = exp * 1000;
     const now = Date.now();
-    const timeout = expiryTime - now - 30000; // refresh 30s early
+    const timeout = expiryTime - now - 30000;
 
     if (timeout <= 0) {
       dispatch(refreshToken());
@@ -200,20 +228,26 @@ const authSlice = createSlice({
       state.access = null;
       state.loading = false;
       state.error = null;
+      state.otpVerified = false;
 
-      stopTokenRefreshTimer();          // ✅ stop timer
+      stopTokenRefreshTimer();
       sessionStorage.removeItem('hasSession');
+      sessionStorage.removeItem('pending_user_id');
     },
+
     setUser: (state, action) => {
       state.userInfo = action.payload;
     },
+
     clearError: (state) => {
       state.error = null;
     },
+
     clearResetStatus: (state) => {
       state.resetStatus = null;
     },
   },
+
   extraReducers: (builder) => {
     builder
 
@@ -232,8 +266,7 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
-        state.error =
-          action.payload || 'Invalid username or password';
+        state.error = action.payload || 'Invalid username or password';
       })
 
       /* PASSWORD RESET */
@@ -265,14 +298,30 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
 
-      /* DELETE AND DEACTIVATE ACCOUNT */
+      /* ACCOUNT DEACTIVATION */
       .addCase(deactivateAccount.fulfilled, (state) => {
         state.userInfo = null;
         state.access = null;
       })
+
+      /* ACCOUNT DELETION */
       .addCase(deleteAccount.fulfilled, (state) => {
         state.userInfo = null;
         state.access = null;
+      })
+
+      /* OTP VERIFY */
+      .addCase(verifyOTP.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(verifyOTP.fulfilled, (state) => {
+        state.loading = false;
+        state.otpVerified = true;
+      })
+      .addCase(verifyOTP.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       })
 
       /* REFRESH */
@@ -289,11 +338,17 @@ const authSlice = createSlice({
         state.access = null;
         state.error = action.payload;
 
-        stopTokenRefreshTimer();   // ✅ STOP timer on failure
+        stopTokenRefreshTimer();
         sessionStorage.removeItem('hasSession');
       });
   },
 });
 
-export const { logout, setUser, clearError, clearResetStatus } = authSlice.actions;
+export const {
+  logout,
+  setUser,
+  clearError,
+  clearResetStatus,
+} = authSlice.actions;
+
 export default authSlice.reducer;

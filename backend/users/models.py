@@ -3,6 +3,7 @@ from django.db import models
 import os
 from django.utils import timezone
 from datetime import timedelta
+import random
 
 def profile_picture_upload_to(instance, filename):
     """
@@ -22,18 +23,28 @@ class Sector(models.Model):
         return self.name
 
 
+
 class CustomUserManager(BaseUserManager):
     """
     Custom user manager for the CustomUser model.
     Handles user creation for normal users, staff, and superusers.
     """
-    def create_user(self, username, email, password=None, **extra_fields):
-        if not email:
-            raise ValueError("The Email field must be set")
-        email = self.normalize_email(email)
-        extra_fields.setdefault('is_active', False)
-        user = self.model(username=username, email=email, **extra_fields)
+    def create_user(self, username, password=None, email=None, phone_number=None, **extra_fields):
+        if not email and not phone_number:
+            raise ValueError("User must have either email or phone number")
+
+        if email:
+            email = self.normalize_email(email)
+
+        user = self.model(
+            username=username,
+            email=email,
+            phone_number=phone_number,
+            **extra_fields
+        )
+
         user.set_password(password)
+        user.is_active = False
         user.save(using=self._db)
         return user
 
@@ -47,7 +58,14 @@ class CustomUserManager(BaseUserManager):
         if not extra_fields.get('is_superuser'):
             raise ValueError('Superuser must have is_superuser=True.')
 
-        return self.create_user(username, email, password, **extra_fields)
+        return self.create_user(
+            username=username,
+            email=email,
+            password=password,
+            **extra_fields
+        )
+
+
 
 
 class CustomUser(AbstractUser):
@@ -55,16 +73,37 @@ class CustomUser(AbstractUser):
     Custom user model for the application.
     Adds additional fields like 'sectors' for normal users.
     """
-    email               = models.EmailField(unique=True)
+    email               = models.EmailField(unique=True, null=True, blank=True)
+    phone_number        = models.CharField(max_length=20, unique=True, null=True, blank=True)
+    
+    is_phone_verified   = models.BooleanField(default=False)
+    is_email_verified   = models.BooleanField(default=False)
+    
     sectors             = models.ManyToManyField(Sector, blank=True)
     deactivated_at      = models.DateTimeField(null=True, blank=True)
     terms_accepted_at   = models.DateTimeField(null=True, blank=True)
     # Replace the default User manager with the custom one
     objects = CustomUserManager()
+    
+    def is_deactivation_expired(self):
+        if not self.deactivated_at:
+            return False
+
+        return timezone.now() > self.deactivated_at + timedelta(days=30)
 
     def __str__(self):
         return self.username
+    
+    
 
+class OTP(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+    def is_expired(self):
+        return (timezone.now() - self.created_at).seconds > 300  # 5 mins
 
 
 

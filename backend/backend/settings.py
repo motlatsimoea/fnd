@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "chat",
     "notifications",
     "info",
+    "follows",
     
     # Third Party
     "rest_framework",
@@ -215,14 +216,22 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 
+
+TWILIO_SID = os.getenv("TWILIO_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_PHONE = os.getenv("TWILIO_PHONE")
+if not TWILIO_SID or not TWILIO_AUTH_TOKEN or not TWILIO_PHONE:
+    print("⚠️ Twilio environment variables are not fully set.")
+
 # Email configuration
-EMAIL_BACKEND = os.getenv(
-    'EMAIL_BACKEND',
-    'django.core.mail.backends.console.EmailBackend'  # fallback for development
-)
+if os.getenv("ENV") == "production":
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_USE_TLS = True
+EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False') == 'True'
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'noreply@example.com'

@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toggleLikePost } from "../../features/blog/BlogList-slice";
 import ImageCarouselModal from "../../components/ImageCarouselModal";
 import { FaHeart } from "react-icons/fa";
+import { renderLexicalContent } from "../../utils/renderLexicalContent";
 import "./BlogPost.css";
 
 const BlogPost = ({
@@ -17,8 +18,10 @@ const BlogPost = ({
   likes,
   liked = false,
 }) => {
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
   const [showGallery, setShowGallery] = useState(false);
   const [startIndex, setStartIndex] = useState(0);
 
@@ -31,72 +34,21 @@ const BlogPost = ({
     setShowGallery(true);
   };
 
-  const renderTextWithTagsAndMentions = (text) => {
-    if (!text) return null;
-
-    let plainText = text;
-
-    // Try parsing Lexical JSON
-    try {
-      const parsed = JSON.parse(text);
-
-      const extractText = (node) => {
-        if (!node) return "";
-        if (node.text !== undefined) return node.text;
-        if (node.children) {
-          return node.children.map(extractText).join("");
-        }
-        return "";
-      };
-
-      plainText = extractText(parsed.root);
-    } catch {
-      // If parsing fails, assume it's already plain text
-    }
-
-    const parts = plainText.split(/(#\w+|@\w+)/g);
-
-    return parts.map((part, idx) => {
-      // Hashtag
-      if (part.startsWith("#")) {
-        const tag = part.slice(1);
-        return (
-          <Link
-            key={idx}
-            to={`/hashtag/${tag}`}
-            className="clickable-hashtag"
-          >
-            {part}
-          </Link>
-        );
-      }
-
-      // Mention
-      if (part.startsWith("@")) {
-        const username = part.slice(1);
-        return (
-          <Link
-            key={idx}
-            to={`/profile/${username}`}
-            className="clickable-mention"
-          >
-            {part}
-          </Link>
-        );
-      }
-
-      return part;
-    });
-  };
   return (
     <div className="blog-post-card">
+
       <div onClick={handleTitleClick} className="blog-title-link">
         <h2 className="blog-title">{title}</h2>
       </div>
 
       <div className="blog-author">
+
         <div onClick={handleUserClick} className="author-link">
-          <img src={authorImage} alt="Author avatar" className="author-img" />
+          <img
+            src={authorImage}
+            alt="Author avatar"
+            className="author-img"
+          />
         </div>
 
         <div className="author-info">
@@ -105,14 +57,19 @@ const BlogPost = ({
           </span>
           <span className="blog-date">{date}</span>
         </div>
+
       </div>
 
-      <p className="blog-text">{renderTextWithTagsAndMentions(text)}</p>
+      <div className="blog-text">
+        {renderLexicalContent(text)}
+      </div>
 
       {images?.length > 0 && (
         <div className="blog-images">
           {images.map((img, idx) => {
+
             const src = img?.file || img;
+
             return (
               <img
                 key={idx}
@@ -125,7 +82,6 @@ const BlogPost = ({
         </div>
       )}
 
-      {/* --- Modern Like Button --- */}
       <button
         className={`like-button ${liked ? "liked" : ""}`}
         onClick={handleToggleLike}
@@ -141,6 +97,7 @@ const BlogPost = ({
           onClose={() => setShowGallery(false)}
         />
       )}
+
     </div>
   );
 };

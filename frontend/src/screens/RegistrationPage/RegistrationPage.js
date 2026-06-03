@@ -1,22 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from "react-router-dom";
 import { registerUser } from '../../features/users/register-slice';
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import './RegistrationPage.css';
 
 const RegistrationPage = () => {
   const dispatch = useDispatch();
-  const { loading, error, message } = useSelector((state) => state.register);
+  const { loading, error, message, userId } = useSelector((state) => state.register);
 
   const [formData, setFormData] = useState({
     username: '',
+    contactMethod: 'email',
     email: '',
+    phone_number: '',
     password: '',
     confirmPassword: '',
     sectors: [],
-    agreedToTerms: false,   // ✅ added
+    agreedToTerms: false,
   });
 
   const [errors, setErrors] = useState({});
@@ -32,21 +37,31 @@ const RegistrationPage = () => {
   ];
 
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
+  const navigate = useNavigate();
 
-  const checkEmailExists = async () => {
-    if (!formData.email || !validateEmail(formData.email)) {
-      setErrors((prev) => ({ ...prev, email: 'Valid email is required.' }));
-      return;
-    }
+  // 🔍 UPDATED: works for email OR phone
+  const checkUserExists = async () => {
     try {
-      const response = await axios.post('/api/users/check-email/', { email: formData.email });
-      if (response.data.exists) {
-        setErrors((prev) => ({ ...prev, email: 'Email already in use.' }));
+      let payload = {};
+
+      if (formData.contactMethod === 'email') {
+        if (!formData.email || !validateEmail(formData.email)) return;
+        payload = { email: formData.email };
       } else {
-        setErrors((prev) => ({ ...prev, email: null }));
+        if (!formData.phone_number) return;
+        payload = { phone_number: `+${formData.phone_number}` };
       }
-    } catch (error) {
-      console.error('Error checking email:', error);
+
+      const response = await axios.post('/api/users/check-user/', payload);
+
+      if (response.data.exists) {
+        setErrors((prev) => ({
+          ...prev,
+          contactMethod: 'Already in use.'
+        }));
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -58,14 +73,22 @@ const RegistrationPage = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
     const newValue = type === "checkbox" ? checked : value;
 
-    setFormData({ ...formData, [name]: newValue });
-    setErrors((prev) => ({ ...prev, [name]: null }));
+    setFormData(prev => ({
+      ...prev,
+      [name]: newValue,
+      ...(name === "contactMethod" && {
+        email: '',
+        phone_number: ''
+      })
+    }));
 
-    if (name === 'password')
+    setErrors(prev => ({ ...prev, [name]: null }));
+
+    if (name === 'password') {
       setPasswordStrength(checkPasswordStrength(value));
+    }
   };
 
   const handleCheckboxChange = (e) => {
@@ -84,8 +107,15 @@ const RegistrationPage = () => {
     if (!formData.username)
       newErrors.username = 'Username is required.';
 
-    if (!formData.email || !validateEmail(formData.email))
-      newErrors.email = 'Valid email is required.';
+    if (formData.contactMethod === 'email') {
+      if (!formData.email || !validateEmail(formData.email))
+        newErrors.email = 'Valid email is required.';
+    }
+
+    if (formData.contactMethod === 'phone') {
+      if (!formData.phone_number)
+        newErrors.phone_number = 'Phone number is required.';
+    }
 
     if (!formData.password || formData.password.length < 6)
       newErrors.password = 'Password must be at least 6 characters.';
@@ -101,17 +131,21 @@ const RegistrationPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const clientErrors = validateForm();
 
+    const clientErrors = validateForm();
     if (Object.keys(clientErrors).length > 0) {
       setErrors(clientErrors);
       return;
     }
 
-    // Map frontend field to backend field
     const payload = {
-      ...formData,
+      username: formData.username,
+      password: formData.password,
+      sectors: formData.sectors,
       agreed_to_terms: formData.agreedToTerms,
+      ...(formData.contactMethod === 'email'
+        ? { email: formData.email }
+        : { phone_number: `+${formData.phone_number}` }),
     };
 
     dispatch(registerUser(payload));
@@ -121,7 +155,9 @@ const RegistrationPage = () => {
     if (message) {
       setFormData({
         username: '',
+        contactMethod: 'email',
         email: '',
+        phone_number: '',
         password: '',
         confirmPassword: '',
         sectors: [],
@@ -129,19 +165,23 @@ const RegistrationPage = () => {
       });
       setErrors({});
       setPasswordStrength('');
+
+      if (userId) {
+        navigate("/verify-otp");
+      }
     }
-  }, [message]);
+  }, [message, userId, navigate]);
 
   return (
     <div className="registration-page">
-      <h1>Welcome to FND. Register here...</h1>
+      <div className="registration-card">
+          <h1>Welcome to FND...</h1>
 
       {loading && <Loader />}
       {message && <Message variant="success">{message}</Message>}
       {error?.detail && <Message variant="danger">{error.detail}</Message>}
 
-      <form onSubmit={handleSubmit} className="registration-form" noValidate>
-
+      <form onSubmit={handleSubmit} className="registration-form">
         {/* Username */}
         <label>Username:</label>
         <input
@@ -152,16 +192,57 @@ const RegistrationPage = () => {
         />
         {errors.username && <p className="error">{errors.username}</p>}
 
+        {/* Contact Method */}
+        <label>Register with:</label>
+        <div className="contact-toggle">
+          <button
+            type="button"
+            className={formData.contactMethod === "email" ? "active" : ""}
+            onClick={() => setFormData({...formData, contactMethod: "email"})}
+          >
+            Email
+          </button>
+
+          <button
+            type="button"
+            className={formData.contactMethod === "phone" ? "active" : ""}
+            onClick={() => setFormData({...formData, contactMethod: "phone"})}
+          >
+            Phone
+          </button>
+        </div>
+        {errors.contactMethod && <p className="error">{errors.contactMethod}</p>}
+
         {/* Email */}
-        <label>Email:</label>
-        <input
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          onBlur={checkEmailExists}
-        />
-        {errors.email && <p className="error">{errors.email}</p>}
+        {formData.contactMethod === "email" && (
+          <>
+            <label>Email:</label>
+            <input
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              onBlur={checkUserExists}
+            />
+            {errors.email && <p className="error">{errors.email}</p>}
+          </>
+        )}
+
+        {/* Phone */}
+        {formData.contactMethod === "phone" && (
+          <>
+            <label>Phone Number:</label>
+            <PhoneInput
+              country={'ls'}
+              value={formData.phone_number}
+              onChange={(phone) =>
+                setFormData({ ...formData, phone_number: phone })
+              }
+              onBlur={checkUserExists}
+            />
+            {errors.phone_number && <p className="error">{errors.phone_number}</p>}
+          </>
+        )}
 
         {/* Sectors */}
         <fieldset className="farming-sectors">
@@ -202,7 +283,7 @@ const RegistrationPage = () => {
         />
         {errors.confirmPassword && <p className="error">{errors.confirmPassword}</p>}
 
-        {/* ✅ Terms Agreement */}
+        {/* Terms */}
         <div className="terms-agreement">
           <label>
             <input
@@ -211,24 +292,17 @@ const RegistrationPage = () => {
               checked={formData.agreedToTerms}
               onChange={handleChange}
             />
-            I agree to the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+            I agree to the Terms and Privacy Policy
           </label>
         </div>
-        {errors.agreedToTerms && (
-          <p className="error">{errors.agreedToTerms}</p>
-        )}
+        {errors.agreedToTerms && <p className="error">{errors.agreedToTerms}</p>}
 
-        <button
-          type="submit"
-          disabled={loading || !formData.agreedToTerms}
-        >
+        <button disabled={loading || !formData.agreedToTerms}>
           Register
         </button>
       </form>
-
-      <p className="login-link">
-        Already have an account? <a href="/login">Log in</a>
-      </p>
+      </div>
+      
     </div>
   );
 };

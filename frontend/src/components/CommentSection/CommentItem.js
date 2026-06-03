@@ -4,12 +4,16 @@ import { deleteComment } from "../../features/blog/Comment-slice";
 import CommentForm from "./CommentForm";
 import { FaReply, FaEdit, FaTrash } from "react-icons/fa";
 import "./CommentSection.css";
+import { renderLexicalContent } from "../../utils/renderLexicalContent";
 
 const CommentItem = ({ comment, postId, depth = 0 }) => {
   const dispatch = useDispatch();
   const [showReply, setShowReply] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const existingComment = useSelector((state) => {
     const findComment = (tree, id) => {
@@ -27,11 +31,25 @@ const CommentItem = ({ comment, postId, depth = 0 }) => {
 
   if (!existingComment) return null;
 
-  const handleDelete = async () => {
-    if (window.confirm("Delete this comment?")) {
-      await dispatch(deleteComment({ postId, commentId: comment.id }));
+  const confirmDelete = async () => {
+    try {
+      setIsDeleting(true);
+
+      await dispatch(
+        deleteComment({
+          postId,
+          commentId: comment.id,
+        })
+      ).unwrap();
+
       setShowReply(false);
       setIsEditing(false);
+      setShowDeleteModal(false);
+
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -74,7 +92,9 @@ const CommentItem = ({ comment, postId, depth = 0 }) => {
       {!collapsed && (
         <div className="comment-body">
           {!isEditing ? (
-            <p className="comment-content">{comment.content}</p>
+            <div className="comment-content">
+              {renderLexicalContent(comment.content)}
+            </div>
           ) : (
             <CommentForm
               postId={postId}
@@ -99,12 +119,14 @@ const CommentItem = ({ comment, postId, depth = 0 }) => {
             >
               <FaEdit /> Edit
             </button>
+
             <button
-              onClick={handleDelete}
+              onClick={() => setShowDeleteModal(true)}
               className="comment-btn delete-btn"
             >
               <FaTrash /> Delete
             </button>
+
           </div>
 
           {/* Reply Form */}
@@ -131,6 +153,42 @@ const CommentItem = ({ comment, postId, depth = 0 }) => {
               ))}
             </div>
           )}
+        </div>
+      )}
+      {showDeleteModal && (
+        <div
+          className="comment-modal-overlay"
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            className="comment-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            
+            <h3>
+              delete this comment?
+            </h3>
+
+            <div className="comment-modal-actions">
+
+              <button
+                className="comment-modal-cancel"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="comment-modal-delete"
+                onClick={confirmDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+
+            </div>
+          </div>
         </div>
       )}
     </div>

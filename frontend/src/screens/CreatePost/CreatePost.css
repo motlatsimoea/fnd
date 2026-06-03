@@ -158,6 +158,13 @@
   border: 2px dashed #219150;
   background-color: #f0fff6;
 }
+
+.post-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 10px;
+}
+
 /* Responsive */
 @media (max-width: 600px) {
   .post-card {

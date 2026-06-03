@@ -130,87 +130,99 @@ const ProductForm = () => {
       });
   };
 
+
   return (
-    <form className="add-product-form" onSubmit={handleSubmit}>
-      <h2>Add a Product</h2>
+    <form className="product-form" onSubmit={handleSubmit}>
+      <h2 className="form-title">Create Product</h2>
 
       {loading === "loading" && <Loader />}
 
-      <input
-        type="text"
-        name="name"
-        placeholder="Product Name"
-        value={formData.name}
-        onChange={handleChange}
-        required
-      />
-      <textarea
-        name="description"
-        placeholder="Product Description"
-        value={formData.description}
-        onChange={handleChange}
-        required
-      />
-      <input
-        type="number"
-        name="price"
-        placeholder="Price"
-        value={formData.price}
-        onChange={handleChange}
-        step="0.01"
-        min="0"
-        required
-      />
-
-      <label>Thumbnail Image:</label>
-      <input
-        type="file"
-        name="thumbnail"
-        accept="image/*"
-        onChange={handleThumbnailChange}
-        ref={thumbnailRef}
-      />
-      {thumbnailPreview && (
-        <img
-          src={thumbnailPreview}
-          alt="Thumbnail Preview"
-          style={{ maxWidth: "150px", marginTop: "10px" }}
+      <div className="form-group">
+        <label>Product</label>
+        <input
+          type="text"
+          name="name"
+          placeholder="e.g. Chickens..."
+          value={formData.name}
+          onChange={handleChange}
+          required
         />
-      )}
-
-      <label>Additional Images (up to 4):</label>
-      <input
-        type="file"
-        name="additionalImages"
-        multiple
-        accept="image/*"
-        onChange={handleAdditionalImagesChange}
-        ref={additionalRef}
-      />
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          marginTop: "10px",
-          flexWrap: "wrap",
-        }}
-      > 
-
-        <div className="image-previews">
-          {additionalPreviews.map((url, idx) => (
-          <img
-            key={idx}
-            src={url}
-            alt={`Additional Preview ${idx + 1}`}
-            style={{ maxWidth: "100px", maxHeight: "100px", objectFit: "cover" }}
-          />
-        ))}
-        </div>
-        
       </div>
 
-      <button type="submit" disabled={loading === "loading"}>
-        {loading === "loading" ? "Submitting..." : "Submit"}
+      <div className="form-group">
+        <label>Description</label>
+        <textarea
+          name="description"
+          placeholder="Describe your product..."
+          value={formData.description}
+          onChange={handleChange}
+          required
+        />
+      </div>
+
+      <div className="form-group">
+        <label>Price</label>
+        <input
+          type="number"
+          name="price"
+          placeholder="0.00"
+          value={formData.price}
+          onChange={handleChange}
+          step="0.01"
+          min="0"
+          required
+        />
+      </div>
+
+      {/* Thumbnail */}
+      <div className="form-group">
+        <label>Thumbnail</label>
+        <div className="file-upload">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleThumbnailChange}
+            ref={thumbnailRef}
+          />
+          <span>Click to upload thumbnail</span>
+        </div>
+
+        {thumbnailPreview && (
+          <img
+            src={thumbnailPreview}
+            alt="Thumbnail Preview"
+            className="preview-large"
+          />
+        )}
+      </div>
+
+      {/* Additional Images */}
+      <div className="form-group">
+        <label>Additional Images (max 4)</label>
+        <div className="file-upload">
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleAdditionalImagesChange}
+            ref={additionalRef}
+          />
+          <span>Upload more images</span>
+        </div>
+
+        <div className="preview-grid">
+          {additionalPreviews.map((url, idx) => (
+            <img key={idx} src={url} alt="" />
+          ))}
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        className="submit-btn"
+        disabled={loading === "loading"}
+      >
+        {loading === "loading" ? "Creating..." : "Create Product"}
       </button>
 
       {error && <Message variant="danger">{error}</Message>}

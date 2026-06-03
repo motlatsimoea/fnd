@@ -10,7 +10,7 @@ import Reviews from "./Reviews";
 import ImageModal from "../../components/ImageModal";
 import Loader from "../../components/Loader";
 import Message from "../../components/Message";
-import { FaArrowLeft } from "react-icons/fa"; // ✅ Back arrow icon
+import { FaArrowLeft } from "react-icons/fa";
 import "./ProductPage.css";
 
 const ProductPage = () => {
@@ -29,8 +29,8 @@ const ProductPage = () => {
 
   const [currentImage, setCurrentImage] = useState(0);
   const [modalOpen, setModalOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  // ✅ Compose image URLs safely
   const images = product
     ? [
         ...(product.thumbnail
@@ -50,12 +50,12 @@ const ProductPage = () => {
                 : img.file || img.image || img.url || ""
             )
           : []),
-      ]
+      ].filter(Boolean)
     : [];
 
   useEffect(() => {
     if (id) dispatch(fetchProductById(id));
-    
+
     return () => {
       dispatch(clearError());
     };
@@ -71,14 +71,13 @@ const ProductPage = () => {
     setCurrentImage((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      try {
-        await dispatch(deleteProduct(product.id)).unwrap();
-        navigate("/market");
-      } catch (err) {
-        console.error("Delete failed:", err);
-      }
+  const confirmDelete = async () => {
+    try {
+      await dispatch(deleteProduct(product.id)).unwrap();
+      setShowDeleteModal(false);
+      navigate("/market");
+    } catch (err) {
+      console.error("Delete failed:", err);
     }
   };
 
@@ -89,75 +88,114 @@ const ProductPage = () => {
   const isOwner = userInfo && userInfo.username === product.seller;
 
   return (
-    <div className="product-page">
-      {/* ✅ Back button */}
-      <button className="back-btn" onClick={() => navigate(-1)}>
-        <FaArrowLeft /> Back
-      </button>
+    <>
+      <div className="product-page">
+        <button className="back-btn" onClick={() => navigate(-1)}>
+          <FaArrowLeft /> Back
+        </button>
 
-      {images.length > 0 ? (
-        <div className="product-slider">
-          <button onClick={prevImage} aria-label="Previous image">
-            &lt;
-          </button>
+        {images.length > 0 ? (
+          <div className="product-slider">
+            <button onClick={prevImage} aria-label="Previous image">
+              &lt;
+            </button>
+
+            <img
+              src={images[currentImage]}
+              alt={`${product.name} ${currentImage + 1}`}
+              className="product-image"
+              style={{ cursor: "pointer" }}
+              onClick={() => setModalOpen(true)}
+            />
+
+            <button onClick={nextImage} aria-label="Next image">
+              &gt;
+            </button>
+          </div>
+        ) : (
           <img
-            src={images[currentImage]}
-            alt={`${product.name} ${currentImage + 1}`}
+            src="/images/placeholder.jpg"
+            alt="No product available"
             className="product-image"
-            style={{ cursor: "pointer" }}
-            onClick={() => setModalOpen(true)}
           />
-          <button onClick={nextImage} aria-label="Next image">
-            &gt;
-          </button>
-        </div>
-      ) : (
-        <img
-          src="/images/placeholder.jpg"
-          alt="No product available"
-          className="product-image"
-        />
-      )}
+        )}
 
-      <h1>{product.name}</h1>
-      <p>{product.description}</p>
-      <p className="price">R{product.price}</p>
-      <p className="seller">
-        Seller:{" "}
-        <Link to={`/profile/${product.seller}`}>
-          {product.seller || "Unknown Seller"}
-        </Link>
-      </p>
+        <h1>{product.name}</h1>
+        <p>{product.description}</p>
+        <p className="price">R{product.price}</p>
 
-      {/* ✅ Owner-only actions */}
-      {isOwner && (
-        <div className="product-actions">
-          <button
-            className="edit-btn"
-            onClick={() => navigate(`/edit-product/${product.id}`)}
+        <p className="seller">
+          Seller:{" "}
+          <Link to={`/profile/${product.seller}`}>
+            {product.seller || "Unknown Seller"}
+          </Link>
+        </p>
+
+        {isOwner && (
+          <div className="product-actions">
+            <button
+              className="edit-btn"
+              onClick={() => navigate(`/edit-product/${product.id}`)}
+            >
+              ✏️ Edit
+            </button>
+
+            <button
+              className="delete-btn"
+              onClick={() => setShowDeleteModal(true)}
+              disabled={deleteStatus === "loading"}
+            >
+              🗑️ Delete
+            </button>
+          </div>
+        )}
+
+        {product.id && <Reviews productId={product.id} />}
+
+        {modalOpen && (
+          <ImageModal
+            images={images}
+            initialIndex={currentImage}
+            onClose={() => setModalOpen(false)}
+          />
+        )}
+      </div>
+
+      {showDeleteModal && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowDeleteModal(false)}
+        >
+          <div
+            className="modal-card"
+            onClick={(e) => e.stopPropagation()}
           >
-            ✏️ Edit
-          </button>
-          <button
-            className="delete-btn"
-            onClick={handleDelete}
-            disabled={deleteStatus === "loading"}
-          >
-            {deleteStatus === "loading" ? "Deleting..." : "🗑️ Delete"}
-          </button>
+           
+            <h3>
+              Delete Product?
+            </h3>
+
+            <div className="modal-actions">
+              <button
+                className="modal-cancel"
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleteStatus === "loading"}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="modal-delete"
+                onClick={confirmDelete}
+                disabled={deleteStatus === "loading"}
+              >
+                {deleteStatus === "loading" ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
-
-      {product.id && <Reviews productId={product.id} />}
-
-      {modalOpen && (
-        <ImageModal
-          images={images}
-          initialIndex={currentImage}
-          onClose={() => setModalOpen(false)}
-        />
-      )}
-    </div>
+    </>
   );
 };
 

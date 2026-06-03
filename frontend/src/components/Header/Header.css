@@ -1,127 +1,44 @@
-/* General styles */
+/* ============================
+   Global Styles
+============================ */
 body {
-    margin: 0;
-    font-family: 'Roboto', Arial, sans-serif; /* Modern, social media-friendly font */
-    background-color: #e8f5e9; /* Very light green */
-  }
-  
-/* Basic navbar styles */
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: #3c7c57; /* Dark green background */
-    padding: 10px 20px;
-  }
-  
-  .navbar .logo {
-    color: white;
-    font-size: 24px;
-    font-weight: bold;
-  } 
-  
-  .navbar .nav-links {
-    display: flex;
-    gap: 15px;
-  }
-  
-  .navbar .nav-item {
-    color: white;
-    font-size: 20px;
-    text-decoration: none;
-  }
-  
-  /* User dropdown menu */
-  .user-dropdown {
-    position: relative;
-  }
-  
-  .user-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 26px;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.15s ease-in-out, color 0.15s ease-in-out;
-  }
-  
-  .user-menu {
-    position: absolute;
-    right: 10px;
-    top: 50px;
-    background-color: white;
-    padding: 10px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    border-radius: 5px;
-  }
-  
-  .user-menu .user-item {
-    background: none;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    color: #333;
-  }
-  
-  
-/* Notifications Modal */
-.notifications-modal {
-  position: absolute;
-  top: 60px;
-  right: 20px;
-  width: 300px;
-  background-color: #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  z-index: 1000;
-  padding: 10px;
-}
-
-.notifications-modal h4 {
   margin: 0;
-  padding: 10px 0;
-  font-size: 16px;
-  border-bottom: 1px solid #ddd;
+  font-family: "Roboto", Arial, sans-serif;
+  background-color: #e8f5e9;
 }
 
-.notifications-modal ul {
-  list-style: none;
-  padding: 0;
-  margin: 10px 0;
+/* ============================
+   Navbar
+============================ */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #3c7c57;
+  padding: 10px 20px;
 }
 
-.notifications-modal li {
-  margin: 10px 0;
-}
-
-.notifications-modal li a {
-  text-decoration: none;
-  color: #333;
-}
-
-.notifications-modal li a:hover {
-  color: #007bff;
-}
-
-.close-modal {
-  display: block;
-  margin: 10px auto 0;
-  padding: 5px 10px;
-  background-color: #007bff;
+.logo {
   color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  font-size: 24px;
+  font-weight: bold;
 }
 
-.close-modal:hover {
-  background-color: #0056b3;
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
-/* User Dropdown */
+.nav-item {
+  color: white;
+  font-size: 20px;
+  text-decoration: none;
+}
+
+/* ============================
+   User Dropdown
+============================ */
 .user-dropdown {
   position: relative;
 }
@@ -129,80 +46,97 @@ body {
 .user-btn {
   background: none;
   border: none;
+  color: white;
   cursor: pointer;
-  font-size: 24px;
-  color: #333;
+  font-size: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, color 0.15s ease;
 }
 
 .user-btn:hover {
   transform: scale(1.1);
-  color: #b3e0b3; /* lighter green on hover */
+  color: #d1f1d1;
 }
 
 .user-menu {
   position: absolute;
-  top: 50px; /* below the button */
+  top: 50px;
   right: 0;
-  width: 180px;
-  background: #fff;
+  width: 190px;
+  background: white;
   border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  padding: 8px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   animation: fadeInDropdown 0.2s ease-out;
 }
 
-.user-menu .user-item {
+.user-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px;
-  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: none;
+  background: none;
   color: #333;
+  font-size: 14px;
   text-decoration: none;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
 
-.user-menu .user-item:hover {
-  background-color: #2d7d46; /* green theme */
-  color: #fff;
-  border-radius: 8px;
+.user-item:hover {
+  background-color: #2d7d46;
+  color: white;
 }
 
-/* Icons inside dropdown items */
-.user-menu .user-item svg {
+.user-item svg {
   font-size: 16px;
 }
 
-/* Small fade-in animation */
-@keyframes fadeInDropdown {
-  0% { opacity: 0; transform: translateY(-10px); }
-  100% { opacity: 1; transform: translateY(0); }
+.logout-item {
+  color: #e03131;
 }
 
-/* Make bell icon clickable */
-.notification-button {
-  background: transparent;
-  border: none;
-  cursor: pointer;
+/* ============================
+   Notification / Inbox Buttons
+============================ */
+.notification-wrapper,
+.inbox-wrapper {
   position: relative;
-  font-size: 1.2rem;
-  color: #333;
-  transition: transform 0.1s ease-in-out;
+  display: flex;
+  align-items: center;
 }
 
-.notification-button:hover {
+.notification-button,
+.inbox-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease, color 0.1s ease;
+}
+
+.notification-button:hover,
+.inbox-button:hover {
   transform: scale(1.1);
+  color: #d1f1d1;
 }
 
-/* Red badge for unread */
 .notification-badge {
   position: absolute;
-  top: -5px;
-  right: -5px;
+  top: -6px;
+  right: -8px;
   background: #e74c3c;
   color: white;
   font-size: 0.65rem;
@@ -211,24 +145,24 @@ body {
   border-radius: 50%;
 }
 
-/* Modal styling */
+/* ============================
+   Notifications Modal
+============================ */
 .notifications-modal {
   position: absolute;
+  top: 42px;
   right: 0;
-  top: 100%;
   width: 320px;
   max-height: 400px;
-  background: #fff;
+  background: white;
   border-radius: 10px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
   overflow: hidden;
-  z-index: 999;
-  margin-top: 10px;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
 }
 
-/* Header inside modal */
 .notifications-header {
   display: flex;
   justify-content: space-between;
@@ -247,15 +181,14 @@ body {
   background: transparent;
   border: none;
   font-size: 1.2rem;
-  cursor: pointer;
   color: #666;
+  cursor: pointer;
 }
 
 .close-btn:hover {
   color: #000;
 }
 
-/* List styling */
 .notifications-list {
   list-style: none;
   margin: 0;
@@ -270,7 +203,7 @@ body {
 
 .notification-item {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   padding: 10px 16px;
   text-decoration: none;
   color: #333;
@@ -295,56 +228,32 @@ body {
   color: #999;
 }
 
-/* No notifications text */
 .no-notifications {
   padding: 20px;
   text-align: center;
   color: #999;
 }
 
-/* Modal positioning and styling same as general notifications */
+/* ============================
+   Inbox Modal
+============================ */
 .inbox-modal {
-  position: fixed;         /* instead of absolute */
-  top: 60px;               /* place just below navbar */
-  right: 500px;             /* near the inbox icon */
+  position: fixed;
+  top: 60px;
+  right: 500px;
   width: 360px;
   max-height: 450px;
-  background: #fff;
+  background: white;
   border-radius: 10px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
   overflow: hidden;
-  z-index: 2000;           /* ensure above navbar */
+  z-index: 2000;
   display: flex;
   flex-direction: column;
 }
 
-/* Header */
 .inbox-modal .notifications-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
   background: #f0f2f5;
-  border-bottom: 1px solid #ddd;
-}
-
-/* List styling */
-.inbox-modal .notifications-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  overflow-y: auto;
-  flex-grow: 1;
-}
-
-.inbox-modal .notification-item {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 10px 16px;
-  text-decoration: none;
-  color: #333;
-  transition: background 0.15s;
 }
 
 .inbox-modal .notification-item:hover {
@@ -353,45 +262,20 @@ body {
 
 .inbox-modal .notification-item.unread p {
   font-weight: bold;
-  color: #1a73e8; /* highlight unread messages */
+  color: #1a73e8;
 }
 
-.inbox-modal .notification-message {
-  margin: 0;
-  font-size: 0.9rem;
-}
+/* ============================
+   Animations
+============================ */
+@keyframes fadeInDropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 
-.inbox-modal .notification-time {
-  font-size: 0.75rem;
-  color: #999;
-}
-
-.inbox-modal .no-notifications {
-  padding: 20px;
-  text-align: center;
-  color: #999;
-}
-
-.inbox-wrapper {
-  display: flex;
-  align-items: center; /* vertical align center like nav-links */
-}
-
-.inbox-button {
-  background: none;       /* remove white background */
-  border: none;           /* remove default border */
-  color: white;           /* match other icons */
-  font-size: 20px;        /* same as .nav-item */
-  cursor: pointer;
-  padding: 0;             /* remove extra padding */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.1s ease-in-out;
-  vertical-align: middle;
-}
-
-.inbox-button:hover {
-  transform: scale(1.1);
-  color: #d1f1d1; /* optional: subtle hover effect to match other icons */
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
