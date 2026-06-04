@@ -233,66 +233,66 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         return token
 
     def validate(self, attrs):
-        print("=== LOGIN ATTEMPT ===")
+        #print("=== LOGIN ATTEMPT ===")
 
         username = attrs.get("username")
         password = attrs.get("password")
 
-        print("USERNAME:", username)
-        print("PASSWORD PROVIDED:", bool(password))
+        #print("USERNAME:", username)
+        #print("PASSWORD PROVIDED:", bool(password))
 
         try:
             user = User.objects.get(username=username)
 
-            print("USER FOUND:", user.username)
-            print("ACTIVE:", user.is_active)
-            print("DEACTIVATED_AT:", user.deactivated_at)
+            #print("USER FOUND:", user.username)
+            #print("ACTIVE:", user.is_active)
+            #print("DEACTIVATED_AT:", user.deactivated_at)
 
         except User.DoesNotExist:
-            print("USER NOT FOUND")
+            #print("USER NOT FOUND")
             raise serializers.ValidationError("Invalid username or password")
 
         password_ok = user.check_password(password)
 
-        print("PASSWORD CHECK:", password_ok)
+        #print("PASSWORD CHECK:", password_ok)
 
         if not password_ok:
             raise serializers.ValidationError("Invalid username or password")
 
-        print("PASSED PASSWORD CHECK")
+        #print("PASSED PASSWORD CHECK")
 
         if user.deactivated_at:
-            print("ACCOUNT IS DEACTIVATED")
+            #print("ACCOUNT IS DEACTIVATED")
 
             expired = user.is_deactivation_expired()
 
-            print("DEACTIVATION EXPIRED:", expired)
+            #print("DEACTIVATION EXPIRED:", expired)
 
             if not expired:
-                print("REACTIVATING ACCOUNT")
+                #print("REACTIVATING ACCOUNT")
 
                 user.is_active = True
                 user.deactivated_at = None
                 user.save(update_fields=["is_active", "deactivated_at"])
 
-                print("ACCOUNT REACTIVATED")
+                #print("ACCOUNT REACTIVATED")
             else:
-                print("ACCOUNT EXPIRED")
+                #print("ACCOUNT EXPIRED")
                 raise serializers.ValidationError(
                     "Account has been permanently deleted."
                 )
 
-        print("ACTIVE STATUS AFTER CHECK:", user.is_active)
+        #print("ACTIVE STATUS AFTER CHECK:", user.is_active)
 
         if not user.is_active:
-            print("ACCOUNT STILL INACTIVE")
+            #print("ACCOUNT STILL INACTIVE")
             raise serializers.ValidationError("Account is not active.")
 
-        print("CREATING TOKENS")
+        #print("CREATING TOKENS")
 
         refresh = self.get_token(user)
 
-        print("TOKENS CREATED")
+        #print("TOKENS CREATED")
 
         data = {
             "refresh": str(refresh),
@@ -300,7 +300,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             "user": UserSerializerWithToken(user).data,
         }
 
-        print("LOGIN SUCCESS")
+        #print("LOGIN SUCCESS")
 
         return data
 

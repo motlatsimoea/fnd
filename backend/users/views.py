@@ -18,7 +18,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from users.services.otp_service import send_otp
+from users.services.otp_service import send_otp, generate_otp
+from users.services.otp_service import send_sms_otp
 
 User = get_user_model()
 
@@ -120,35 +121,61 @@ class RequestPasswordResetView(APIView):
 
     def post(self, request):
         email = request.data.get("email")
-        print(email)
-        if not email:
-            return Response({"detail": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+        phone_number = request.data.get("phone_number")
+
+        if not email and not phone_number:
+            return Response(
+                {"detail": "Email or phone number is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         try:
-            user = CustomUser.objects.get(email=email)
-            print(user)
-            token = PasswordResetTokenGenerator().make_token(user)
-            print(token)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            print(uid)
+            if email:
+                user = CustomUser.objects.get(email=email)
 
-            reset_link = f"http://localhost:3000/reset-password/{uid}/{token}/"
-            print(reset_link)
-            send_mail(
-                "Password Reset",
-                f"Click here to reset your password: {reset_link}",
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-            )
-            print("📧 Email sent successfully!")
+                token = PasswordResetTokenGenerator().make_token(user)
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+                reset_link = f"http://localhost:3000/reset-password/{uid}/{token}/"
+
+                send_mail(
+                    "Password Reset",
+                    f"Click here to reset your password: {reset_link}",
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                )
+
+                return Response({
+                    "detail": "If this email exists, a reset link has been sent.",
+                    "channel": "email"
+                })
+
+            if phone_number:
+                user = CustomUser.objects.get(phone_number=phone_number)
+
+                OTP.objects.filter(user=user, is_used=False).delete()
+
+                code = generate_otp()
+                OTP.objects.create(user=user, code=code)
+
+                send_sms_otp(user.phone_number, code)
+
+                return Response({
+                    "detail": "If this phone number exists, an OTP has been sent.",
+                    "channel": "phone",
+                    "user_id": user.id
+                })
+
         except CustomUser.DoesNotExist:
-            print("⚠️ No user with that email")
-            pass
-        except Exception as e:
-            print("❌ ERROR:", e)
-            return Response({"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({
+                "detail": "If this account exists, reset instructions have been sent."
+            })
 
-        return Response({"detail": "If this email exists, a reset link has been sent."})
+        except Exception as e:
+            return Response(
+                {"detail": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
 
 class ResetPasswordConfirmView(APIView):
@@ -159,23 +186,101 @@ class ResetPasswordConfirmView(APIView):
             uid = urlsafe_base64_decode(uidb64).decode()
             user = CustomUser.objects.get(pk=uid)
         except (CustomUser.DoesNotExist, ValueError, TypeError):
-            return Response({"detail": "Invalid link"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Invalid link"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if not PasswordResetTokenGenerator().check_token(user, token):
-            return Response({"detail": "Invalid or expired token"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Invalid or expired token"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         new_password = request.data.get("password")
-        if not new_password:
-            return Response({"detail": "Password is required"}, status=status.HTTP_400_BAD_REQUEST)
-        
+        confirm_password = request.data.get("confirm_password")
+
+        if not new_password or not confirm_password:
+            return Response(
+                {"detail": "Password and confirmation are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if new_password != confirm_password:
+            return Response(
+                {"detail": "Passwords do not match"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         try:
             validate_password(new_password, user)
         except ValidationError as e:
-            return Response({"detail": e.messages},status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": e.messages},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         user.set_password(new_password)
         user.save()
-        return Response({"detail": "Password reset successful"}, status=status.HTTP_200_OK)
+
+        return Response(
+            {"detail": "Password reset successful"},
+            status=status.HTTP_200_OK
+        )
+    
+    
+class PhonePasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        user_id = request.data.get("user_id")
+        code = request.data.get("code")
+        password = request.data.get("password")
+
+        if not user_id or not code or not password:
+            return Response(
+                {"detail": "user_id, code, and password are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            otp = OTP.objects.filter(
+                user_id=user_id,
+                code=code,
+                is_used=False
+            ).latest("created_at")
+        except OTP.DoesNotExist:
+            return Response(
+                {"detail": "Invalid OTP."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if otp.is_expired():
+            return Response(
+                {"detail": "OTP expired."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user = otp.user
+
+        try:
+            validate_password(password, user)
+        except ValidationError as e:
+            return Response(
+                {"detail": e.messages},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.set_password(password)
+        user.save()
+
+        otp.is_used = True
+        otp.save()
+
+        return Response(
+            {"detail": "Password reset successful."},
+            status=status.HTTP_200_OK
+        )
 
 
     

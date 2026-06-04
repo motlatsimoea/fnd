@@ -46,30 +46,62 @@ export const login = createAsyncThunk(
 
 export const requestPasswordReset = createAsyncThunk(
   'auth/requestPasswordReset',
-  async (email, { rejectWithValue }) => {
+  async (payload, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.post('password-reset/', { email });
-      return data.detail;
+      const { data } = await axiosInstance.post('password-reset/', payload);
+
+      return {
+        detail: data.detail,
+        channel: data.channel,
+        user_id: data.user_id,
+      };
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.detail || 'Error sending reset link'
+        error.response?.data?.detail || 'Error sending reset instructions'
       );
     }
   }
 );
 
+
 export const resetPasswordConfirm = createAsyncThunk(
-  'auth/resetPasswordConfirm',
-  async ({ uid, token, password }, { rejectWithValue }) => {
+  "auth/resetPasswordConfirm",
+  async ({ uid, token, password, confirm_password }, { rejectWithValue }) => {
     try {
       const { data } = await axiosInstance.post(
         `/password-reset-confirm/${uid}/${token}/`,
-        { password }
+        {
+          password,
+          confirm_password,
+        }
       );
+
       return data.detail;
     } catch (error) {
       return rejectWithValue(
-        error.response?.data?.detail || 'Error resetting password'
+        error.response?.data?.detail || "Error resetting password"
+      );
+    }
+  }
+);
+
+export const resetPasswordPhoneConfirm = createAsyncThunk(
+  "auth/resetPasswordPhoneConfirm",
+  async ({ user_id, code, password }, { rejectWithValue }) => {
+    try {
+      const { data } = await axiosInstance.post(
+        "password-reset-phone-confirm/",
+        {
+          user_id,
+          code,
+          password,
+        }
+      );
+
+      return data.detail;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.detail || "Error resetting password"
       );
     }
   }
@@ -277,7 +309,7 @@ const authSlice = createSlice({
       })
       .addCase(requestPasswordReset.fulfilled, (state, action) => {
         state.loading = false;
-        state.resetStatus = action.payload;
+        state.resetStatus = action.payload.detail;
       })
       .addCase(requestPasswordReset.rejected, (state, action) => {
         state.loading = false;
@@ -294,6 +326,19 @@ const authSlice = createSlice({
         state.resetStatus = action.payload;
       })
       .addCase(resetPasswordConfirm.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(resetPasswordPhoneConfirm.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetPasswordPhoneConfirm.fulfilled, (state, action) => {
+        state.loading = false;
+        state.resetStatus = action.payload;
+      })
+      .addCase(resetPasswordPhoneConfirm.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

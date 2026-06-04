@@ -23,6 +23,7 @@ import VerifyOtpPage from './screens/RegistrationPage/VerifyOtpPage';
 import LoginPage from './screens/LoginPage/LoginPage';
 import ForgotPasswordPage from './screens/PassowordReset/ForgotPasswordPage';
 import ResetPasswordPage from './screens/PassowordReset/ResetPasswordPage';
+import ResetPasswordPhonePage from './screens/PassowordReset/ResetPasswordPhonePage';
 
 // Protected screens
 import CreatePost from './screens/CreatePost/CreatePost';
@@ -96,6 +97,7 @@ const App = () => {
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
         <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
+        <Route path="/reset-password-phone" element={<ResetPasswordPhonePage />} />
         <Route path="/product/:id" element={<ProductPage />} />
         <Route path="/article/:id" element={<ArticlePage />} />
 
