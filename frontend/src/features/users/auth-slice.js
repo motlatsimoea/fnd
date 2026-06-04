@@ -107,6 +107,33 @@ export const resetPasswordPhoneConfirm = createAsyncThunk(
   }
 );
 
+
+export const changePassword = createAsyncThunk(
+  "auth/changePassword",
+  async (
+    { current_password, new_password, confirm_password },
+    { rejectWithValue }
+  ) => {
+    try {
+      const { data } = await axiosInstance.post("/change-password/", {
+        current_password,
+        new_password,
+        confirm_password,
+      });
+
+      return data;
+    } catch (error) {
+      const detail = error.response?.data?.detail;
+
+      return rejectWithValue(
+        Array.isArray(detail)
+          ? detail.join(" ")
+          : detail || "Password change failed"
+      );
+    }
+  }
+);
+
 /* =====================================================
    ACCOUNT DEACTIVATION AND DELETION
 ===================================================== */
@@ -339,6 +366,20 @@ const authSlice = createSlice({
         state.resetStatus = action.payload;
       })
       .addCase(resetPasswordPhoneConfirm.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      /* CHANGE PASSWORD */
+      .addCase(changePassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(changePassword.fulfilled, (state) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(changePassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

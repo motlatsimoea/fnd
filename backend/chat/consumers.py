@@ -13,22 +13,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.unique_key = self.scope["url_route"]["kwargs"]["unique_key"]
         self.room_group_name = f"chat_{self.unique_key}"
         self.user = self.scope["user"]
-        print("=== CHAT CONNECT START ===")
-        print("User:", self.scope["user"])
-        print("Unique key:", self.unique_key)
-        print("Query string:", self.scope["query_string"])
+        #print("=== CHAT CONNECT START ===")
+        #print("User:", self.scope["user"])
+        #print("Unique key:", self.unique_key)
+        #print("Query string:", self.scope["query_string"])
 
-        print(f"[CONNECT] Attempting WS | key={self.unique_key} | user={self.user}")
+        #print(f"[CONNECT] Attempting WS | key={self.unique_key} | user={self.user}")
 
         # ❌ Reject anonymous users
         if self.user.is_anonymous:
-            print("[CONNECT] ❌ Anonymous user")
+            #print("[CONNECT] ❌ Anonymous user")
             await self.close()
             return
 
         # ❌ Ensure user is a participant
         if not await self.user_in_chat(self.user, self.unique_key):
-            print("[CONNECT] ❌ User not a participant")
+            #print("[CONNECT] ❌ User not a participant")
             await self.close()
             return
 
@@ -36,7 +36,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             self.chat = await self.get_inbox(self.unique_key)
         except Inbox.DoesNotExist:
-            print("[CONNECT] ❌ Inbox not found")
+            #print("[CONNECT] ❌ Inbox not found")
             await self.close()
             return
 
@@ -47,14 +47,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
 
         await self.accept()
-        print(f"[CONNECT] ✅ Connected | group={self.room_group_name}")
+        #print(f"[CONNECT] ✅ Connected | group={self.room_group_name}")
 
     async def disconnect(self, close_code):
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name,
         )
-        print(f"[DISCONNECT] group={self.room_group_name} | code={close_code}")
+        #print(f"[DISCONNECT] group={self.room_group_name} | code={close_code}")
 
     async def receive(self, text_data):
         """
@@ -71,10 +71,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
             # ❌ Ignore empty messages
             if not message_text or not message_text.strip():
-                print("[RECEIVE] ❌ Empty message ignored")
+                #print("[RECEIVE] ❌ Empty message ignored")
                 return
 
-            print(f"[RECEIVE] From {self.user}: {message_text}")
+            #print(f"[RECEIVE] From {self.user}: {message_text}")
 
             # ✅ Save message
             message = await self.create_message(
@@ -83,7 +83,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 text=message_text,
             )
 
-            print(f"[RECEIVE] ✅ Saved message id={message.id}")
+            #print(f"[RECEIVE] ✅ Saved message id={message.id}")
             
             await self.mark_inbox_unread(self.chat, self.user, message_text, message)
 
@@ -98,7 +98,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     message=message_text[:80],  # preview text
                     inbox=self.chat,
                 )
-                print("[RECEIVE] 🔔 Inbox notification created")
+                #print("[RECEIVE] 🔔 Inbox notification created")
             else:
                 print("[RECEIVE] ⚠️ No valid recipient for notification")
                 

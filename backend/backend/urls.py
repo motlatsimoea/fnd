@@ -10,6 +10,7 @@ from users.views import (MyTokenObtainPairView,
                          RequestPasswordResetView,
                          ResetPasswordConfirmView,
                          PhonePasswordResetConfirmView,
+                         ChangePasswordView,
                          DeactivateAccountView, 
                          DeleteAccountView)
 
@@ -20,6 +21,7 @@ urlpatterns = [
     
     path("api/password-reset/", RequestPasswordResetView.as_view(), name="password-reset"),
     path("api/password-reset-phone-confirm/", PhonePasswordResetConfirmView.as_view(), name="password-reset-phone-confirm"),
+    path("api/change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("api/password-reset-confirm/<uidb64>/<token>/", ResetPasswordConfirmView.as_view(), name="password-reset-confirm"),
 
     path("api/deactivate-account/", DeactivateAccountView.as_view()),
