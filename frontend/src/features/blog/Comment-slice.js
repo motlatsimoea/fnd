@@ -47,8 +47,11 @@ export const updateComment = createAsyncThunk(
       );
       return { ...res.data, id: commentId };
     } catch (error) {
+      console.log("FULL UPDATE COMMENT ERROR:", error.response?.data);
       return thunkAPI.rejectWithValue(
-        error.response?.data?.detail || 'Failed to edit comment'
+        error.response?.data?.detail ||
+        error.response?.data?.error ||
+        'Failed to edit comment'
       );
     }
   }

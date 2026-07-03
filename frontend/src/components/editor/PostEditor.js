@@ -14,6 +14,8 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import {
   $getSelection,
   $isRangeSelection,
+  $getRoot,
+  $createParagraphNode,
   TextNode,
   ParagraphNode,
 } from "lexical";
@@ -46,6 +48,16 @@ function EditorRefPlugin({ editorRef }) {
         if ($isRangeSelection(selection)) {
           selection.insertText(emoji);
         }
+      });
+
+      editor.focus();
+    },
+
+    clearEditor() {
+      editor.update(() => {
+        const root = $getRoot();
+        root.clear();
+        root.append($createParagraphNode());
       });
 
       editor.focus();

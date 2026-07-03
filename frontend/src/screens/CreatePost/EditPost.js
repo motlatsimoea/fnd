@@ -73,7 +73,7 @@ const EditPost = () => {
     });
 
     try {
-      await dispatch(updatePost({ postId: id, postData: formData })).unwrap();
+      await dispatch(updatePost({ postId: id, formData })).unwrap();
       navigate(`/blog/${id}`);
     } catch (err) {
       console.error(err);

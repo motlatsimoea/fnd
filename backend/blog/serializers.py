@@ -32,6 +32,10 @@ class LikeSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     replies = serializers.SerializerMethodField()
     author_username = serializers.CharField(source='author.username', read_only=True) 
+    hashtags = HashtagSerializer(many=True, read_only=True)
+    hashtag_names = serializers.ListField(
+        child=serializers.CharField(), write_only=True, required=False
+    )
     author_profile_image = serializers.SerializerMethodField()
     time_since_posted = serializers.SerializerMethodField()
 
@@ -39,7 +43,8 @@ class CommentSerializer(serializers.ModelSerializer):
         model = Comment
         fields = [
             'id', 'post', 'author', 'author_username', 'author_profile_image', 'time_since_posted',
-            'content', 'parent', 'replies', 'created_at', 'updated_at'
+            'content', 'parent', 'replies', 'hashtags',
+            'hashtag_names', 'created_at', 'updated_at'
         ]
         read_only_fields = ['author', 'created_at', 'updated_at']
         
@@ -71,7 +76,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     def get_replies(self, obj):
         if obj.replies.exists():
-            return CommentSerializer(obj.replies.all(), many=True).data
+            return CommentSerializer(obj.replies.all(), many=True, context=self.context).data
         return []
     
     def get_time_since_posted(self, obj):

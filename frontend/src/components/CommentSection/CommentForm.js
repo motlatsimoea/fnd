@@ -8,6 +8,7 @@ import "./CommentSection.css";
 const CommentForm = ({
   postId,
   parentId = null,
+  commentId = null,
   initialText = "",
   onCancel,
   isEditing = false,
@@ -33,7 +34,7 @@ const CommentForm = ({
         await dispatch(
           updateComment({
             postId,
-            commentId: parentId,
+            commentId,
             text: content,
           })
         ).unwrap();
@@ -49,9 +50,10 @@ const CommentForm = ({
         ).unwrap();
 
         setContent("");
+        editorRef.current?.clearEditor();
       }
     } catch (err) {
-      console.error(err);
+      console.error("COMMENT UPDATE ERROR:", err);
     } finally {
       setLoading(false);
     }
@@ -59,7 +61,11 @@ const CommentForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="comment-form">
-      <PostEditor ref={editorRef} onChange={setContent} />
+      <PostEditor 
+        ref={editorRef} 
+        onChange={setContent} 
+        initialContent={initialText} 
+      />
 
       <div className="form-actions">
         <button

@@ -20,7 +20,8 @@ const CommentSection = ({ postId }) => {
     <div className="p-4 border rounded bg-white shadow-sm">
       <h3 className="text-lg font-semibold mb-4">Comments</h3>
 
-      <CommentForm postId={postId} />
+      <CommentForm postId={postId}
+      />
 
       {loading && <Loader />}
       {error && <Message variant="danger">Error: {error}</Message>}

@@ -1,22 +1,18 @@
-/* ============================
-   General Comment Section Styles
-============================ */
 .comment-section {
   background-color: #f8f9fa;
   padding: 20px;
   border-radius: 8px;
   margin: 20px 0;
-  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; /* Better font */
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
 }
 
-/* ============================
-   Comment & Reply Form
-============================ */
+/* Forms */
 .comment-form,
 .reply-form {
   display: flex;
   flex-direction: column;
   margin-bottom: 20px;
+  overflow: visible;
 }
 
 .comment-input,
@@ -41,8 +37,14 @@
   background-color: #fff;
 }
 
-.comment-submit,
-.reply-submit,
+/* Submit / Cancel buttons */
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
 .btn-submit,
 .btn-cancel {
   padding: 8px 16px;
@@ -54,15 +56,11 @@
   transition: all 0.2s ease;
 }
 
-.comment-submit,
-.reply-submit,
 .btn-submit {
   background-color: #2d7d46;
   color: #fff;
 }
 
-.comment-submit:hover,
-.reply-submit:hover,
 .btn-submit:hover {
   background-color: #23643b;
 }
@@ -76,29 +74,23 @@
   background-color: #d6d6d6;
 }
 
-/* ============================
-   Comments List
-============================ */
+/* Comments list */
 .comments-list {
-  margin-top: 25px; /* more space between comment section and previous content */
+  margin-top: 25px;
 }
 
-/* ============================
-   Individual Comment
-============================ */
 .comment-item {
-  margin-bottom: 25px; /* space between comments */
+  margin-bottom: 25px;
   display: flex;
   flex-direction: column;
+  overflow: visible;
 }
 
-/* ============================
-   Comment Header
-============================ */
+/* Header */
 .comment-header {
   display: flex;
   align-items: center;
-  gap: 12px; /* space between avatar and username */
+  gap: 12px;
   margin-bottom: 6px;
 }
 
@@ -115,7 +107,6 @@
   justify-content: center;
   align-items: center;
   font-weight: 600;
-  font-size: 1rem;
 }
 
 .comment-user-info {
@@ -136,14 +127,13 @@
   margin-top: 2px;
 }
 
-/* ============================
-   Comment Body & Content
-============================ */
+/* Body */
 .comment-body {
-  margin-left: 54px; /* aligns text with username instead of avatar */
+  margin-left: 54px;
   font-size: 0.98rem;
   color: #333;
   line-height: 1.5;
+  overflow: visible;
 }
 
 .comment-content {
@@ -155,97 +145,103 @@
   font-size: 0.95rem;
 }
 
-/* ============================
-   Replies Section
-============================ */
+/* Replies */
 .comment-replies {
   border-left: 2px solid #e5e7eb;
   padding-left: 10px;
   margin-top: 10px;
-  margin-left: 50px; /* indent replies more smoothly */
+  margin-left: 50px;
+  overflow: visible;
 }
 
-.reply {
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
+.reply-form-wrapper {
+  overflow: visible;
 }
 
-.reply strong {
-  color: #2a9d8f;
-}
-
-.reply div {
-  margin-left: 10px;
-}
-
-/* ============================
-   Buttons (Reply, Edit, Delete)
-============================ */
+/* Comment action buttons */
 .comment-actions {
   margin-top: 8px;
-  display: flex;
-  gap: 10px;
-}
-
-.comment-btn {
-  display: flex;
+  display: flex !important;
   align-items: center;
+  gap: 12px;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.comment-actions button.comment-btn,
+.comment-actions .comment-btn {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
   gap: 4px;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  min-width: auto !important;
+  width: auto !important;
+  height: auto !important;
+  font-family: inherit !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  cursor: pointer !important;
+  text-transform: none !important;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.comment-actions .comment-btn svg {
+  display: inline-block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
   font-size: 0.8rem;
-  font-weight: 500;
-  padding: 6px 12px;
-  border-radius: 16px;
-  border: none;
-  cursor: pointer;
-  background: #f3f4f6;
-  color: #4b5563;
-  transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
-.comment-btn svg {
-  font-size: 0.9rem;
+.comment-actions .comment-btn:hover {
+  text-decoration: underline;
 }
 
-.comment-btn:hover {
-  transform: translateY(-1px);
+.comment-actions .reply-btn {
+  color: #2563eb !important;
 }
 
-.reply-btn {
-  color: #2563eb;
+.comment-actions .reply-btn:hover {
+  color: #1d4ed8 !important;
 }
 
-.reply-btn:hover {
-  background: #e0ecff;
+.comment-actions .edit-btn {
+  color: #059669 !important;
 }
 
-.edit-btn {
-  color: #059669;
+.comment-actions .edit-btn:hover {
+  color: #047857 !important;
 }
 
-.edit-btn:hover {
-  background: #d1fae5;
+.comment-actions .delete-btn {
+  color: #dc2626 !important;
 }
 
-.delete-btn {
-  color: #dc2626;
+.comment-actions .delete-btn:hover {
+  color: #b91c1c !important;
 }
 
-.delete-btn:hover {
-  background: #fee2e2;
-}
-
-/* ============================
-   Collapsible Replies
-============================ */
+/* Collapse toggle */
 .comment-toggle {
   margin-left: auto;
   font-size: 0.75rem;
   color: #2563eb;
   background: none;
   border: none;
+  padding: 0;
   cursor: pointer;
-  transition: color 0.2s ease;
 }
 
 .comment-toggle:hover {
@@ -253,10 +249,14 @@
   color: #1d4ed8;
 }
 
-/* ============================
-   Delete Comment Modal
-============================ */
+/* Mention dropdown support */
+.comment-form .post-editor-container {
+  position: relative;
+  overflow: visible;
+  z-index: 20;
+}
 
+/* Delete modal */
 .comment-modal-overlay {
   position: fixed;
   inset: 0;
@@ -281,12 +281,6 @@
   margin-top: 0;
   margin-bottom: 10px;
   font-size: 1.2rem;
-}
-
-.comment-modal-card p {
-  color: #666;
-  line-height: 1.5;
-  margin-bottom: 20px;
 }
 
 .comment-modal-actions {
@@ -341,9 +335,7 @@
   }
 }
 
-/* ============================
-   Responsive Adjustments
-============================ */
+/* Responsive */
 @media (max-width: 640px) {
   .comment-form {
     padding: 10px;

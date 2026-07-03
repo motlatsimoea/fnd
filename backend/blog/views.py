@@ -14,6 +14,7 @@ from django.db.models import Prefetch
 from django.contrib.auth import get_user_model
 import re, json
 from .utils import extract_text
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 
 User = get_user_model()
 mention_regex = r'(?<!\w)@(\w+)'
@@ -21,7 +22,7 @@ hashtag_regex = r'#(\w+)'
 
 
 class PostView(APIView):
-
+    
     def get_permissions(self):
         if self.request.method == 'GET':
             return [AllowAny()]
@@ -151,6 +152,40 @@ class PostView(APIView):
             )
 
 
+    
+
+class HashtagListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        query = request.GET.get("q", "").lower()
+
+        hashtags = Hashtag.objects.filter(
+            name__istartswith=query
+        ).order_by('-usage_count')[:10]
+
+        serializer = HashtagSerializer(hashtags, many=True)
+        return Response(serializer.data)
+    
+    
+
+
+class PostDetailView(APIView):
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get(self, request, post_id):
+        try:
+            post = Post.objects.get(id=post_id)
+            serializer = PostSerializer(post, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Post.DoesNotExist:
+            return Response({'detail': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
     # =========================
     # UPDATE POST
     # =========================
@@ -276,33 +311,6 @@ class PostView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-class HashtagListView(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request):
-        query = request.GET.get("q", "").lower()
-
-        hashtags = Hashtag.objects.filter(
-            name__istartswith=query
-        ).order_by('-usage_count')[:10]
-
-        serializer = HashtagSerializer(hashtags, many=True)
-        return Response(serializer.data)
-    
-    
-
-
-class PostDetailView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, post_id):
-        try:
-            post = Post.objects.get(id=post_id)
-            serializer = PostSerializer(post, context={'request': request})
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except Post.DoesNotExist:
-            return Response({'detail': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
-
     def delete(self, request, post_id):
         try:
             post = Post.objects.get(id=post_id)
@@ -313,6 +321,7 @@ class PostDetailView(APIView):
             return Response({'detail': 'Post deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
         except Post.DoesNotExist:
             return Response({'detail': 'Post not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
 
 
 
@@ -520,66 +529,101 @@ class CommentDetailView(APIView):
         
     def patch(self, request, post_id, id):
 
+        if not request.user.is_authenticated:
+            return Response(
+                {"detail": "Authentication required."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
         try:
-            comment = Comment.objects.get(id=id, post__id=post_id, author=request.user)
+            comment = Comment.objects.get(
+                id=id,
+                post__id=post_id,
+                author=request.user
+            )
         except Comment.DoesNotExist:
-            return Response({'error': 'Comment not found or you are not the author.'}, status=404)
+            return Response(
+                {"detail": "Comment not found or you are not the author."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        serializer = CommentSerializer(comment, data=request.data, partial=True, context={'request': request})
+        serializer = CommentSerializer(
+            comment,
+            data=request.data,
+            partial=True,
+            context={"request": request},
+        )
 
-        if serializer.is_valid():
+        if not serializer.is_valid():
+            return Response(
+                {"detail": "Invalid update data", "errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
+        try:
             with transaction.atomic():
 
-                updated_comment = serializer.save()
+                comment = serializer.save()
+
+                content = request.data.get("content", comment.content)
 
                 try:
-                    parsed = json.loads(updated_comment.content)
+                    parsed = json.loads(content)
                 except Exception:
                     parsed = {}
 
                 plain_text = extract_text(parsed.get("root", {}))
 
-                # -------- HASHTAGS --------
-                hashtag_names = set(re.findall(hashtag_regex, plain_text))
+                # HASHTAGS
+                new_hashtags = set(re.findall(hashtag_regex, plain_text))
+                comment.hashtags.clear()
 
-                updated_comment.hashtags.clear()
-
-                for tag in hashtag_names:
+                for tag in new_hashtags:
                     tag = tag.lower().strip()
 
-                    hashtag, _ = Hashtag.objects.get_or_create(name=tag)
+                    if not tag:
+                        continue
 
+                    hashtag, _ = Hashtag.objects.get_or_create(name=tag)
                     hashtag.usage_count += 1
                     hashtag.save()
 
-                    updated_comment.hashtags.add(hashtag)
+                    comment.hashtags.add(hashtag)
 
-                # -------- MENTIONS --------
-                mentioned_usernames = set(re.findall(mention_regex, plain_text))
+                # MENTIONS
+                new_mentions = set(re.findall(mention_regex, plain_text))
 
-                for username in mentioned_usernames:
-
+                for username in new_mentions:
                     try:
                         mentioned_user = User.objects.get(username=username)
 
                         if mentioned_user != request.user:
-
                             send_notification(
                                 user=mentioned_user,
                                 sender=request.user,
                                 notification_type="mention",
-                                comment=updated_comment,
-                                post=updated_comment.post,
+                                comment=comment,
+                                post=comment.post,
+                                message=f"{request.user.username} mentioned you in a comment.",
                             )
 
                     except User.DoesNotExist:
                         continue
 
-            return Response(serializer.data, status=200)
+            return Response(
+                CommentSerializer(comment, context={"request": request}).data,
+                status=status.HTTP_200_OK,
+            )
 
-        return Response(serializer.errors, status=400)
-    
+        except Exception as e:
+            return Response(
+                {
+                    "detail": "An error occurred while updating the comment.",
+                    "error": str(e),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        
 
     def delete(self, request, post_id, id):
         try:

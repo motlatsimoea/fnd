@@ -38,7 +38,7 @@ const CommentItem = ({ comment, postId, depth = 0 }) => {
       await dispatch(
         deleteComment({
           postId,
-          commentId: comment.id,
+          commentId: existingComment.id,
         })
       ).unwrap();
 
@@ -93,13 +93,13 @@ const CommentItem = ({ comment, postId, depth = 0 }) => {
         <div className="comment-body">
           {!isEditing ? (
             <div className="comment-content">
-              {renderLexicalContent(comment.content)}
+              {renderLexicalContent(existingComment.content)}
             </div>
           ) : (
             <CommentForm
               postId={postId}
-              parentId={comment.id}
-              initialText={comment.content}
+              commentId={existingComment.id}
+              initialText={existingComment.content}
               isEditing
               onCancel={() => setIsEditing(false)}
             />
@@ -111,20 +111,21 @@ const CommentItem = ({ comment, postId, depth = 0 }) => {
               onClick={() => setShowReply(!showReply)}
               className="comment-btn reply-btn"
             >
-              <FaReply /> Reply
+              <FaReply /> reply
             </button>
+            
             <button
               onClick={() => setIsEditing(true)}
               className="comment-btn edit-btn"
             >
-              <FaEdit /> Edit
+              <FaEdit /> edit
             </button>
 
             <button
               onClick={() => setShowDeleteModal(true)}
               className="comment-btn delete-btn"
             >
-              <FaTrash /> Delete
+              <FaTrash /> delete
             </button>
 
           </div>
@@ -134,7 +135,7 @@ const CommentItem = ({ comment, postId, depth = 0 }) => {
             <div className="reply-form-wrapper">
               <CommentForm
                 postId={postId}
-                parentId={comment.id}
+                parentId={existingComment.id}
                 onCancel={() => setShowReply(false)}
               />
             </div>

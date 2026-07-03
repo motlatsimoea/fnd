@@ -1,20 +1,19 @@
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { $getSelection, $isRangeSelection, $createTextNode } from "lexical";
 import { $createMentionNode } from "./MentionNode";
 import axiosInstance from "../../utils/axiosInstance";
 import debounce from "lodash.debounce";
 
-
 export default function MentionPlugin() {
   const [editor] = useLexicalComposerContext();
+
   const [suggestions, setSuggestions] = useState([]);
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
-  const dropdownRef = useRef(null);
 
-  // ---------------- Listen for @ mentions ----------------
   useEffect(() => {
     return editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
@@ -25,32 +24,34 @@ export default function MentionPlugin() {
           return;
         }
 
-        const nodeText = selection.anchor.getNode().getTextContent();
+        const anchorNode = selection.anchor.getNode();
+        const nodeText = anchorNode.getTextContent();
+
         const match = nodeText.match(/(^|\s)@(\w*)$/);
 
-        if (match) {
-          const value = match[1];
-          setQuery(value);
-          setShowDropdown(true);
-
-          // Position dropdown near cursor
-          const domSelection = window.getSelection();
-          if (domSelection.rangeCount > 0) {
-            const rect = domSelection.getRangeAt(0).getBoundingClientRect();
-
-            setPosition({
-              top: rect.bottom + window.scrollY,
-              left: rect.left + window.scrollX,
-            });
-          }
-        } else {
+        if (!match) {
           setShowDropdown(false);
+          return;
+        }
+
+        const value = match[2]; // important fix
+        setQuery(value);
+        setShowDropdown(true);
+
+        const domSelection = window.getSelection();
+
+        if (domSelection && domSelection.rangeCount > 0) {
+          const rect = domSelection.getRangeAt(0).getBoundingClientRect();
+
+          setPosition({
+            top: rect.bottom + 8,
+            left: rect.left,
+          });
         }
       });
     });
   }, [editor]);
 
-  // ---------------- Fetch users (debounced) ----------------
   const fetchUsers = useRef(
     debounce(async (q) => {
       try {
@@ -71,60 +72,64 @@ export default function MentionPlugin() {
     }
   }, [query, showDropdown, fetchUsers]);
 
-
-  // ---------------- Insert mention ----------------
   const insertMention = (username) => {
-  editor.update(() => {
-    const selection = $getSelection();
-    if (!$isRangeSelection(selection)) return;
+    editor.update(() => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) return;
 
-    const anchorNode = selection.anchor.getNode();
-    const text = anchorNode.getTextContent();
+      const anchorNode = selection.anchor.getNode();
+      const text = anchorNode.getTextContent();
 
-    // Find the "@query" part at the end
-    const match = text.match(/@(\w*)$/);
-    if (!match) return;
+      const match = text.match(/(^|\s)@(\w*)$/);
+      if (!match) return;
 
-    const start = match.index;
-    const end = start + match[0].length;
+      const start = match.index + match[1].length;
+      const end = start + `@${match[2]}`.length;
 
-    // Remove "@query"
-    anchorNode.spliceText(start, end - start, "");
+      anchorNode.spliceText(start, end - start, "");
 
-    // Move cursor to correct position
-    selection.setTextNodeRange(anchorNode, start, anchorNode, start);
+      selection.setTextNodeRange(anchorNode, start, anchorNode, start);
 
-    // Insert mention node
-    const mentionNode = $createMentionNode(`@${username}`);
-    selection.insertNodes([mentionNode]);
-    selection.insertNodes([$createTextNode(" ")]);
-  });
+      const mentionNode = $createMentionNode(`@${username}`);
+      selection.insertNodes([mentionNode]);
+      selection.insertNodes([$createTextNode(" ")]);
+    });
 
-  setShowDropdown(false);
-};
+    setShowDropdown(false);
+    editor.focus();
+  };
 
   if (!showDropdown || suggestions.length === 0) return null;
 
-  return (
+  return createPortal(
     <div
-      ref={dropdownRef}
       className="mention-dropdown"
       style={{
-        position: "absolute",
+        position: "fixed",
         top: position.top,
         left: position.left,
-        zIndex: 9999,
       }}
     >
       {suggestions.map((user) => (
-        <div
+        <button
+          type="button"
           key={user.username}
           className="mention-item"
-          onClick={() => insertMention(user.username)}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            insertMention(user.username);
+          }}
         >
-          {user.username}
-        </div>
+          <span className="mention-avatar">
+            {user.username[0].toUpperCase()}
+          </span>
+
+          <span className="mention-details">
+            <span className="mention-username">@{user.username}</span>
+          </span>
+        </button>
       ))}
-    </div>
+    </div>,
+    document.body
   );
 }
