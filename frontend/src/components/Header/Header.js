@@ -6,7 +6,9 @@ import {
   fetchInboxNotifications
 } from '../../features/notifications/notice-slice';
 import { logout as logoutAction } from '../../features/users/auth-slice';
-import { selectUnreadCount } from '../../features/chats/Chat-slice';
+import { 
+  fetchUserChats, selectUnreadCount 
+} from '../../features/chats/Chat-slice';
 import useNotificationsSocket from './NotificationSocket';
 import axiosInstance, { setAccessToken } from '../../utils/axiosInstance';
 import InboxModal from '../../components/chat/InboxModal';
@@ -74,6 +76,7 @@ const Header = () => {
     if (userInfo) {
       dispatch(fetchNotifications());
       dispatch(fetchInboxNotifications());
+      dispatch(fetchUserChats());
     }
   }, [userInfo, dispatch]);
 

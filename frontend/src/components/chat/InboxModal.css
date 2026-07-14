@@ -102,7 +102,7 @@
   color: #111;
 }
 
-.chat-message {
+.chat-preview-message {
   font-size: 13px;
   color: #666;
   margin-top: 4px;
@@ -158,4 +158,49 @@
   background: rgba(33, 145, 80, 0.08);
   padding: 2px 6px;
   border-radius: 6px;
+}
+
+.chat-item-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+
+.chat-item-button:hover {
+  background-color: #f3f4f6;
+}
+
+.inbox-modal.inbox-chat-view {
+  position: fixed;
+  top: 90px;
+  right: 24px;
+  width: 680px;
+  height: 680px;
+  min-width: 420px;
+  min-height: 460px;
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 120px);
+  padding: 0;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+
+  /*
+   * Resize handle appears in the bottom-right corner.
+   */
+  resize: both;
+
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+
+  z-index: 3000;
 }

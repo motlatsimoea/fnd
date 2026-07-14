@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FaArrowLeft } from "react-icons/fa";
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -67,7 +68,16 @@ const SettingsPage = () => {
 
   return (
     <div className="settings-container">
-      <h2>Account Settings</h2>
+      <div className="settings-header">
+        <button
+          className="settings-back-btn"
+          onClick={() => navigate(-1)}
+        >
+          <FaArrowLeft />
+        </button>
+
+        <h2>Account Settings</h2>
+      </div>
 
       {successMessage && (
         <div className="settings-alert success">

@@ -13,6 +13,7 @@ const Chat = ({ chatKey, user, initialMessages }) => {
   const [wsConnected, setWsConnected] = useState(false);
   const dispatch = useDispatch();
   const socketRef = useRef(null);
+  const messagesEndRef = useRef(null);
 
   const messages = useSelector((state) => state.chats.messages[chatKey] || []);
   const accessToken = useSelector((state) => state.auth.access);
@@ -65,6 +66,13 @@ const Chat = ({ chatKey, user, initialMessages }) => {
     initialMessages.forEach((m) => markSeen(chatKey, m.id));
     hasMergedInitial.current = true;
   }, [chatKey, initialMessages, dispatch, markSeen]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
+  }, [messages]);
 
 
   const createWebSocket = useCallback(() => {
@@ -204,6 +212,8 @@ const Chat = ({ chatKey, user, initialMessages }) => {
             </div>
           );
         })}
+
+        <div ref={messagesEndRef} />
       </div>
 
       <div className="chat-input">

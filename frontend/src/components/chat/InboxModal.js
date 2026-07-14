@@ -1,12 +1,18 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserChats } from "../../features/chats/Chat-slice";
-import { Link } from "react-router-dom";
+import ChatPanel from "./ChatPanel";
 import "./InboxModal.css";
 
 const InboxModal = ({ onClose }) => {
   const dispatch = useDispatch();
-  const { chatRooms = [], loading, error } = useSelector((state) => state.chats);
+
+  const [selectedChatKey, setSelectedChatKey] = useState(null);
+
+  const { chatRooms = [], loading, error } = useSelector(
+    (state) => state.chats
+  );
+
   const userId = useSelector((state) => state.auth.userInfo?.id);
 
   useEffect(() => {
@@ -26,10 +32,23 @@ const InboxModal = ({ onClose }) => {
     return new Date(b.updated_at) - new Date(a.updated_at);
   });
 
+  if (selectedChatKey) {
+    return (
+      <div className="inbox-modal inbox-chat-view">
+        <ChatPanel
+          chatKey={selectedChatKey}
+          onBack={() => setSelectedChatKey(null)}
+          onClose={onClose}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="inbox-modal">
       <div className="modal-header">
         <h3>Messages</h3>
+
         <button onClick={onClose} className="close-btn">
           ✕
         </button>
@@ -43,6 +62,7 @@ const InboxModal = ({ onClose }) => {
           sortedChats.map((chat) => {
             const otherUsers =
               chat.participants?.filter((p) => p.id !== userId) || [];
+
             const isUnread = chat.unread_count > 0;
 
             return (
@@ -50,7 +70,11 @@ const InboxModal = ({ onClose }) => {
                 key={chat.id}
                 className={`chat-item ${isUnread ? "chat-unread" : ""}`}
               >
-                <Link to={`/chat/${chat.unique_key}`} onClick={onClose}>
+                <button
+                  type="button"
+                  className="chat-item-button"
+                  onClick={() => setSelectedChatKey(chat.unique_key)}
+                >
                   <div className="avatar-wrapper">
                     {otherUsers.map((u) => (
                       <img
@@ -75,11 +99,11 @@ const InboxModal = ({ onClose }) => {
                       )}
                     </div>
 
-                    <span className="chat-message">
+                    <span className="chat-preview-message">
                       {chat.last_message?.text || "No messages yet"}
                     </span>
                   </div>
-                </Link>
+                </button>
               </li>
             );
           })
