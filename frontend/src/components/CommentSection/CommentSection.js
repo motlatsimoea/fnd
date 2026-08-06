@@ -17,9 +17,10 @@ const CommentSection = ({ postId }) => {
   }, [dispatch, postId]);
 
   return (
-    <div className="p-4 border rounded bg-white shadow-sm">
-      <h3 className="text-lg font-semibold mb-4">Comments</h3>
-
+    <div className="comment-section">
+      <h3 className="comment-title">
+          Comments
+      </h3>
       <CommentForm postId={postId}
       />
 

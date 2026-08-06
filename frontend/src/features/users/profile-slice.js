@@ -20,28 +20,47 @@ export const fetchProfile = createAsyncThunk(
 
 // ─── Update Profile (with FormData) ──────────────
 export const updateProfile = createAsyncThunk(
-  "profile/updateProfile",
-  async ({ username, formData }, { rejectWithValue }) => {
-    try {
-      const data = new FormData();
-      Object.entries(formData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) data.append(key, value);
-      });
+    "profile/updateProfile",
+    async ({ username, formData }, { rejectWithValue }) => {
+      try {
 
-      const url = username
-        ? `/users/profile/${username}/`
-        : "/users/profile/";
+        const data = new FormData();
 
-      const response = await axiosInstance.put(url, data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      return response.data;
-    } catch (err) {
-      return rejectWithValue(err.response?.data || "Failed to update profile");
+        Object.entries(formData).forEach(([key, value]) => {
+          if (key === "sector_ids") {
+            value.forEach((id) => {
+              data.append("sector_ids", id);
+            });
+
+          } else if (
+            value !== null &&
+            value !== undefined
+          ) {
+            data.append(key, value);
+          }
+        });
+
+        const url = username
+          ? `/users/profile/${username}/`
+          : "/users/profile/";
+
+        const response = await axiosInstance.put(
+          url,
+          data
+        );
+
+        return response.data;
+
+      } catch (err) {
+        return rejectWithValue(
+          err.response?.data ||
+          "Failed to update profile"
+        );
+      }
     }
-  }
-);
+  );
 
+  
 const profileSlice = createSlice({
   name: "profile",
   initialState: { profile: null, loading: false, error: null },

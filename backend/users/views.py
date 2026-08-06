@@ -9,8 +9,8 @@ from django.core.mail import send_mail
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .models import Profile, CustomUser, OTP
-from .serializers import ProfileSerializer, UserSerializer, MyTokenObtainPairSerializer
+from .models import Profile, CustomUser, OTP, Sector
+from .serializers import ProfileSerializer, UserSerializer, MyTokenObtainPairSerializer, SectorSerializer
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -495,6 +495,18 @@ class DeleteAccountView(APIView):
 
         return response
     
+
+class SectorListView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        
+        sectors = Sector.objects.all().order_by("name")
+        serializer = SectorSerializer(
+            sectors,
+            many=True
+        )
+        return Response(serializer.data)
     
 
 class ProfileView(APIView):

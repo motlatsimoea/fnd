@@ -5,6 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 import random
 
+
 def profile_picture_upload_to(instance, filename):
     """
     Define the upload path for profile pictures.
@@ -17,7 +18,12 @@ class Sector(models.Model):
     """
     Model for farming sectors (e.g., Crop Farming, Livestock, etc.)
     """
-    name = models.CharField(max_length=100, unique=True)
+    name    = models.CharField(max_length=100, unique=True)
+    
+    order   = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["order"]
 
     def __str__(self):
         return self.name

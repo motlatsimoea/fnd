@@ -6,6 +6,7 @@ from .views import (
     check_user_exists,
     get_current_user,
     UserSearchView,
+    SectorListView
 )
 
 
@@ -16,5 +17,6 @@ urlpatterns = [
     path("search/", UserSearchView.as_view(), name="user-search"),
     path('verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
     path('profile/', ProfileView.as_view(), name='profile'),
-    path('profile/<str:username>/', ProfileView.as_view(), name='profile_with_username')
+    path('profile/<str:username>/', ProfileView.as_view(), name='profile_with_username'),
+    path("sectors/", SectorListView.as_view(), name="sector-list"),
 ]

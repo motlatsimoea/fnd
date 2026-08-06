@@ -99,28 +99,27 @@ class ChatView(APIView):
         )
         
     
+class DeleteChatView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def delete(self, request, chat_id):
-        """
-        Handles the deletion of a chat room.
-        Only participants in the chat are allowed to delete it.
-        """
-        try:
-            chat = Inbox.objects.get(id=chat_id)
+        chat = get_object_or_404(
+            Inbox,
+            id=chat_id,
+            participants=request.user,
+        )
 
-            # Check if the requesting user is a participant
-            if request.user not in chat.participants.all():
-                return Response(
-                    {"error": "You do not have permission to delete this chat."},
-                    status=status.HTTP_403_FORBIDDEN
-                )
+        chat_key = chat.unique_key
+        chat.delete()
 
-            # Delete the chat
-            chat.delete()
-            return Response({"message": "Chat deleted successfully."}, status=status.HTTP_200_OK)
-
-        except Inbox.DoesNotExist:
-            return Response({"error": "Chat not found."}, status=status.HTTP_404_NOT_FOUND)
-        
+        return Response(
+            {
+                "detail": "Chat deleted.",
+                "chat_id": str(chat_id),
+                "chat_key": chat_key,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class MessageView(APIView):

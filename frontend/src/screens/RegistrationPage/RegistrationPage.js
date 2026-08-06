@@ -26,15 +26,7 @@ const RegistrationPage = () => {
 
   const [errors, setErrors] = useState({});
   const [passwordStrength, setPasswordStrength] = useState('');
-
-  const farmingSectors = [
-    'Livestock','Crop Farming','Aquaculture','Horticulture',
-    'Agroforestry','Poultry Farming','Dairy Farming','Beekeeping',
-    'Viticulture(Grapes & Wine)','Sericulture(Silk Production)',
-    'Mushroom Farming','Organic Farming','Greenhouse Farming',
-    'Hydroponics','Arable Farming','Mixed Farming',
-    'Fish Farming','Goat Farming','Sheep Farming','Pig Farming'
-  ];
+  const [availableSectors, setAvailableSectors] = useState([]);
 
   const validateEmail = (email) => /\S+@\S+\.\S+/.test(email);
   const navigate = useNavigate();
@@ -92,12 +84,15 @@ const RegistrationPage = () => {
   };
 
   const handleCheckboxChange = (e) => {
-    const { value, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      sectors: checked
-        ? [...prev.sectors, value]
-        : prev.sectors.filter((sector) => sector !== value),
+    const id = Number(e.target.value);
+    const checked = e.target.checked;
+    setFormData(prev=>({
+        ...prev,
+        sectors: checked
+          ? [...prev.sectors,id]
+          : prev.sectors.filter(
+              sectorId => sectorId !== id
+            )
     }));
   };
 
@@ -150,6 +145,20 @@ const RegistrationPage = () => {
 
     dispatch(registerUser(payload));
   };
+
+  useEffect(() => {
+      const fetchSectors = async () => {
+          try {
+              const response = await axios.get(
+                  "/api/users/sectors/"
+              );
+              setAvailableSectors(response.data);
+          } catch(err){
+              console.error(err);
+          }
+      };
+      fetchSectors();
+  }, []);
 
   useEffect(() => {
     if (message) {
@@ -247,15 +256,16 @@ const RegistrationPage = () => {
         {/* Sectors */}
         <fieldset className="farming-sectors">
           <legend>Farming Sector(s):</legend>
-          {farmingSectors.map((sector) => (
-            <label key={sector}>
+          {availableSectors.map((sector)=>(
+
+            <label key={sector.id}>
               <input
                 type="checkbox"
-                value={sector}
-                checked={formData.sectors.includes(sector)}
+                value={sector.id}
+                checked={formData.sectors.includes(sector.id)}
                 onChange={handleCheckboxChange}
               />
-              {sector}
+              {sector.name}
             </label>
           ))}
         </fieldset>

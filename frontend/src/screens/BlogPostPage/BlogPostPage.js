@@ -11,7 +11,7 @@ import Loader from "../../components/Loader";
 import Message from "../../components/Message";
 import ImageModal from "../../components/ImageModal";
 import ImageCarouselModal from "../../components/ImageCarouselModal";
-import { FaArrowLeft, FaHeart } from "react-icons/fa";
+import { FaArrowLeft, FaHeart, FaEdit, FaTrash } from "react-icons/fa";
 import { renderLexicalContent } from "../../utils/renderLexicalContent";
 import "./BlogPostPage.css";
 
@@ -95,19 +95,24 @@ const BlogPostPage = () => {
 
             {isOwner && (
               <div className="post-actions">
-                <button
-                  className="edit-btn"
-                  onClick={() => navigate(`/edit-post/${singlePost.id}`)}
-                >
-                  Edit
-                </button>
 
                 <button
-                  className="delete-btn"
+                  className="post-action-link edit-link"
+                  onClick={() => navigate(`/edit-post/${singlePost.id}`)}
+                >
+                  <FaEdit />
+                  <span>Edit</span>
+                </button>
+
+
+                <button
+                  className="post-action-link delete-link"
                   onClick={() => setShowDeleteModal(true)}
                 >
-                  Delete
+                  <FaTrash />
+                  <span>Delete</span>
                 </button>
+
               </div>
             )}
           </div>
@@ -144,7 +149,9 @@ const BlogPostPage = () => {
         </div>
       </div>
 
-      <CommentSection postId={id} />
+      <div className="comments-wrapper">
+          <CommentSection postId={id} />
+      </div>
 
       {zoomImage && (
         <ImageModal

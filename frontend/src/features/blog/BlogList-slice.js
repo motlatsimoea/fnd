@@ -52,7 +52,10 @@ export const updatePost = createAsyncThunk(
       return response.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.response?.data?.detail || 'Failed to update post'
+        error.response?.data || {
+          detail:
+          "Failed to update post",
+        }
       );
     }
   }
@@ -148,13 +151,16 @@ const blogSlice = createSlice({
         state.loading = false;
         state.error = action.payload || action.error.message;
       })
+
       // Update post
       .addCase(updatePost.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
 
       .addCase(updatePost.fulfilled, (state, action) => {
         state.loading = false;
+        state.error = null;
 
         const updatedPost = {
           ...action.payload,
@@ -162,12 +168,15 @@ const blogSlice = createSlice({
         };
 
         // Update single post
-        if (state.singlePost?.id === updatedPost.id) {
-          state.singlePost = updatedPost;
-        }
+        if (
+            String(state.singlePost?.id) ===
+            String(updatedPost.id)
+          ) {
+            state.singlePost = updatedPost;
+          }
 
         // Update in feed
-        const index = state.posts.findIndex(p => p.id === updatedPost.id);
+        const index = state.posts.findIndex((post) => String(post.id) === String(updatedPost.id));
         if (index !== -1) {
           state.posts[index] = updatedPost;
         }

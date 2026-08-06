@@ -20,6 +20,12 @@ class FollowUserSerializer(serializers.ModelSerializer):
             "username",
             "profile_picture"
         ]
+        
+class SectorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Sector
+        fields = ['id', 'name']
+        
 
 class ProfileSerializer(serializers.ModelSerializer):
 
@@ -27,7 +33,14 @@ class ProfileSerializer(serializers.ModelSerializer):
     username        = serializers.CharField(source="user.username", required=False)
     email           = serializers.EmailField(source="user.email", required=False)
 
-    sectors         = serializers.SerializerMethodField()
+    sectors         = SectorSerializer(source="user.sectors", many=True, read_only=True)
+
+    sector_ids      = serializers.PrimaryKeyRelatedField(queryset=Sector.objects.all(),
+                                                            many=True,
+                                                            write_only=True,
+                                                            required=False,
+                                                            source="user.sectors"
+                                                        )
 
     posts           = PostSerializer(many=True, read_only=True, source="user.posts")
     products        = ProductSerializer(many=True, read_only=True, source="user.products")
@@ -49,7 +62,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "first_name", "last_name", "location",
             "phone_number", "bio",
             "profile_picture", "background_picture",
-            "sectors",
+            "sectors", "sector_ids",
 
             "posts",
             "products",
@@ -64,10 +77,6 @@ class ProfileSerializer(serializers.ModelSerializer):
             "is_following",
         ]
         
-        
-    def get_sectors(self, obj):
-        """Return user's sector names"""
-        return [sector.name for sector in obj.user.sectors.all()]
 
     def get_liked_posts(self, obj):
         """Return posts this user has liked"""
@@ -102,23 +111,26 @@ class ProfileSerializer(serializers.ModelSerializer):
         return False
 
     def update(self, instance, validated_data):
-        # Handle nested user fields (username, email)
+
         user_data = validated_data.pop("user", {})
+
+        sectors = user_data.pop(
+            "sectors",
+            None
+        )
+
         for attr, value in user_data.items():
             setattr(instance.user, attr, value)
+
         instance.user.save()
 
-        # Update profile fields
-        return super().update(instance, validated_data)
+        if sectors is not None:
+            instance.user.sectors.set(sectors)
 
-    
-    
-
-class SectorSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Sector
-        fields = ['id', 'name']
-
+        return super().update(
+            instance,
+            validated_data
+        )
 
 
 class UserSerializer(serializers.ModelSerializer):

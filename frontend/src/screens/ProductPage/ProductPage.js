@@ -10,7 +10,7 @@ import Reviews from "./Reviews";
 import ImageModal from "../../components/ImageModal";
 import Loader from "../../components/Loader";
 import Message from "../../components/Message";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaEdit, FaTrash } from "react-icons/fa";
 import "./ProductPage.css";
 
 const ProductPage = () => {
@@ -120,37 +120,64 @@ const ProductPage = () => {
           />
         )}
 
-        <h1>{product.name}</h1>
-        <p>{product.description}</p>
-        <p className="price">R{product.price}</p>
+        <div className="product-info">
 
-        <p className="seller">
-          Seller:{" "}
-          <Link to={`/profile/${product.seller}`}>
-            {product.seller || "Unknown Seller"}
-          </Link>
-        </p>
+      <div className="product-header">
+        <div>
+          <h1>{product.name}</h1>
+
+          <p className="price">
+            R{product.price}
+          </p>
+
+          <p className="seller">
+            Sold by{" "}
+            <Link to={`/profile/${product.seller}`}>
+              {product.seller || "Unknown Seller"}
+            </Link>
+          </p>
+
+        </div>
 
         {isOwner && (
           <div className="product-actions">
+
             <button
-              className="edit-btn"
+              className="product-action-link edit-link"
               onClick={() => navigate(`/edit-product/${product.id}`)}
             >
-              ✏️ Edit
+              <FaEdit />
+              <span>Edit</span>
             </button>
 
             <button
-              className="delete-btn"
+              className="product-action-link delete-link"
               onClick={() => setShowDeleteModal(true)}
               disabled={deleteStatus === "loading"}
             >
-              🗑️ Delete
+              <FaTrash />
+              <span>
+                {deleteStatus === "loading"
+                  ? "Deleting..."
+                  : "Delete"}
+              </span>
             </button>
+
           </div>
         )}
 
-        {product.id && <Reviews productId={product.id} />}
+      </div>
+
+      <div className="product-description">
+        <h3>Description</h3>
+        <p>{product.description}</p>
+      </div>
+
+    </div>
+
+    <div className="reviews-section">
+      {product.id && <Reviews productId={product.id} />}
+    </div>
 
         {modalOpen && (
           <ImageModal

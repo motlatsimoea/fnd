@@ -29,6 +29,29 @@ export const fetchMessages = createAsyncThunk(
   }
 );
 
+export const deleteChat = createAsyncThunk(
+  "chats/deleteChat",
+  async ({ chatId, chatKey }, thunkAPI) => {
+    try {
+      const response = await axiosInstance.delete(
+        `/inbox/${chatId}/delete/`
+      );
+
+      return {
+        chatId,
+        chatKey,
+        ...response.data,
+      };
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data || {
+          detail: "Failed to delete chat.",
+        }
+      );
+    }
+  }
+);
+
 /* =======================
    SLICE
 ======================= */
@@ -40,6 +63,8 @@ const chatSlice = createSlice({
     messages: {}, // { chatKey: [message, ...] }
     loading: false,
     error: null,
+    deletingChatId: null,
+    deleteError: null,
   },
   reducers: {
     receiveNewMessage: (state, action) => {
@@ -165,6 +190,33 @@ const chatSlice = createSlice({
       .addCase(fetchMessages.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(deleteChat.pending, (state, action) => {
+        state.deletingChatId = action.meta.arg.chatId;
+        state.deleteError = null;
+      })
+
+      .addCase(deleteChat.fulfilled, (state, action) => {
+        const { chatId, chatKey } = action.payload;
+
+        state.deletingChatId = null;
+        state.deleteError = null;
+
+        state.chatRooms = state.chatRooms.filter(
+          (chat) => String(chat.id) !== String(chatId)
+        );
+
+        if (chatKey) {
+          delete state.messages[chatKey];
+        }
+      })
+
+      .addCase(deleteChat.rejected, (state, action) => {
+        state.deletingChatId = null;
+        state.deleteError =
+          action.payload ||
+          action.error.message ||
+          "Failed to delete chat.";
       });
   },
 });

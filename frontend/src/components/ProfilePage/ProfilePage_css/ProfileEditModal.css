@@ -1,115 +1,269 @@
 /* ProfileEditModal.css */
 
-/* Overlay */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+/* ---------- Overlay ---------- */
+
+.modal-overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    backdrop-filter:blur(4px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
 }
 
-/* Modal Content */
-.modal-content {
-  background: #fff;
-  padding: 30px 25px;
-  width: 450px;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  font-family: 'Arial', sans-serif;
-  max-height: 90vh;
-  overflow-y: auto;
+/* ---------- Modal ---------- */
+
+.modal-content{
+    width:min(820px,95vw);
+    max-height:90vh;
+    overflow-y:auto;
+    background:#fff;
+    border-radius:20px;
+    padding:32px;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);
 }
 
-/* Modal Heading */
-.modal-content h2 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  text-align: center;
-  color: #2d7d46;
+.modal-content h2{
+    margin:0 0 30px;
+    font-size:30px;
+    font-weight:700;
+    color:#1d3b2a;
 }
 
-/* Form labels and inputs */
-.modal-content label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 5px;
-  color: #333;
-  margin-top: 15px;
+/* ---------- Grid ---------- */
+
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:28px;
 }
 
-.modal-content input[type="text"],
-.modal-content input[type="email"],
-.modal-content input[type="file"],
-.modal-content textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  font-size: 14px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+.form-column{
+    display:flex;
+    flex-direction:column;
 }
 
-.modal-content textarea {
-  min-height: 80px;
-  resize: vertical;
+/* ---------- Labels ---------- */
+
+.modal-content label{
+    margin-top:18px;
+    margin-bottom:6px;
+    font-weight:600;
+    color:#444;
+
+}
+
+/* ---------- Inputs ---------- */
+
+.modal-content input[type=text],
+
+.modal-content input[type=email],
+
+.modal-content textarea{
+    width:100%;
+    border:1px solid #ddd;
+    border-radius:12px;
+    padding:13px 15px;
+    font-size:15px;
+    transition:.25s;
+
+}
+
+.modal-content textarea{
+    min-height:120px;
+    resize:vertical;
 }
 
 .modal-content input:focus,
-.modal-content textarea:focus {
-  outline: none;
-  border-color: #2d7d46;
-  box-shadow: 0 0 5px rgba(45,125,70,0.3);
+
+.modal-content textarea:focus{
+    outline:none;
+    border-color:#4caf50;
+    box-shadow:0 0 0 4px rgba(76,175,80,.15);
+
 }
 
-/* Buttons */
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 20px;
+/* ---------- Sections ---------- */
+
+.section{
+    margin-top:35px;
 }
 
-.cancel-btn {
-  background: #ccc;
-  color: #333;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s;
+.section h3{
+    margin-bottom:18px;
+    color:#2d7d46;
 }
 
-.cancel-btn:hover {
-  background: #b3b3b3;
+/* ---------- Sector Chips ---------- */
+
+.sector-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    max-height:220px;
+    overflow-y:auto;
+    padding:8px;
+
 }
 
-.save-btn {
-  background: #2d7d46;
-  color: #fff;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.2s;
+.sector-chip{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    border:1px solid #ddd;
+    padding:10px 14px;
+    border-radius:30px;
+    cursor:pointer;
+    transition:.25s;
+    user-select:none;
+    background:#fafafa;
+
 }
 
-.save-btn:hover {
-  background: #246139;
+.sector-chip:hover{
+    border-color:#2d7d46;
 }
 
-/* File input preview spacing */
-.modal-content input[type="file"] {
-  padding: 6px;
+.sector-chip.selected{
+    background:#2d7d46;
+    color:white;
+    border-color:#2d7d46;
 }
 
-/* Responsive tweaks */
-@media (max-width: 500px) {
-  .modal-content {
-    width: 90%;
-    padding: 20px;
-  }
+.sector-chip input{
+    display:none;
+}
+
+/* ---------- Upload ---------- */
+
+.upload-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.upload-grid input{
+    margin-top:8px;
+}
+
+.image-upload-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:25px;
+}
+
+.upload-card{
+    background:#fafafa;
+    border:1px solid #ececec;
+    border-radius:18px;
+    padding:20px;
+    text-align:center;
+}
+
+.upload-card h4{
+    margin-bottom:18px;
+    color:#444;
+}
+
+.profile-preview{
+    width:140px;
+    height:140px;
+    object-fit:cover;
+    border-radius:50%;
+    border:5px solid white;
+    box-shadow:0 10px 25px rgba(0,0,0,.15);
+    margin-bottom:18px;
+}
+
+.cover-preview{
+    width:100%;
+    height:170px;
+    object-fit:cover;
+    border-radius:14px;
+    box-shadow:0 8px 18px rgba(0,0,0,.12);
+    margin-bottom:18px;
+}
+
+.upload-btn{
+    display:inline-block;
+    padding:11px 18px;
+    border-radius:10px;
+    background:#2d7d46;
+    color:white;
+    cursor:pointer;
+    transition:.25s;
+    font-weight:600;
+}
+
+.upload-btn:hover{
+
+    background:#25683a;
+
+}
+
+/* ---------- Footer ---------- */
+
+.modal-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:16px;
+    margin-top:40px;
+    padding-top:25px;
+    border-top:1px solid #eee;
+    position:sticky;
+    bottom:0;
+    background:white;
+
+}
+
+/* ---------- Buttons ---------- */
+
+.cancel-btn{
+    border:none;
+    padding:12px 22px;
+    border-radius:12px;
+    background:#ececec;
+    cursor:pointer;
+    font-weight:600;
+    transition:.2s;
+}
+
+.cancel-btn:hover{
+    background:#ddd;
+}
+
+.save-btn{
+    border:none;
+    padding:12px 24px;
+    border-radius:12px;
+    background:#2d7d46;
+    color:white;
+    cursor:pointer;
+    font-weight:600;
+    transition:.2s;
+}
+
+.save-btn:hover{
+    background:#25683a;
+    transform:translateY(-1px);
+}
+
+/* ---------- Responsive ---------- */
+
+@media(max-width:768px){
+
+    .form-grid{
+        grid-template-columns:1fr;
+    }
+
+    .upload-grid{
+        grid-template-columns:1fr;
+    }
+
+    .modal-content{
+        padding:24px;
+    }
+
 }

@@ -110,3 +110,65 @@
   background-color: #b5b5b5;
   cursor: not-allowed;
 }
+
+.chat-input-wrapper {
+  position: relative;
+}
+
+.chat-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-input input {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-emoji-container {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.chat-emoji-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 10px;
+  background: #f3f4f6;
+  font-size: 20px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.chat-emoji-btn:hover {
+  background: #e5e7eb;
+  transform: scale(1.04);
+}
+
+.chat-emoji-picker {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  z-index: 4000;
+  border-radius: 12px;
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 480px) {
+  .chat-emoji-picker {
+    position: fixed;
+    left: 50%;
+    bottom: 80px;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 24px);
+  }
+}

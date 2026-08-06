@@ -185,8 +185,10 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
 
           {sectors && sectors.length > 0 && (
             <div className="sectors">
-              {sectors.map((sector, index) => (
-                <span key={index}>{sector}</span>
+              {sectors.map((sector) => (
+                <span key={sector.id}>
+                  {sector.name}
+                </span>
               ))}
             </div>
           )}

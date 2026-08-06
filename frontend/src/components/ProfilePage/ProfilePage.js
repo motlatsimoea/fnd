@@ -33,9 +33,17 @@ const ProfilePage = () => {
   }, [dispatch, routeUsername, currentUser]);
 
   const handleSaveProfile = (formData) => {
-    if (!profile) return;
-    const usernameToUpdate = profile.user?.username || profile.username;
-    dispatch(updateProfile({ username: usernameToUpdate, formData }));
+      if (!profile) return;
+      const usernameToUpdate =
+          profile.user?.username ||
+          profile.username;
+
+      dispatch(
+          updateProfile({
+              username: usernameToUpdate,
+              formData
+          })
+      );
   };
 
   const isLoading = profileLoading || authLoading;
