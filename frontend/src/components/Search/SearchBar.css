@@ -1,0 +1,179 @@
+.search-container {
+  position: relative;
+  width: 320px;
+}
+
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+
+  background: #f1f2f4;
+  border-radius: 20px;
+
+  padding: 8px 14px;
+
+  box-sizing: border-box;
+}
+
+.search-icon {
+  margin-right: 8px;
+  color: #777;
+}
+
+.search-input-wrapper input {
+  border: none;
+  outline: none;
+  background: transparent;
+
+  width: 100%;
+
+  font-size: 14px;
+}
+
+.search-loading {
+  font-size: 12px;
+  color: #777;
+}
+
+
+/* --------------------
+   RESULTS
+-------------------- */
+
+.search-results {
+  position: absolute;
+
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+
+  background: white;
+
+  border-radius: 10px;
+
+  box-shadow:
+    0 5px 20px rgba(0, 0, 0, 0.15);
+
+  overflow: hidden;
+
+  z-index: 5000;
+
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+
+/* --------------------
+   SECTION
+-------------------- */
+
+.search-section {
+  padding: 6px 0;
+}
+
+.search-section-title {
+  padding: 8px 14px;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  color: #888;
+
+  text-transform: uppercase;
+}
+
+
+/* --------------------
+   RESULT
+-------------------- */
+
+.search-result {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 10px 14px;
+
+  border: none;
+  background: transparent;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.search-result:hover {
+  background: #f5f6f8;
+}
+
+
+/* --------------------
+   ICON / IMAGE
+-------------------- */
+
+.search-result-icon {
+  width: 38px;
+  height: 38px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eee;
+
+  flex-shrink: 0;
+
+  overflow: hidden;
+}
+
+.search-result-icon img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+
+/* --------------------
+   TEXT
+-------------------- */
+
+.search-result-text {
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+}
+
+.search-result-text strong {
+  font-size: 14px;
+}
+
+.search-result-text span {
+  font-size: 12px;
+  color: #777;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* --------------------
+   EMPTY
+-------------------- */
+
+.no-results {
+  padding: 20px;
+
+  text-align: center;
+
+  color: #777;
+}

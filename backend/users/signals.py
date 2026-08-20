@@ -10,5 +10,5 @@ def create_profile(sender, instance, created, **kwargs):
     """
     Create a profile for each new user.
     """
-    if created:
+    if created and not instance.is_superuser:
         Profile.objects.create(user=instance)

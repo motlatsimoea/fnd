@@ -1,14 +1,16 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import ProfileEditModal from "./ProfileEditModal";
 import ImageModal from "../ImageModal";
 import FollowersModal from "./FollowersModal";
 import "./ProfilePage_css/ProfileHeader.css";
 import axiosInstance from "../../utils/axiosInstance";
+import ChatPanel from '../../components/chat/ChatPanel';
+import { fetchUserChats } from "../../features/chats/Chat-slice";
 
 const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
 
-  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const [isEditing, setIsEditing] = useState(false);
   const [zoomedImage, setZoomedImage] = useState(null);
@@ -19,6 +21,9 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
   const [isFollowing, setIsFollowing] = useState(user?.is_following);
   const [followersCount, setFollowersCount] = useState(user?.followers_count);
   const [followingCount] = useState(user?.following_count);
+
+  const [showChat, setShowChat] = useState(false);
+  const [chatKey, setChatKey] = useState(null);
 
   if (!user || !currentUser) return null;
 
@@ -64,18 +69,20 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
   };
 
   const handleMessageClick = async () => {
-    try {
+      try {
+        const res = await axiosInstance.post("/inbox/get-or-create/", {
+          user2: user_id,
+        });
 
-      const res = await axiosInstance.post("/inbox/get-or-create/", {
-        user2: user_id
-      });
+        await dispatch(fetchUserChats()).unwrap();
 
-      navigate(`/chat/${res.data.unique_key}`);
+        setChatKey(res.data.unique_key);
+        setShowChat(true);
 
-    } catch (err) {
-      console.error(err);
-    }
-  };
+      } catch (err) {
+        console.error("Failed to open chat:", err);
+      }
+    };
 
   const handleEditClick = () => setIsEditing(true);
   const handleCloseModal = () => setIsEditing(false);
@@ -115,10 +122,10 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
           <div
             className="profile-picture"
             style={{
-              backgroundImage: `url(${profile_picture || "/default_profile.png"})`
+              backgroundImage: `url(${profile_picture ||  "/default_profile.png"})`
             }}
             onClick={() =>
-              setZoomedImage(profile_picture || "/default_profile.png")
+              setZoomedImage(profile_picture ||  "/default_profile.png")
             }
           />
 
@@ -231,6 +238,14 @@ const ProfileHeader = ({ user, currentUser, onSaveProfile }) => {
           users={following}
           title="Following"
           onClose={() => setShowFollowing(false)}
+        />
+      )}
+
+      {showChat && chatKey && (
+        <ChatPanel
+          chatKey={chatKey}
+          onClose={() => setShowChat(false)}
+          floating={true}
         />
       )}
 

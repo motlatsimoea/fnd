@@ -1,6 +1,8 @@
 # serializers.py
 from rest_framework import serializers
 from .models import Product, ProductImage, Review
+from django.conf import settings
+from django.utils.timesince import timesince
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -10,14 +12,17 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username']
 
+
 class ReviewSerializer(serializers.ModelSerializer):
     # include parent so replies can be created / validated
     parent = serializers.PrimaryKeyRelatedField(queryset=Review.objects.all(), required=False, allow_null=True)
     author = UserSerializer(read_only=True) 
     profile_image = serializers.SerializerMethodField()
+    time_since_posted = serializers.SerializerMethodField()
+    
     class Meta:
         model = Review
-        fields = ['id', 'author', 'rating', 'content', 'created_at', 'profile_image', 'parent', 'product']
+        fields = ['id', 'author', 'rating', 'content', 'created_at', 'profile_image', 'parent', 'product', 'time_since_posted']
         read_only_fields = ['author', 'created_at', 'product']
         # include 'product' read-only for clarity in responses; if you want it writable remove from read_only_fields
 
@@ -27,13 +32,18 @@ class ReviewSerializer(serializers.ModelSerializer):
         return value
     
     def get_profile_image(self, obj):
-        request = self.context.get('request')
         try:
             profile = obj.author.profile
+
             if profile and profile.profile_picture:
-                return request.build_absolute_uri(profile.profile_picture.url)
+                return (
+                    f"{settings.SUPABASE_PUBLIC_URL}/storage/v1/object/public/"
+                    f"{settings.SUPABASE_STORAGE_BUCKET}/"
+                    f"{profile.profile_picture.name}"
+                )
         except Exception:
             pass
+
         return None
     
     def validate(self, data):
@@ -42,21 +52,38 @@ class ReviewSerializer(serializers.ModelSerializer):
         if parent and parent.product != product:
             raise serializers.ValidationError("Parent review must be for the same product.")
         return data
+    
+    def get_time_since_posted(self, obj):
+            return timesince(obj.created_at) + " ago"
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
     # product should be read-only when nested under ProductSerializer
     product = serializers.PrimaryKeyRelatedField(read_only=True)
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductImage
         fields = ['id', 'product', 'image']
-        
+
     def validate(self, attrs):
         product = self.context.get('product')
+
         if product and product.additional_images.count() >= 4:
-            raise serializers.ValidationError("A product can only have up to 4 additional images.")
+            raise serializers.ValidationError(
+                "A product can only have up to 4 additional images."
+            )
+
         return attrs
+
+    def get_image(self, obj):
+        if not obj.image:
+            return None
+
+        return (
+            f"{settings.SUPABASE_PUBLIC_URL}/storage/v1/object/public/"
+            f"{settings.SUPABASE_STORAGE_BUCKET}/{obj.image.name}"
+        )
         
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -67,32 +94,59 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'description', 'price', 'seller', 'thumbnail',
-                  'created_at', 'updated_at', 'average_rating', 'reviews', 'additional_images']
+        fields = [
+            'id',
+            'name',
+            'description',
+            'price',
+            'seller',
+            'thumbnail',
+            'created_at',
+            'updated_at',
+            'average_rating',
+            'reviews',
+            'additional_images'
+        ]
+        read_only_fields = [
+            'seller',
+            'created_at',
+            'updated_at',
+            'average_rating',
+            'reviews',
+            'additional_images'
+        ]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+
+        if instance.thumbnail:
+            representation['thumbnail'] = (
+                f"{settings.SUPABASE_PUBLIC_URL}/storage/v1/object/public/"
+                f"{settings.SUPABASE_STORAGE_BUCKET}/{instance.thumbnail.name}"
+            )
+        else:
+            representation['thumbnail'] = None
+
+        return representation
 
     def get_average_rating(self, obj):
         return obj.average_rating()
+    
 
     def create(self, validated_data):
-        images_data = validated_data.pop('additional_images', [])
-        # seller may be passed via serializer.save(seller=...)
         seller = validated_data.pop('seller', None)
+
         if seller is not None:
             validated_data['seller'] = seller
 
-        product = Product.objects.create(**validated_data)
-
-        for image_data in images_data:
-            # image_data should contain 'image' key; product is set explicitly
-            ProductImage.objects.create(product=product, **{k: v for k, v in image_data.items() if k != 'product'})
-
-        return product
+        return Product.objects.create(**validated_data)
 
     def update(self, instance, validated_data):
-        # allow partial updates; ignore additional_images here (use separate endpoint)
-        images_data = validated_data.pop('additional_images', None)
+        validated_data.pop('additional_images', None)
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+
         instance.save()
-        # optional: handle additional_images if required
+
         return instance

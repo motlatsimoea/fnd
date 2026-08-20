@@ -13,7 +13,7 @@ def generate_otp():
 
 def send_email_otp(email, code):
     subject = "Your Verification Code"
-    message = f"Your OTP is {code}. It expires in 5 minutes."
+    message = f"Welcome to Farmer Next-door! Thank you for Registering. Your OTP is {code}. It expires in 5 minutes."
     
     send_mail(
         subject,

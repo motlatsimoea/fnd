@@ -31,10 +31,7 @@ class Sector(models.Model):
 
 
 class CustomUserManager(BaseUserManager):
-    """
-    Custom user manager for the CustomUser model.
-    Handles user creation for normal users, staff, and superusers.
-    """
+
     def create_user(self, username, password=None, email=None, phone_number=None, **extra_fields):
         if not email and not phone_number:
             raise ValueError("User must have either email or phone number")
@@ -50,27 +47,52 @@ class CustomUserManager(BaseUserManager):
         )
 
         user.set_password(password)
+
+        # Normal users must go through your verification process
         user.is_active = False
+
         user.save(using=self._db)
         return user
+
 
     def create_superuser(self, username, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        extra_fields.setdefault('is_active', True)
 
         if not extra_fields.get('is_staff'):
-            raise ValueError('Superuser must have is_staff=True.')
-        if not extra_fields.get('is_superuser'):
-            raise ValueError('Superuser must have is_superuser=True.')
+            raise ValueError(
+                'Superuser must have is_staff=True.'
+            )
 
-        return self.create_user(
+        if not extra_fields.get('is_superuser'):
+            raise ValueError(
+                'Superuser must have is_superuser=True.'
+            )
+
+        if not password:
+            raise ValueError(
+                'Superuser must have a password.'
+            )
+
+        if email:
+            email = self.normalize_email(email)
+
+        user = self.model(
             username=username,
             email=email,
-            password=password,
             **extra_fields
         )
 
+        user.set_password(password)
+
+        # Superusers do NOT need verification
+        user.is_active = True
+        user.is_email_verified = True
+        user.is_phone_verified = True
+
+        user.save(using=self._db)
+
+        return user
 
 
 
@@ -127,13 +149,11 @@ class Profile(models.Model):
         upload_to=profile_picture_upload_to, 
         blank=True, 
         null=True, 
-        default='profile_pictures/default.png'
     )
     background_picture = models.ImageField(
         upload_to="background_pictures/", 
         blank=True, 
         null=True, 
-        default="background_pictures/default.jpg"
     )
     
     def __str__(self):

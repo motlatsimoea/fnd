@@ -35,6 +35,7 @@ import ProfilePage from './components/ProfilePage/ProfilePage';
 import InboxPage from './screens/InboxPage/InboxPage';
 import ChatPage from './components/chat/ChatPage';
 import Chat from './components/chat/chat';
+import SearchPage from "./screens/SearchPage/SearchPage";
 
 import PrivacyPolicy from './screens/legal/PrivacyPolicy';
 import TermsOfService from './screens/legal/TermsOfService';
@@ -105,6 +106,7 @@ const App = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="/create-post" element={<CreatePost />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/blog/:id" element={<BlogPostPage />} />
           <Route path="/edit-post/:id" element={<EditPost />} />
           <Route path="/hashtag/:name" element={<HashtagPage />} />

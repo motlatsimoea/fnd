@@ -1,4 +1,3 @@
-version: "3.9"
 
 services:
   django:
@@ -15,7 +14,8 @@ services:
     depends_on:
       - redis
     environment:
-      - DEBUG=1
+      - ENV=development
+      - DEBUG=True
       - REDIS_HOST=redis
       - REDIS_PORT=6379
 

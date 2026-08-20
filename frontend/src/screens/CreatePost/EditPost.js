@@ -30,7 +30,8 @@ const MAX_FILES = 4;
  * Handles object URL creation and cleanup for newly selected files.
  */
 const NewMediaPreview = ({ file }) => {
-  const [previewUrl, setPreviewUrl] = useState("");
+const [previewUrl, setPreviewUrl] = useState("");
+
 
   useEffect(() => {
     const objectUrl = URL.createObjectURL(file);
@@ -72,6 +73,7 @@ const EditPost = () => {
 
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
+  const initializedPostId = useRef(null);
 
   const {
     singlePost,
@@ -99,18 +101,23 @@ const EditPost = () => {
     dispatch(fetchSinglePost(id));
   }, [dispatch, id]);
 
-  useEffect(() => {
+
+  
+useEffect(() => {
     if (
-      singlePost &&
-      String(singlePost.id) === String(id)
+        singlePost &&
+        String(singlePost.id) === String(id) &&
+        initializedPostId.current !== String(id)
     ) {
-      setTitle(singlePost.title || "");
-      setContent(singlePost.content || "");
-      setExistingMedia(singlePost.media || []);
-      setFiles([]);
-      setUpdateError(null);
+        setTitle(singlePost.title || "");
+        setContent(singlePost.content || "");
+        setExistingMedia(singlePost.media || []);
+        setFiles([]);
+        setUpdateError(null);
+
+        initializedPostId.current = String(id);
     }
-  }, [singlePost, id]);
+}, [singlePost, id]);
 
   const compressImage = async (file) => {
     const options = {
@@ -374,17 +381,16 @@ const EditPost = () => {
       setIsUpdating(true);
 
       await dispatch(
-        updatePost({
-          postId: id,
-          formData,
-        })
-      ).unwrap();
+            updatePost({
+                postId: id,
+                formData,
+            })
+        ).unwrap();
 
-      toast.success(
-        "Post updated successfully."
-      );
+        toast.success("Post updated successfully.");
 
-      navigate(`/blog/${id}`);
+        navigate(`/blog/${id}`);
+
     } catch (requestError) {
       console.error(
         "Post update failed:",

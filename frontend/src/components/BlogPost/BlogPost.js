@@ -34,6 +34,7 @@ const BlogPost = ({
     setShowGallery(true);
   };
 
+  console.log("authorImage:", authorImage);
   return (
     <div className="blog-post-card">
 
@@ -45,8 +46,8 @@ const BlogPost = ({
 
         <div onClick={handleUserClick} className="author-link">
           <img
-            src={authorImage}
-            alt="Author avatar"
+            src={authorImage || "/default_profile.png"}
+            alt={`${author?.username || "User"} profile`}
             className="author-img"
           />
         </div>

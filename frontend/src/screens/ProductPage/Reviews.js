@@ -141,16 +141,7 @@ const Reviews = ({ productId }) => {
     }
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-
-    return date.toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
+  
   return (
     <>
       <div className="reviews-section" id="reviews-section">
@@ -238,7 +229,7 @@ const Reviews = ({ productId }) => {
                   </Link>
 
                   <span className="review-date">
-                    {review.created_at ? formatDate(review.created_at) : ""}
+                    {review.time_since_posted || ""}
                   </span>
                 </div>
               </div>

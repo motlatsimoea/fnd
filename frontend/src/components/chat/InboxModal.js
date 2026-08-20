@@ -281,7 +281,7 @@ const InboxModal = ({ onClose }) => {
                             key={user.id}
                             src={
                               user.profile_picture ||
-                              "/default-avatar.png"
+                               "/default_profile.png"
                             }
                             alt={
                               user.username

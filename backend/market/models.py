@@ -15,6 +15,9 @@ class Product(models.Model):
     thumbnail   = models.ImageField(upload_to='product_images/')
     created_at  = models.DateTimeField(auto_now_add=True)
     updated_at  = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
 
     def average_rating(self):
         avg = self.reviews.aggregate(average=Avg('rating'))['average']

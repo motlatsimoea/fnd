@@ -26,6 +26,12 @@ class Post(models.Model):
     hashtags    = models.ManyToManyField(Hashtag, blank=True)
     created_at  = models.DateTimeField(auto_now_add=True)
     updated_at  = models.DateTimeField(auto_now=True)
+    
+    def clean(self):
+        if self.post.media.count() >= 4:
+            raise ValidationError(
+                "You can only upload a max of 4 files"
+            )
 
     def __str__(self):
         return self.title
@@ -33,12 +39,10 @@ class Post(models.Model):
 
 class Media(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='media')
-    file = models.FileField(upload_to='media/')
-    uploaded_at = models.DateTimeField(auto_now_add=True)
     
-    def clean(self):
-        if self.post.file.count() >= 4:
-            raise ValidationError("You can only upload a max of 4 files")
+    file = models.FileField(upload_to='media/')
+    
+    uploaded_at = models.DateTimeField(auto_now_add=True)
     
 
     def __str__(self):
@@ -73,6 +77,9 @@ class Comment(models.Model):
     hashtags    = models.ManyToManyField(Hashtag, blank=True)
     created_at  = models.DateTimeField(auto_now_add=True)
     updated_at  = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
 
     def __str__(self):
         return f"Comment by {self.author.username} on {self.post.title}"

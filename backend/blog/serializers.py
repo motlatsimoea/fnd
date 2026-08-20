@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.utils.timesince import timesince
 from .models import Post, Media, Like, Comment, Hashtag
-#from users.serializers import UserSerializer
+from django.conf import settings
 from users.models import CustomUser
 
 
@@ -18,9 +18,20 @@ class HashtagSerializer(serializers.ModelSerializer):
 
 
 class MediaSerializer(serializers.ModelSerializer):
+    file = serializers.SerializerMethodField()
+    
     class Meta:
         model = Media
         fields = ['id', 'file', 'uploaded_at']
+        
+    def get_file(self, obj):
+        if not obj.file:
+            return None
+
+        return (
+            f"{settings.SUPABASE_PUBLIC_URL}/storage/v1/object/public/"
+            f"{settings.SUPABASE_STORAGE_BUCKET}/{obj.file.name}"
+        )
 
 
 class LikeSerializer(serializers.ModelSerializer):
@@ -65,13 +76,18 @@ class CommentSerializer(serializers.ModelSerializer):
     
     
     def get_author_profile_image(self, obj):
-        request = self.context.get('request')
         try:
             profile = obj.author.profile
+
             if profile and profile.profile_picture:
-                return request.build_absolute_uri(profile.profile_picture.url)
+                return (
+                    f"{settings.SUPABASE_PUBLIC_URL}/storage/v1/object/public/"
+                    f"{settings.SUPABASE_STORAGE_BUCKET}/"
+                    f"{profile.profile_picture.name}"
+                )
         except Exception:
             pass
+
         return None
 
     def get_replies(self, obj):
@@ -136,13 +152,16 @@ class PostSerializer(serializers.ModelSerializer):
         return obj.media.count()
 
     def get_authorImage(self, obj):
-        request = self.context.get('request')
         profile = getattr(obj.author, 'profile', None)
 
-        if profile:
-            return request.build_absolute_uri(profile.profile_picture.url)
+        if not profile or not profile.profile_picture:
+            return None
 
-        return None
+        return (
+            f"{settings.SUPABASE_PUBLIC_URL}/storage/v1/object/public/"
+            f"{settings.SUPABASE_STORAGE_BUCKET}/"
+            f"{profile.profile_picture.name}"
+        )
 
 
 

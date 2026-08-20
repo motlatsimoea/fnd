@@ -80,7 +80,7 @@ const BlogPostPage = () => {
         <div className="post-header">
 
           <img
-            src={singlePost.authorImage || "https://via.placeholder.com/50"}
+            src={singlePost.authorImage ||  "/default_profile.png"}
             alt={singlePost.author.username}
             className="user-image"
             onClick={() =>

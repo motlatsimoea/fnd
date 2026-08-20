@@ -7,11 +7,12 @@ from blog.serializers import Post
 from django.utils import timezone
 from follows.models import Follow
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
 User = get_user_model()
 
 class FollowUserSerializer(serializers.ModelSerializer):
-    profile_picture = serializers.ImageField(source="profile.profile_picture")
+    profile_picture = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -20,6 +21,21 @@ class FollowUserSerializer(serializers.ModelSerializer):
             "username",
             "profile_picture"
         ]
+
+    def get_profile_picture(self, obj):
+        try:
+            profile = obj.profile
+
+            if profile and profile.profile_picture:
+                return (
+                    f"{settings.SUPABASE_PUBLIC_URL}/storage/v1/object/public/"
+                    f"{settings.SUPABASE_STORAGE_BUCKET}/"
+                    f"{profile.profile_picture.name}"
+                )
+        except Exception:
+            pass
+
+        return None
         
 class SectorSerializer(serializers.ModelSerializer):
     class Meta:

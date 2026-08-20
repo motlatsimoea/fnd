@@ -8,7 +8,8 @@ const HashtagPage = () => {
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    axios.get(`/api/posts/?hashtag=${name}`)
+    axios
+      .get(`/api/posts/?hashtag=${encodeURIComponent(name)}`)
       .then(res => setPosts(res.data))
       .catch(err => console.error(err));
   }, [name]);
@@ -16,20 +17,25 @@ const HashtagPage = () => {
   return (
     <div>
       <h2>#{name}</h2>
-      {posts.map(post => (
-        <BlogPost
-          key={post.id}
-          id={post.id}
-          title={post.title}
-          author={post.author.username}
-          date={post.time_since_posted}
-          authorImage={post.authorImage}
-          images={post.media}        
-          text={post.content}
-          likes={post.like_count}
-          liked={post.is_liked}
-        />
-      ))}
+
+      {posts.length === 0 ? (
+        <p>No posts found for #{name}.</p>
+      ) : (
+        posts.map(post => (
+          <BlogPost
+            key={post.id}
+            id={post.id}
+            title={post.title}
+            author={post.author.username}
+            date={post.time_since_posted}
+            authorImage={post.authorImage}
+            images={post.media}
+            text={post.content}
+            likes={post.like_count}
+            liked={post.is_liked}
+          />
+        ))
+      )}
     </div>
   );
 };

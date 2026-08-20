@@ -553,12 +553,19 @@ class UserSearchView(APIView):
 
     def get(self, request):
         query = request.GET.get("q", "").strip()
+
+        users = User.objects.filter(
+            is_active=True,
+            is_staff=False
+        )
+
         if query:
-            users = User.objects.filter(
+            users = users.filter(
                 username__istartswith=query
-            )[:10]
-        else:
-            users = User.objects.all()[:10]
+            )
+
+        users = users[:10]
+
         return Response([
             {"username": u.username}
             for u in users

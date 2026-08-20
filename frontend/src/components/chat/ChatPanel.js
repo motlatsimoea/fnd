@@ -12,7 +12,7 @@ import {
 import axiosInstance from "../../utils/axiosInstance";
 import "./ChatPanel.css";
 
-const ChatPanel = ({ chatKey, onBack, onClose }) => {
+const ChatPanel = ({ chatKey, onBack, onClose, floating = false }) => {
   const dispatch = useDispatch();
 
   const user = useSelector((state) => state.auth?.userInfo || null);
@@ -90,28 +90,35 @@ const ChatPanel = ({ chatKey, onBack, onClose }) => {
   }
 
   return (
-    <div className="chat-panel">
+    <div className={`chat-panel ${floating ? "chat-panel-floating" : ""}`}>
       <div className="chat-panel-header">
-        <button className="chat-back-btn" onClick={onBack}>
-          ←
-        </button>
+        {onBack && (
+          <button className="chat-back-btn" onClick={onBack}>
+            ←
+          </button>
+        )}
 
-        <Link
+        {otherUser && (
+          <Link
             to={`/profile/${otherUser.username}`}
             onClick={onClose}
             className="chat-header-user"
-        >
+          >
             <img
-                src={otherUser?.profile_picture || "/default-avatar.png"}
-                alt={chatTitle}
-                className="chat-header-avatar"
+              src={otherUser.profile_picture || "/default_profile.png"}
+              alt={chatTitle}
+              className="chat-header-avatar"
             />
 
             <h3>{chatTitle}</h3>
-        </Link>
+          </Link>
+        )}
 
         {onClose && (
-          <button className="chat-panel-close-btn" onClick={onClose}>
+          <button
+            className="chat-panel-close-btn"
+            onClick={onClose}
+          >
             ✕
           </button>
         )}

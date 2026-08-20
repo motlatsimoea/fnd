@@ -27,7 +27,7 @@ const InboxPage = () => {
           return (
             <Link key={chat.id} to={`/chat/${chat.unique_key}`} className="chat-item">
               <img
-                src={otherUser?.profile_picture || '/default-avatar.png'}
+                src={otherUser?.profile_picture || "/default_profile.png"}
                 alt={otherUser?.username}
               />
               <div>

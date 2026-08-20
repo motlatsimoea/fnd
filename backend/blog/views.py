@@ -158,7 +158,7 @@ class HashtagListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        query = request.GET.get("q", "").lower()
+        query = request.GET.get("q", "").strip().lower()
 
         hashtags = Hashtag.objects.filter(
             name__istartswith=query
@@ -328,7 +328,10 @@ class PostDetailView(APIView):
 
                 # Save title and content first.
                 post = serializer.save()
-
+                print("========== POST UPDATE ==========")
+                print("TITLE:", post.title)
+                print("CONTENT:", post.content)
+                print("=================================")  
                 # =====================================
                 # SYNCHRONIZE MEDIA
                 # =====================================

@@ -2,7 +2,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 from datetime import timedelta
-from decouple import config
+import dj_database_url
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -12,16 +12,31 @@ load_dotenv(env_path)
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-gxnb+q8s2(!r928hms$edt!@_a807ms-&m@zdxv@9yt*i-h$fs"
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY is not set")
 
-SECRET_KEY_FOR_ENCRYPTION = os.getenv('SECRET_KEY_FOR_ENCRYPTION')  # The key you generated
+
+SECRET_KEY_FOR_ENCRYPTION = os.getenv('SECRET_KEY_FOR_ENCRYPTION') 
 
 #os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
-# Application definition
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    
+
+ALLOWED_HOSTS = ["localhost", "127.0.0.1",]
+
+if os.getenv("RENDER_EXTERNAL_HOSTNAME"):
+    ALLOWED_HOSTS.append(
+        os.getenv("RENDER_EXTERNAL_HOSTNAME")
+    )
+
+
 
 INSTALLED_APPS = [
     "daphne",
@@ -40,6 +55,7 @@ INSTALLED_APPS = [
     "notifications",
     "info",
     "follows",
+    "search",
     
     # Third Party
     "rest_framework",
@@ -48,6 +64,7 @@ INSTALLED_APPS = [
     "channels",
     "django_ckeditor_5",
     "rest_framework_simplejwt.token_blacklist",
+    "storages",
 ]
 
 REST_FRAMEWORK = {
@@ -75,37 +92,43 @@ SIMPLE_JWT = {
     'TOKEN_OBTAIN_SERIALIZER': 'users.serializers.MyTokenObtainPairSerializer',  # Custom serializer path
 }
 
+REDIS_URL = os.getenv("REDIS_URL")
+
+if not REDIS_URL:
+    raise RuntimeError("REDIS_URL environment variable is not set")
+
 CHANNEL_LAYERS = {
     "default": {
-        #"BACKEND": "channels.layers.InMemoryChannelLayer",  
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)], # Redis now runs here
-            
+            "hosts": [REDIS_URL],
         },
     },
 }
 
 LOGGING = {
     "version": 1,
+    "disable_existing_loggers": False,
+
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
         },
     },
+
     "root": {
         "handlers": ["console"],
-        "level": "WARNING",
+        "level": "INFO",
     },
+
     "loggers": {
-        "your_app_name": {
+        "django": {
             "handlers": ["console"],
-            "level": "DEBUG",
+            "level": "INFO",
             "propagate": False,
         },
     },
 }
-
 
 
 MIDDLEWARE = [
@@ -157,12 +180,20 @@ ASGI_APPLICATION = "backend.asgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+if os.getenv("USE_SUPABASE_DATABASE", "False").lower() == "true":
+    DATABASES = {
+        "default": dj_database_url.parse(
+            os.getenv("DATABASE_URL"),
+            conn_max_age=600,
+        )
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 
 # Password validation
@@ -199,21 +230,75 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 
-CORS_ALLOW_CREDENTIALS = True
+SUPABASE_PUBLIC_URL = os.getenv("SUPABASE_PUBLIC_URL")
+SUPABASE_STORAGE_BUCKET = os.getenv("SUPABASE_STORAGE_BUCKET")
+
+if os.getenv("USE_SUPABASE_STORAGE") == "True":
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "storages.backends.s3.S3Storage",
+            "OPTIONS": {
+                "endpoint_url": os.getenv("SUPABASE_S3_ENDPOINT"),
+                "access_key": os.getenv("SUPABASE_S3_ACCESS_KEY"),
+                "secret_key": os.getenv("SUPABASE_S3_SECRET_KEY"),
+                "bucket_name": os.getenv("SUPABASE_STORAGE_BUCKET"),
+                "region_name": os.getenv("SUPABASE_S3_REGION"),
+                "file_overwrite": False,
+                "default_acl": None,
+                "querystring_auth": False,
+            },
+        },
+
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
+else:
+
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+
+#CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://192.168.1.66:3000",
 ]
 
+# Add production frontend
+PRODUCTION_FRONTEND_URL = os.getenv(
+    "PRODUCTION_FRONTEND_URL"
+)
+
+if PRODUCTION_FRONTEND_URL:
+    CORS_ALLOWED_ORIGINS.append(
+        PRODUCTION_FRONTEND_URL
+    )
+
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
 ]
+
+if PRODUCTION_FRONTEND_URL:
+    CSRF_TRUSTED_ORIGINS.append(
+        PRODUCTION_FRONTEND_URL
+    )
+
 
 
 
@@ -231,10 +316,16 @@ else:
     
 EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'False') == 'True'
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+EMAIL_USE_SSL = False
+
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER or 'noreply@example.com'
+
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL",
+    EMAIL_HOST_USER
+)
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

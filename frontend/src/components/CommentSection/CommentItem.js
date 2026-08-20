@@ -64,7 +64,7 @@ const CommentItem = ({ comment, postId, depth = 0 }) => {
           {comment.author_profile_image ? (
             <img
               src={comment.author_profile_image}
-              alt={comment.author_username}
+              alt={ "/default_profile.png"}
               className="comment-avatar"
             />
           ) : (

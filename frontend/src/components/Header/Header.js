@@ -12,6 +12,7 @@ import {
 import useNotificationsSocket from './NotificationSocket';
 import axiosInstance, { setAccessToken } from '../../utils/axiosInstance';
 import InboxModal from '../../components/chat/InboxModal';
+import SearchBar from "../../components/Search/SearchBar";
 import NotificationsModal from '../../components/NotificationsModal/NotificationsModal';
 
 import {
@@ -133,6 +134,10 @@ const Header = () => {
         <div className="logo">fnd</div>
       </Link>
 
+      {userInfo && (
+          <SearchBar />
+      )}
+
       {userInfo ? (
         <>
           <div className="nav-links">
@@ -208,9 +213,17 @@ const Header = () => {
 
             {showUserMenu && (
               <div className="user-menu">
+                <Link
+                  to={`/profile/${userInfo.username}`}
+                  className="user-item"
+                >
+                  <FaUserCircle /> Profile
+                </Link>
+
                 <Link to="/settings" className="user-item">
                   <FaCogs /> Settings
                 </Link>
+
                 <span onClick={handleLogout} className="user-item">
                   <FaSignOutAlt /> Logout
                 </span>
