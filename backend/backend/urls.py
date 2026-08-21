@@ -2,8 +2,8 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
+from django.http import JsonResponse
 from django.conf.urls.static import static
-from rest_framework_simplejwt.views import TokenRefreshView
 from users.views import (MyTokenObtainPairView, 
                          LogoutAndBlacklistRefreshTokenForUserView, 
                          MyTokenRefreshCookieView,
@@ -14,7 +14,13 @@ from users.views import (MyTokenObtainPairView,
                          DeactivateAccountView, 
                          DeleteAccountView)
 
+
+
+def health_check(request):
+    return JsonResponse({"status": "ok"})
+
 urlpatterns = [
+    path("health/", health_check),
     path('api/login/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path("api/token/refresh/", MyTokenRefreshCookieView.as_view(), name='token_refresh'),
     path('api/logout/', LogoutAndBlacklistRefreshTokenForUserView.as_view()),
