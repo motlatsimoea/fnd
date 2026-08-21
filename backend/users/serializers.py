@@ -156,9 +156,11 @@ class UserSerializer(serializers.ModelSerializer):
     
     agreed_to_terms = serializers.BooleanField(write_only=True)
 
-    sectors = serializers.ListField(
-        child=serializers.CharField(max_length=100),
-        write_only=True
+    sectors = serializers.PrimaryKeyRelatedField(
+        queryset=Sector.objects.all(),
+        many=True,
+        write_only=True,
+        required=False
     )
 
     sectors_display = serializers.SerializerMethodField()
@@ -204,29 +206,34 @@ class UserSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        sectors_data = validated_data.pop('sectors', [])
-        password = validated_data.pop('password')
-        validated_data.pop('agreed_to_terms')
+
+        sectors = validated_data.pop("sectors", [])
+
+        password = validated_data.pop("password")
+        validated_data.pop("agreed_to_terms")
 
         user = CustomUser.objects.create(**validated_data)
+
         user.set_password(password)
 
         user.terms_accepted_at = timezone.now()
         user.is_active = False
+
         user.save()
 
-        sectors = Sector.objects.filter(name__in=sectors_data)
         user.sectors.set(sectors)
 
         return user
 
     def update(self, instance, validated_data):
-        sectors_data = validated_data.pop('sectors', None)
-        if sectors_data:
-            sectors = Sector.objects.filter(name__in=sectors_data)
-            instance.sectors.set(sectors)
-        return super().update(instance, validated_data)
 
+        sectors = validated_data.pop("sectors", None)
+
+        if sectors is not None:
+            instance.sectors.set(sectors)
+
+        return super().update(instance, validated_data)
+    
     def get_sectors_display(self, obj):
         return [sector.name for sector in obj.sectors.all()]
 

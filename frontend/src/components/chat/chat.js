@@ -22,9 +22,9 @@ const Chat = ({
   user,
   initialMessages,
 }) => {
+
   const [message, setMessage] = useState("");
-  const [wsConnected, setWsConnected] =
-    useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
 
   const [
     showEmojiPicker,
@@ -50,28 +50,63 @@ const Chat = ({
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 10;
 
+  const reconnectTimeoutRef = useRef(null);
+
   const messageQueues = useRef({});
+
+  /* -----------------------------------------
+     MESSAGE QUEUE
+  ----------------------------------------- */
 
   const pushToQueue = useCallback(
     (key, payload) => {
+
       messageQueues.current[key] =
         messageQueues.current[key] || [];
 
-      messageQueues.current[key].push(
-        payload
-      );
+      messageQueues.current[key].push(payload);
     },
     []
   );
 
+  const flushQueueFor = useCallback(
+    (ws, key) => {
+
+      const queue =
+        messageQueues.current[key] || [];
+
+      while (
+        queue.length &&
+        ws.readyState === WebSocket.OPEN
+      ) {
+
+        const payload = queue.shift();
+
+        ws.send(
+          JSON.stringify(payload)
+        );
+      }
+
+      if (!queue.length) {
+        delete messageQueues.current[key];
+      }
+    },
+    []
+  );
+
+  /* -----------------------------------------
+     INITIAL MESSAGES
+  ----------------------------------------- */
+
   const hasMergedInitial = useRef(false);
+
   const seenIds = useRef({});
 
   const markSeen = useCallback(
     (chatId, id) => {
+
       if (!seenIds.current[chatId]) {
-        seenIds.current[chatId] =
-          new Set();
+        seenIds.current[chatId] = new Set();
       }
 
       if (
@@ -81,37 +116,14 @@ const Chat = ({
       }
 
       seenIds.current[chatId].add(id);
+
       return true;
     },
     []
   );
 
-  const flushQueueFor = useCallback(
-    (ws, key) => {
-      const queue =
-        messageQueues.current[key] || [];
-
-      while (
-        queue.length &&
-        ws.readyState === WebSocket.OPEN
-      ) {
-        const payload = queue.shift();
-
-        ws.send(
-          JSON.stringify(payload)
-        );
-      }
-
-      if (!queue.length) {
-        delete messageQueues.current[
-          key
-        ];
-      }
-    },
-    []
-  );
-
   useEffect(() => {
+
     if (!initialMessages?.length) {
       return;
     }
@@ -143,6 +155,7 @@ const Chat = ({
     );
 
     hasMergedInitial.current = true;
+
   }, [
     chatKey,
     initialMessages,
@@ -150,29 +163,37 @@ const Chat = ({
     markSeen,
   ]);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView(
-      {
-        behavior: "smooth",
-        block: "end",
-      }
-    );
-  }, [messages]);
+  /* -----------------------------------------
+     RESET WHEN CHANGING CHAT
+  ----------------------------------------- */
 
-  /*
-   * Reset merged-message tracking when
-   * moving to another chat.
-   */
   useEffect(() => {
+
     hasMergedInitial.current = false;
+
   }, [chatKey]);
 
-  /*
-   * Close the emoji picker when clicking
-   * outside of it.
-   */
+  /* -----------------------------------------
+     AUTO SCROLL
+  ----------------------------------------- */
+
   useEffect(() => {
+
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
+
+  }, [messages]);
+
+  /* -----------------------------------------
+     CLOSE EMOJI PICKER
+  ----------------------------------------- */
+
+  useEffect(() => {
+
     const handleOutsideClick = (event) => {
+
       if (
         emojiPickerRef.current &&
         !emojiPickerRef.current.contains(
@@ -181,6 +202,7 @@ const Chat = ({
       ) {
         setShowEmojiPicker(false);
       }
+
     };
 
     document.addEventListener(
@@ -189,64 +211,64 @@ const Chat = ({
     );
 
     return () => {
+
       document.removeEventListener(
         "mousedown",
         handleOutsideClick
       );
+
     };
+
   }, []);
 
-  const createWebSocket = useCallback(
-    () => {
+  /* -----------------------------------------
+     CREATE WEBSOCKET
+  ----------------------------------------- */
+
+  const createWebSocket = useCallback(() => {
       if (!chatKey || !accessToken) {
-        console.log(
-          "[ChatWS] Missing connection data",
-          {
-            chatKey,
-            accessToken:
-              Boolean(accessToken),
-          }
-        );
+        console.log("[ChatWS] Missing connection data", {
+          chatKey,
+          accessToken: Boolean(accessToken),
+        });
 
         return;
       }
 
+      // Prevent duplicate connections
       if (
         socketRef.current &&
         socketRef.current.readyState < 2
       ) {
-        console.log(
-          "[ChatWS] Socket already active"
-        );
-
+        console.log("[ChatWS] Socket already active");
         return;
       }
 
-      const protocol =
-        window.location.protocol ===
-        "https:"
-          ? "wss"
-          : "ws";
+      const WS_BASE_URL =
+        process.env.REACT_APP_WS_URL;
 
-      const backendHost =
-        process.env.NODE_ENV ===
-        "development"
-          ? "localhost:8000"
-          : window.location.host;
+      if (!WS_BASE_URL) {
+        console.error(
+          "[ChatWS] REACT_APP_WS_URL is not configured"
+        );
+        return;
+      }
 
       const wsUrl =
-        `${protocol}://${backendHost}` +
-        `/ws/chat/${chatKey}/` +
-        `?token=${accessToken}`;
+        `${WS_BASE_URL}/ws/chat/${chatKey}/` +
+        `?token=${encodeURIComponent(accessToken)}`;
+
+      console.log(
+        "[ChatWS] Connecting to:",
+        `${WS_BASE_URL}/ws/chat/${chatKey}/`
+      );
 
       const ws = new WebSocket(wsUrl);
 
       socketRef.current = ws;
 
       ws.onopen = () => {
-        console.log(
-          "[ChatWS] Connected"
-        );
+        console.log("[ChatWS] ✅ connected");
 
         reconnectAttempts.current = 0;
         setWsConnected(true);
@@ -259,19 +281,24 @@ const Chat = ({
 
         try {
           data = JSON.parse(event.data);
-        } catch (parseError) {
+        } catch (error) {
           console.error(
-            "Invalid WebSocket message:",
-            parseError
+            "[ChatWS] Invalid WebSocket message:",
+            error
           );
-
           return;
         }
+
+        console.log(
+          "[ChatWS] 📩 received:",
+          data
+        );
 
         if (!data.message) {
           return;
         }
 
+        // Server acknowledgement of our temporary message
         if (data.temp_id) {
           dispatch(
             updateMessageId({
@@ -282,23 +309,17 @@ const Chat = ({
           );
 
           if (data.id) {
-            markSeen(
-              chatKey,
-              data.id
-            );
+            markSeen(chatKey, data.id);
           }
 
           return;
         }
 
         if (!data.id) {
-          data.id =
-            `temp-${Date.now()}`;
+          data.id = `temp-${Date.now()}`;
         }
 
-        if (
-          markSeen(chatKey, data.id)
-        ) {
+        if (markSeen(chatKey, data.id)) {
           dispatch(
             receiveNewMessage({
               chatKey,
@@ -310,7 +331,7 @@ const Chat = ({
 
       ws.onclose = (event) => {
         console.log(
-          "[ChatWS] Closed",
+          "[ChatWS] 🔌 closed",
           {
             code: event.code,
             reason: event.reason,
@@ -319,7 +340,10 @@ const Chat = ({
         );
 
         setWsConnected(false);
-        socketRef.current = null;
+
+        if (socketRef.current === ws) {
+          socketRef.current = null;
+        }
 
         if (
           reconnectAttempts.current <
@@ -334,54 +358,104 @@ const Chat = ({
 
           reconnectAttempts.current += 1;
 
-          setTimeout(
-            createWebSocket,
-            delay
+          console.log(
+            `[ChatWS] Reconnecting in ${delay}ms...`
           );
+
+          reconnectTimeoutRef.current =
+            setTimeout(
+              createWebSocket,
+              delay
+            );
         }
       };
 
-      ws.onerror = (socketError) => {
+      ws.onerror = (error) => {
         console.error(
-          "WebSocket error:",
-          socketError
+          "[ChatWS] ❌ error:",
+          error
         );
 
         ws.close();
       };
-    },
-    [
+    }, [
       chatKey,
       accessToken,
       dispatch,
       flushQueueFor,
       markSeen,
-    ]
-  );
+    ]);
+
+  /* -----------------------------------------
+     CONNECT / DISCONNECT
+  ----------------------------------------- */
 
   useEffect(() => {
+
+    if (!chatKey || !accessToken) {
+      return;
+    }
+
     createWebSocket();
 
     return () => {
-      socketRef.current?.close();
-      socketRef.current = null;
+
+      /*
+       * Cancel pending reconnect
+       */
+
+      if (
+        reconnectTimeoutRef.current
+      ) {
+
+        clearTimeout(
+          reconnectTimeoutRef.current
+        );
+
+        reconnectTimeoutRef.current =
+          null;
+      }
+
+      /*
+       * Close existing socket
+       */
+
+      if (
+        socketRef.current
+      ) {
+
+        socketRef.current.close();
+
+        socketRef.current = null;
+      }
 
       setWsConnected(false);
+
       reconnectAttempts.current = 0;
     };
+
   }, [
     chatKey,
     accessToken,
     createWebSocket,
   ]);
 
+  /* -----------------------------------------
+     EMOJI
+  ----------------------------------------- */
+
   const handleEmojiClick = (
     emojiData
   ) => {
-    const emoji = emojiData.emoji;
-    const input = inputRef.current;
+
+    const emoji =
+      emojiData.emoji;
+
+    const input =
+      inputRef.current;
 
     if (!input) {
+
       setMessage(
         (previousMessage) =>
           previousMessage + emoji
@@ -399,17 +473,21 @@ const Chat = ({
       message.length;
 
     const updatedMessage =
-      message.slice(0, selectionStart) +
+      message.slice(
+        0,
+        selectionStart
+      ) +
       emoji +
-      message.slice(selectionEnd);
+      message.slice(
+        selectionEnd
+      );
 
-    setMessage(updatedMessage);
+    setMessage(
+      updatedMessage
+    );
 
-    /*
-     * Restore the cursor immediately after
-     * the inserted emoji.
-     */
     requestAnimationFrame(() => {
+
       const newCursorPosition =
         selectionStart +
         emoji.length;
@@ -420,10 +498,16 @@ const Chat = ({
         newCursorPosition,
         newCursorPosition
       );
+
     });
   };
 
+  /* -----------------------------------------
+     SEND MESSAGE
+  ----------------------------------------- */
+
   const sendMessage = () => {
+
     const trimmedMessage =
       message.trim();
 
@@ -435,16 +519,31 @@ const Chat = ({
       `temp-${Date.now()}`;
 
     const newMessage = {
+
       id: tempId,
-      message: trimmedMessage,
+
+      message:
+        trimmedMessage,
+
       sender_info: {
+
         id: user.id,
-        username: user.username,
+
+        username:
+          user.username,
+
       },
+
       timestamp:
         new Date().toISOString(),
+
       sending: true,
+
     };
+
+    /*
+     * Show immediately in Redux.
+     */
 
     dispatch(
       receiveNewMessage({
@@ -454,19 +553,35 @@ const Chat = ({
     );
 
     const payload = {
-      message: trimmedMessage,
-      temp_id: tempId,
+
+      message:
+        trimmedMessage,
+
+      temp_id:
+        tempId,
+
     };
+
+    /*
+     * Send immediately if connected.
+     */
 
     if (
       wsConnected &&
       socketRef.current?.readyState ===
         WebSocket.OPEN
     ) {
+
       socketRef.current.send(
         JSON.stringify(payload)
       );
+
     } else {
+
+      /*
+       * Otherwise queue it.
+       */
+
       pushToQueue(
         chatKey,
         payload
@@ -474,27 +589,47 @@ const Chat = ({
     }
 
     setMessage("");
-    setShowEmojiPicker(false);
+
+    setShowEmojiPicker(
+      false
+    );
 
     inputRef.current?.focus();
   };
 
-  const handleKeyDown = (event) => {
+  /* -----------------------------------------
+     ENTER KEY
+  ----------------------------------------- */
+
+  const handleKeyDown = (
+    event
+  ) => {
+
     if (
       event.key === "Enter" &&
       !event.shiftKey &&
       !event.isComposing
     ) {
+
       event.preventDefault();
+
       sendMessage();
     }
   };
 
+  /* -----------------------------------------
+     RENDER
+  ----------------------------------------- */
+
   return (
+
     <div className="chat-container">
+
       <div className="chat-box">
+
         {messages.map(
           (currentMessage) => {
+
             const isMe =
               String(
                 currentMessage
@@ -503,6 +638,7 @@ const Chat = ({
               String(user.id);
 
             return (
+
               <div
                 key={
                   currentMessage.id
@@ -513,19 +649,25 @@ const Chat = ({
                     : "other"
                 }`}
               >
+
                 <p>
+
                   {
                     currentMessage.message
                   }{" "}
 
                   {currentMessage.sending && (
+
                     <span className="sending">
                       …sending
                     </span>
+
                   )}
+
                 </p>
 
                 <span className="timestamp">
+
                   {formatDistanceToNow(
                     new Date(
                       currentMessage.timestamp
@@ -534,21 +676,31 @@ const Chat = ({
                       addSuffix: true,
                     }
                   )}
+
                 </span>
+
               </div>
+
             );
+
           }
         )}
 
-        <div ref={messagesEndRef} />
+        <div
+          ref={messagesEndRef}
+        />
+
       </div>
 
       <div className="chat-input-wrapper">
+
         <div className="chat-input">
+
           <div
             className="chat-emoji-container"
             ref={emojiPickerRef}
           >
+
             <button
               type="button"
               className="chat-emoji-btn"
@@ -565,7 +717,9 @@ const Chat = ({
             </button>
 
             {showEmojiPicker && (
+
               <div className="chat-emoji-picker">
+
                 <EmojiPicker
                   onEmojiClick={
                     handleEmojiClick
@@ -577,8 +731,11 @@ const Chat = ({
                   width={320}
                   height={400}
                 />
+
               </div>
+
             )}
+
           </div>
 
           <input
@@ -607,9 +764,13 @@ const Chat = ({
               ? "Send"
               : "Queue"}
           </button>
+
         </div>
+
       </div>
+
     </div>
+
   );
 };
 

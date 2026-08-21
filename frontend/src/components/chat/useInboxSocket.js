@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
+
 import {
   receiveNewMessage,
   incrementUnreadCount,
@@ -8,68 +9,126 @@ import {
 
 const useInboxSocket = (loadingAuth) => {
   const dispatch = useDispatch();
-  const accessToken = useSelector((state) => state.auth.access);
+
+  const accessToken = useSelector(
+    (state) => state.auth.access
+  );
+
   const socketRef = useRef(null);
 
   useEffect(() => {
-    if (loadingAuth || !accessToken) return;
+    if (loadingAuth || !accessToken) {
+      return;
+    }
 
-    const wsProtocol =
-      window.location.protocol === "https:" ? "wss" : "ws";
+    const WS_BASE_URL =
+      process.env.REACT_APP_WS_URL;
 
-    const socket = new WebSocket(
-      `${wsProtocol}://localhost:8000/ws/inbox/?token=${accessToken}`
+    if (!WS_BASE_URL) {
+      console.error(
+        "[InboxSocket] REACT_APP_WS_URL is not configured"
+      );
+      return;
+    }
+
+    const wsUrl =
+      `${WS_BASE_URL}/ws/inbox/` +
+      `?token=${encodeURIComponent(accessToken)}`;
+
+    console.log(
+      "[InboxSocket] Connecting to:",
+      `${WS_BASE_URL}/ws/inbox/`
     );
+
+    const socket =
+      new WebSocket(wsUrl);
 
     socketRef.current = socket;
 
     socket.onopen = () => {
-      console.log("[InboxSocket] ✅ connected");
+      console.log(
+        "[InboxSocket] ✅ connected"
+      );
     };
 
     socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      console.log("[InboxSocket] 📩 message received:", data);
+      try {
+        const data =
+          JSON.parse(event.data);
 
-      if (data.type === "new_message") {
-        const { chat_key, message } = data;
+        console.log(
+          "[InboxSocket] 📩 received:",
+          data
+        );
 
-        // 1️⃣ Store message in Redux
-        dispatch(
-          receiveNewMessage({
-            chatKey: chat_key,
+        if (
+          data.type === "new_message"
+        ) {
+          const {
+            chat_key,
             message,
-          })
-        );
+          } = data;
 
-        // 2️⃣ Update unread counter immediately
-        dispatch(
-          incrementUnreadCount({
-            chatKey: chat_key,
-          })
-        );
+          dispatch(
+            receiveNewMessage({
+              chatKey: chat_key,
+              message,
+            })
+          );
 
-        // 3️⃣ Optional safety: refetch chat rooms
-        dispatch(fetchUserChats());
+          dispatch(
+            incrementUnreadCount({
+              chatKey: chat_key,
+            })
+          );
+
+          dispatch(
+            fetchUserChats()
+          );
+        }
+      } catch (error) {
+        console.error(
+          "[InboxSocket] Failed to parse message:",
+          error
+        );
       }
     };
 
-    socket.onerror = (err) => {
-      console.error("[InboxSocket] ❌ error", err);
+    socket.onerror = (error) => {
+      console.error(
+        "[InboxSocket] ❌ error:",
+        error
+      );
     };
 
     socket.onclose = (event) => {
       console.log(
-        "[InboxSocket] 🔌 closed",
+        "[InboxSocket] 🔌 closed:",
         event.code,
         event.reason
       );
+
+      if (
+        socketRef.current === socket
+      ) {
+        socketRef.current = null;
+      }
     };
 
     return () => {
       socket.close();
+
+      if (
+        socketRef.current === socket
+      ) {
+        socketRef.current = null;
+      }
     };
-  }, [accessToken, loadingAuth, dispatch]);
+  }, [
+    accessToken,
+    loadingAuth,
+    dispatch,
+  ]);
 
   return socketRef;
 };
