@@ -1,5 +1,4 @@
 // features/users/auth-slice.js
-import axios from 'axios';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance, { setAccessToken } from '../../utils/axiosInstance';
 import { jwtDecode } from 'jwt-decode';
@@ -18,26 +17,33 @@ const initialState = {
 ===================================================== */
 
 export const login = createAsyncThunk(
-  'auth/login',
-  async ({ username, password }, { rejectWithValue }) => {
-    try {
-      const { data } = await axios.post('/api/login/', {
-        username,
-        password,
-      });
+    'auth/login',
+    async ({ username, password }, { rejectWithValue }) => {
+        try {
+            const { data } = await axiosInstance.post(
+                '/login/',
+                {
+                    username,
+                    password,
+                }
+            );
 
-      if (data?.access) setAccessToken(data.access);
+            if (data?.access) {
+                setAccessToken(data.access);
+            }
 
-      return {
-        access: data?.access ?? null,
-        user: data?.user ?? null,
-      };
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.detail || 'Invalid username or password'
-      );
+            return {
+                access: data?.access ?? null,
+                user: data?.user ?? null,
+            };
+
+        } catch (error) {
+            return rejectWithValue(
+                error.response?.data?.detail ||
+                'Invalid username or password'
+            );
+        }
     }
-  }
 );
 
 /* =====================================================
@@ -183,10 +189,13 @@ export const verifyOTP = createAsyncThunk(
   'auth/verifyOTP',
   async ({ user_id, code }, { rejectWithValue }) => {
     try {
-      const { data } = await axios.post('/api/users/verify-otp/', {
-        user_id,
-        code,
-      });
+      const { data } = await axiosInstance.post(
+          '/users/verify-otp/',
+          {
+              user_id,
+              code,
+          }
+      );
 
       return data;
     } catch (error) {
@@ -206,9 +215,7 @@ export const refreshToken = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await axiosInstance.post(
-        '/token/refresh/',
-        {},
-        { withCredentials: true }
+        '/token/refresh/'
       );
 
       const access = data?.access ?? data;

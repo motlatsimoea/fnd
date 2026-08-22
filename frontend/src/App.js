@@ -53,20 +53,36 @@ const App = () => {
   // Bootstrap auth on app load
   useEffect(() => {
     const bootstrapAuth = async () => {
+      const hasSession =
+        sessionStorage.getItem("hasSession") === "true";
+
+      if (!hasSession) {
+        setLoadingAuth(false);
+        return;
+      }
+
       try {
-        const hasSession = sessionStorage.getItem('hasSession') === 'true';
-        if (!hasSession) {
-          setLoadingAuth(false);
-          return;
+        const result =
+          await dispatch(refreshToken()).unwrap();
+
+        const access = result?.access;
+
+        if (!access) {
+          throw new Error("No access token returned");
         }
 
-        const result = await dispatch(refreshToken()).unwrap();
-        const access = result?.access ?? result;
         setAccessToken(access);
 
-        startTokenRefreshTimer(dispatch, access);
+        startTokenRefreshTimer(
+          dispatch,
+          access
+        );
+
       } catch (err) {
-        console.error("Bootstrap auth failed:", err);
+        console.error(
+          "Bootstrap auth failed:",
+          err
+        );
       } finally {
         setLoadingAuth(false);
       }

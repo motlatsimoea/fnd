@@ -29,6 +29,12 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     
 
+IS_PRODUCTION = os.getenv("DJANGO_ENV", "development").lower() == "production"
+
+COOKIE_SECURE = IS_PRODUCTION
+COOKIE_SAMESITE = "None" if IS_PRODUCTION else "Lax"
+    
+
 ALLOWED_HOSTS = ["localhost", "127.0.0.1",]
 
 if os.getenv("RENDER_EXTERNAL_HOSTNAME"):

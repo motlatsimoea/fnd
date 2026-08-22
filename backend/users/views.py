@@ -20,6 +20,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from users.services.otp_service import send_otp, generate_otp
 from users.services.otp_service import send_sms_otp
+from django.conf import settings
 
 User = get_user_model()
 
@@ -33,38 +34,27 @@ def get_current_user(request):
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
-
+    
     def post(self, request, *args, **kwargs):
-        # Run the default token generation
-        response = super().post(request, *args, **kwargs)
+        response = super().post(
+            request,
+            *args,
+            **kwargs
+        )
 
         refresh_token = response.data.get("refresh")
-        access_token = response.data.get("access")
 
         if refresh_token:
-            # Remove refresh token from JSON body
+            # Remove refresh token from JSON response
             response.data.pop("refresh", None)
 
-            # Store refresh token in HttpOnly cookie
             response.set_cookie(
                 key="refresh_token",
                 value=refresh_token,
                 httponly=True,
-                secure=False,      # True in production
-                samesite='Lax',     # None allows cross-origin in dev
-                max_age=24 * 60 * 60,  # 1 day
-                path="/",
-            )
-
-        if access_token:
-            # Optional: store access token in HttpOnly cookie as well
-            response.set_cookie(
-                key="access_token",
-                value=access_token,
-                httponly=True,
-                secure=False,
-                samesite=None,
-                max_age=5 * 60,  # 5 minutes
+                secure=settings.COOKIE_SECURE,
+                samesite=settings.COOKIE_SAMESITE,
+                max_age=2 * 24 * 60 * 60,
                 path="/",
             )
 
@@ -72,8 +62,10 @@ class MyTokenObtainPairView(TokenObtainPairView):
 
 
 class MyTokenRefreshCookieView(TokenRefreshView):
+    
     def post(self, request, *args, **kwargs):
         refresh = request.COOKIES.get("refresh_token")
+        
         if not refresh:
             return Response(
                 {"detail": "No refresh token cookie set"},
@@ -87,33 +79,20 @@ class MyTokenRefreshCookieView(TokenRefreshView):
 
         # If rotating refresh tokens, update cookie
         if "refresh" in serializer.validated_data:
-            data["refresh"] = serializer.validated_data["refresh"]
 
             response = Response(data)
             response.set_cookie(
                 key="refresh_token",
                 value=serializer.validated_data["refresh"],
                 httponly=True,
-                secure=False,      # True in production
-                samesite=None,     # None allows cross-origin in dev
-                max_age=24 * 60 * 60,
+                secure=settings.COOKIE_SECURE,      # True in production and False in development
+                samesite=settings.COOKIE_SAMESITE,     # None allows cross-origin in dev
+                max_age=2 * 24 * 60 * 60,
                 path="/",
             )
             return response
 
-        # Optional: refresh access token cookie
-        response = Response(data)
-        response.set_cookie(
-            key="access_token",
-            value=data["access"],
-            httponly=True,
-            secure=False,
-            samesite=None,
-            max_age=5 * 60,
-            path="/",
-        )
-
-        return response
+        return Response(data)
     
     
 class RequestPasswordResetView(APIView):
