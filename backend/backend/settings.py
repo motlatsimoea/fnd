@@ -186,7 +186,7 @@ if os.getenv("USE_SUPABASE_DATABASE", "False").lower() == "true":
     DATABASES = {
         "default": dj_database_url.parse(
             os.getenv("DATABASE_URL"),
-            conn_max_age=600,
+            conn_max_age=0,
         )
     }
 else:
