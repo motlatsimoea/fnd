@@ -23,6 +23,7 @@ const useInboxSocket = (loadingAuth) => {
 
     const WS_BASE_URL =
       process.env.REACT_APP_WS_URL;
+      console.log(process.env.REACT_APP_WS_URL)
 
     if (!WS_BASE_URL) {
       console.error(

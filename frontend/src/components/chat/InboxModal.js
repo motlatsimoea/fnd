@@ -81,6 +81,7 @@ const InboxModal = ({ onClose }) => {
       );
     }
 
+
     return String(currentError);
   };
 
@@ -277,6 +278,7 @@ const InboxModal = ({ onClose }) => {
                     <div className="avatar-wrapper">
                       {otherUsers.map(
                         (user) => (
+                          
                           <img
                             key={user.id}
                             src={

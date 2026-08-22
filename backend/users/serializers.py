@@ -154,6 +154,8 @@ class UserSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
     phone_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     
+    profile_picture = serializers.SerializerMethodField()
+    
     agreed_to_terms = serializers.BooleanField(write_only=True)
 
     sectors = serializers.PrimaryKeyRelatedField(
@@ -173,6 +175,7 @@ class UserSerializer(serializers.ModelSerializer):
             'email',
             'phone_number',  
             'password',
+            'profile_picture',
             'sectors',
             'sectors_display',
             'agreed_to_terms'
@@ -236,6 +239,21 @@ class UserSerializer(serializers.ModelSerializer):
     
     def get_sectors_display(self, obj):
         return [sector.name for sector in obj.sectors.all()]
+    
+    def get_profile_picture(self, obj):
+        try:
+            profile = obj.profile
+
+            if profile and profile.profile_picture:
+                return (
+                    f"{settings.SUPABASE_PUBLIC_URL}/storage/v1/object/public/"
+                    f"{settings.SUPABASE_STORAGE_BUCKET}/"
+                    f"{profile.profile_picture.name}"
+                )
+        except Exception:
+            pass
+
+        return None
 
 
 
