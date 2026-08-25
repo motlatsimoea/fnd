@@ -9,7 +9,7 @@ export const fetchBlogPosts = createAsyncThunk(
   'blogs/fetchBlogPosts',
   async () => {
     const response = await axiosInstance.get('/posts/');
-    return response.data.results;
+    return response.data.posts;
   }
 );
 
