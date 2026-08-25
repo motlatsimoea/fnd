@@ -6,6 +6,23 @@ export const setAccessToken = (token) => {
     accessToken = token;
 };
 
+console.log(
+    "========== API CONFIG =========="
+);
+
+console.log(
+    "REACT_APP_API_URL:",
+    process.env.REACT_APP_API_URL
+);
+
+console.log(
+    "REACT_APP_WS_URL:",
+    process.env.REACT_APP_WS_URL
+);
+
+console.log(
+    "================================"
+);
 
 const axiosInstance = axios.create({
     baseURL: process.env.REACT_APP_API_URL,
