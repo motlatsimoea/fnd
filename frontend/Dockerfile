@@ -10,6 +10,10 @@ RUN npm ci
 # Copy frontend source
 COPY . .
 
+# Debug environment variables
+RUN echo "REACT_APP_API_URL=$REACT_APP_API_URL"
+RUN echo "REACT_APP_WS_URL=$REACT_APP_WS_URL"
+
 # Build React application
 RUN npm run build
 
