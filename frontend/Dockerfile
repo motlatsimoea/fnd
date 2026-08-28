@@ -6,10 +6,13 @@ WORKDIR /app
 # Accept variables from Docker build
 ARG REACT_APP_API_URL
 ARG REACT_APP_WS_URL
+ARG REACT_APP_GOOGLE_MAPS_API_KEY
 
 # Make them available to npm run build
 ENV REACT_APP_API_URL=$REACT_APP_API_URL
 ENV REACT_APP_WS_URL=$REACT_APP_WS_URL
+ENV REACT_APP_GOOGLE_MAPS_API_KEY=$REACT_APP_GOOGLE_MAPS_API_KEY
+
 
 # Install dependencies
 COPY package*.json ./

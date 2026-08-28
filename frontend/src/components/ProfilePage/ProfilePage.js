@@ -14,7 +14,8 @@ const ProfilePage = () => {
   const { profile, loading: profileLoading, error } = useSelector(
     (state) => state.profile
   );
-  const currentUser = useSelector((state) => state.auth.userInfo);
+  
+  const currentUsername = currentUser?.username;
   const authLoading = useSelector((state) => state.auth.loading);
 
   const [activeTab, setActiveTab] = useState("posts");
@@ -26,11 +27,12 @@ const ProfilePage = () => {
   ];
 
   useEffect(() => {
-    if (currentUser) {
-      const userToFetch = routeUsername || currentUser.username;
-      dispatch(fetchProfile(userToFetch));
-    }
-  }, [dispatch, routeUsername, currentUser]);
+    if (!currentUsername) return;
+
+    const userToFetch = routeUsername || currentUsername;
+
+    dispatch(fetchProfile(userToFetch));
+  }, [dispatch, routeUsername, currentUsername]);
 
   const handleSaveProfile = (formData) => {
       if (!profile) return;
