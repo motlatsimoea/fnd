@@ -151,7 +151,7 @@ const RegistrationPage = () => {
       const fetchSectors = async () => {
           try {
               const response = await axiosInstance.get(
-                  "/api/users/sectors/"
+                  "/users/sectors/"
               );
               setAvailableSectors(response.data);
           } catch(err){

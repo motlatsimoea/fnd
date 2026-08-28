@@ -106,7 +106,7 @@ const ProfileEditModal = ({ user, onClose, onSave }) => {
       const loadSectors = async () => {
           try {
               const { data } = await axiosInstance.get(
-                  "/api/users/sectors/"
+                  "/users/sectors/"
               );
               setAvailableSectors(data);
           } catch (err) {
