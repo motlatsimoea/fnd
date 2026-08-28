@@ -15,6 +15,10 @@ const ProfilePage = () => {
     (state) => state.profile
   );
   
+  const currentUser = useSelector(
+      (state) => state.auth.userInfo
+    );
+
   const currentUsername = currentUser?.username;
   const authLoading = useSelector((state) => state.auth.loading);
 
