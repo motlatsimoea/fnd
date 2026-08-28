@@ -1,27 +1,49 @@
 from rest_framework import serializers
 from .models import Inbox, Message
 from django.contrib.auth import get_user_model
-
+from django.conf import settings
 
 User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
     profile_picture = serializers.SerializerMethodField()
-    
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'is_staff', 'profile_picture']
-        
-    
+        fields = [
+            'id',
+            'username',
+            'email',
+            'is_staff',
+            'profile_picture'
+        ]
+
     def get_profile_picture(self, obj):
-        request = self.context.get('request')
-        profile = getattr(obj, "profile", None)  # Safely get profile
-        if profile and getattr(profile, "profile_picture", None):
-            return request.build_absolute_uri(profile.profile_picture.url)
-        # Return default avatar for users without a profile
-        return request.build_absolute_uri('/media/profile_pictures/default.png')
-    
+        profile = getattr(obj, "profile", None)
+
+        if not profile:
+            return None
+
+        profile_picture = getattr(
+            profile,
+            "profile_picture",
+            None
+        )
+
+        if not profile_picture:
+            return None
+
+        # Don't return the Django default image.
+        # Let React handle the default avatar.
+        if profile_picture.name == "profile_pictures/default.png":
+            return None
+
+        return (
+            f"{settings.SUPABASE_PUBLIC_URL}/storage/v1/object/public/"
+            f"{settings.SUPABASE_STORAGE_BUCKET}/"
+            f"{profile_picture.name}"
+        )
     
 class MessageSerializer(serializers.ModelSerializer):
     content = serializers.CharField(write_only=True)  # Accept plaintext for writing

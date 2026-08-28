@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import { createPortal } from "react-dom";
 import "./ProfilePage_css/ProfileEditModal.css";
 
@@ -104,7 +105,7 @@ const ProfileEditModal = ({ user, onClose, onSave }) => {
   useEffect(() => {
       const loadSectors = async () => {
           try {
-              const { data } = await axios.get(
+              const { data } = await axiosInstance.get(
                   "/api/users/sectors/"
               );
               setAvailableSectors(data);

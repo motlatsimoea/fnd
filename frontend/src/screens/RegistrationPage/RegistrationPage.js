@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from "react-router-dom";
 import { registerUser } from '../../features/users/register-slice';
@@ -44,7 +45,7 @@ const RegistrationPage = () => {
         payload = { phone_number: `+${formData.phone_number}` };
       }
 
-      const response = await axios.post('/api/users/check-user/', payload);
+      const response = await axiosInstance.post('/api/users/check-user/', payload);
 
       if (response.data.exists) {
         setErrors((prev) => ({
@@ -149,7 +150,7 @@ const RegistrationPage = () => {
   useEffect(() => {
       const fetchSectors = async () => {
           try {
-              const response = await axios.get(
+              const response = await axiosInstance.get(
                   "/api/users/sectors/"
               );
               setAvailableSectors(response.data);

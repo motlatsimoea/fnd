@@ -110,7 +110,6 @@ const App = () => {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/info" element={<InfoPage />} />
-        <Route path="/market" element={<MarketPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
         <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
@@ -121,6 +120,7 @@ const App = () => {
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route path="/create-post" element={<CreatePost />} />
+          <Route path="/market" element={<MarketPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/blog/:id" element={<BlogPostPage />} />
