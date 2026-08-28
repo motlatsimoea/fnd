@@ -14,7 +14,6 @@ import Footer from './components/Footer/Footer';
 // Public screens
 import HomeScreen from './screens/HomeScreen';
 import BlogPostPage from './screens/BlogPostPage/BlogPostPage';
-import MarketPage from './screens/MarketPage/MarketPage';
 import ProductPage from './screens/ProductPage/ProductPage';
 import InfoPage from './screens/InfoPage/InfoPage';
 import ArticlePage from './screens/InfoPage/ArticlePage';
@@ -36,7 +35,7 @@ import InboxPage from './screens/InboxPage/InboxPage';
 import ChatPage from './components/chat/ChatPage';
 import Chat from './components/chat/chat';
 import SearchPage from "./screens/SearchPage/SearchPage";
-
+import MarketPage from './screens/MarketPage/MarketPage';
 import PrivacyPolicy from './screens/legal/PrivacyPolicy';
 import TermsOfService from './screens/legal/TermsOfService';
 import SettingsPage from './screens/SettingsPage/SettingsPage';
@@ -111,7 +110,6 @@ const App = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/info" element={<InfoPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-
         <Route path="/reset-password/:uid/:token" element={<ResetPasswordPage />} />
         <Route path="/reset-password-phone" element={<ResetPasswordPhonePage />} />
         <Route path="/product/:id" element={<ProductPage />} />
